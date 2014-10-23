@@ -236,20 +236,23 @@ sub process_bits{
     my ($rows, $cells, $data) = @_;
     my %test;
     foreach my $row (@{$rows}){
-        my ($location, $probeid, $sum, $bit, $feature, $cpg_island_relationship);
+        my ($location, $probeid, $sum, $bit_string, $feature, $cpg_island_relationship);
         if ($data eq "erc"){
-            ($location, $probeid, undef, undef, $bit, $sum, $feature, $cpg_island_relationship) =  @$row;
+            ($location, $probeid, undef, undef, $bit_string, $sum, $feature, $cpg_island_relationship) =  @$row;
           }
         else{
-            ($location, $probeid, $bit, $sum, undef, undef, $feature, $cpg_island_relationship) = @$row;
+            ($location, $probeid, $bit_string, $sum, undef, undef, $feature, $cpg_island_relationship) = @$row;
           }
         $test{'MVPS'}{$probeid}{'SUM'} = $sum;
         $test{'MVPS'}{$probeid}{'PARAMS'} = join("\t", $feature, $cpg_island_relationship);
-        my @bits = split "", $bit;
         my $index = 0;
+        die if (scalar(@$cells) ne length($bit_string));
         foreach my $cell (@$cells){
-            $test{'CELLS'}{$cell}{'COUNT'} += $bits[$index];
-            push @{$test{'CELLS'}{$cell}{'MVPS'}}, $probeid if $bits[$index] == 1;
+            ## $bit_string is a string made of 0s and 1s. If it is a 1 for this position, count and push
+            if (substr($bit_string, $index, 1)) {
+                $test{'CELLS'}{$cell}{'COUNT'}++;
+                push @{$test{'CELLS'}{$cell}{'MVPS'}}, $probeid;
+            }
             $index++;
           }
       }
@@ -267,9 +270,11 @@ sub get_bits{
 
     my ($mvps, $dbh) = @_;
     my @results;
+
     my $sql = "SELECT * FROM bits WHERE probeid IN (?". (",?" x (@$mvps - 1)).")";
     my $sth = $dbh->prepare($sql); #get the blocks form the ld table
     $sth->execute(@$mvps);
+
     my $result = $sth->fetchall_arrayref();
     $sth->finish();
     foreach my $row (@{$result}){

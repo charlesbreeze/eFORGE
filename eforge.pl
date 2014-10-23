@@ -479,7 +479,7 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
 
     # ultimately want a data frame of names(results)<-c("Zscore", "Cell", "Tissue", "File", "MVPs")
     say $bfh join("\t", @{$bkgrd{$cell}});
-    my $teststat = $$test{'CELLS'}{$cell}{'COUNT'}; #number of overlaps for the test MVPs
+    my $teststat = ($$test{'CELLS'}{$cell}{'COUNT'} or 0); #number of overlaps for the test MVPs
 
     # binomial pvalue, probability of success is derived from the background overlaps over the tests for this cell
     # $backmvps is the total number of background mvps analysed
