@@ -343,9 +343,9 @@ my @origmvps = @mvps;
 
 my ($prox_excluded, $output, $input);
 unless(defined $noproxy){
-$input = scalar @mvps;
-($prox_excluded, @mvps) = prox_filter(\@mvps, $dbh);
-$output = scalar @mvps;
+    $input = scalar @mvps;
+    ($prox_excluded, @mvps) = prox_filter(\@mvps, $dbh);
+    $output = scalar @mvps;
 }
 
 # Check we have enough MVPs
@@ -466,10 +466,10 @@ open my $bfh, ">", "$out_dir/background.tsv" or die "Cannot open background.tsv"
 
 
 ###ncmp is a function from Sort::Naturally
-	     foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) || ncmp($a,$b)} @$cells){
-	       # above line sorts by the tissues alphabetically (from $tissues hash values)
+foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) || ncmp($a,$b)} @$cells){
+    # above line sorts by the tissues alphabetically (from $tissues hash values)
 
-	       # ultimately want a data frame of names(results)<-c("Zscore", "Cell", "Tissue", "File", "MVPs")
+    # ultimately want a data frame of names(results)<-c("Zscore", "Cell", "Tissue", "File", "MVPs")
     say $bfh join("\t", @{$bkgrd{$cell}});
     my $teststat = $$test{'CELLS'}{$cell}{'COUNT'}; #number of overlaps for the test MVPs
 
@@ -527,55 +527,9 @@ open my $bfh, ">", "$out_dir/background.tsv" or die "Cannot open background.tsv"
 #say "$filename\t$pos positive lines at FDR = $fdr at p value <= 0.05";
 
 
-	     unless (defined $noplot){
+unless (defined $noplot){
     #Plotting and table routines
     Chart($filename, $lab, $out_dir, $tissues, $cells, $label, $t1, $t2, $data); # basic pdf plot
     dChart($filename, $lab, $out_dir, $data, $label, $t1, $t2); # rCharts Dimple chart
     table($filename, $lab, $out_dir); # Datatables chart
   }
-
-########check lines below and above (a bit less for the above, check above until next check
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
