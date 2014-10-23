@@ -200,7 +200,9 @@ d1\$colorAxis(
 d1\$addParams(title=\"$label overlaps with $data DHS\")
 d1\$save('$chart', cdn = F)\n";
 
-system "R --no-save --quiet --slave < $rfile";
+    system "R --no-save --quiet --slave < $rfile\n";
+    system "sed -e \"s/src='.*\\\/js/src='\\\/libraries\\\/dimple\\\/js/\" -i\"\" $resultsdir/$chart";
+
   }
 
 =head1 SUBROUTINES/METHODS
@@ -227,10 +229,12 @@ sub table{
       sScrollY= \"600\",
       bPaginate= F,
       sScrollX= \"100%\",
-      sScrollXInner= \"110%\"
+      width= \"680px\"
     )
     dt\$save('$chart', cdn = F)";
     system "R --no-save --quiet --slave < $rfile";
+    system "sed -e \"s/href='.*\\\/css/href='\\\/libraries\\\/datatables\\\/css/; s/src='.*\\\/js/src='\\\/libraries\\\/datatables\\\/js/\" -i\"\" $resultsdir/$chart";
+
   }
 
 =head1 SUBROUTINES/METHODS
