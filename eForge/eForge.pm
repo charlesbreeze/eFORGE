@@ -77,6 +77,7 @@ sub process_file {
     my @snps;
     if ($format =~ /probeid/){
       while (<$fh>){
+            next if /^#/;
             chomp;
             my $rs;
             if (defined $filter) {
