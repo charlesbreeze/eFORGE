@@ -207,7 +207,6 @@ if (!$out_dir) {
     $out_dir = $ug->to_hexstring($ug->create());
 }
 
-
 # the minimum number of mvps allowed for test. Set to 5 as we have binomial p
 unless (defined $min_mvps){
     $min_mvps = 5;
@@ -296,6 +295,7 @@ my @mvps;
 
 # A series of data file formats to accept.
 
+warn "[".scalar(localtime())."] Processing input...\n";
 if (defined $file){
   if (defined $filter) {
     unless ($format eq "ian" or $format eq "probeid"){
@@ -389,12 +389,12 @@ foreach my $probeid (@origmvps){
 }
 
 if (scalar @missing > 0) {
-    print "The following " . scalar @missing . " MVPs have not been analysed because they were not found on the Illumina  Infinium HumanMethylation450 BeadChip\n";
-    print join("\n", @missing) . "\n";
+    warn "The following " . scalar @missing . " MVPs have not been analysed because they were not found on the Illumina  Infinium HumanMethylation450 BeadChip\n";
+    warn join("\n", @missing) . "\n";
   }
 if (defined $proxy) {
   if ($output < $input) {
-    say "For $label, $input MVPs provided, " . scalar @mvps . " retained, " . scalar @missing . " not analysed, "  . scalar(keys %$prox_excluded) . " proximity filtered at 1 kb";
+    warn "For $label, $input MVPs provided, " . scalar @mvps . " retained, " . scalar @missing . " not analysed, "  . scalar(keys %$prox_excluded) . " proximity filtered at 1 kb\n";
       }
 }
 
@@ -404,7 +404,7 @@ if (defined $proxy) {
 
 my @foundmvps = keys %{$$test{'MVPS'}};
 my $mvpcount = scalar @foundmvps;
-print "Test MVPs analysed $mvpcount\n";
+warn "[".scalar(localtime())."] Running the analysis with $mvpcount MVPs...\n";
 
 
 # identify the feature and cpg island relationship, and then make bkgrd picks (old version just below)
@@ -420,12 +420,14 @@ my %bkgrd; #this hash is going to store the bkgrd overlaps
 # Get the bits for the background sets and process
 my $backmvps;
 
+my $num = 0;
 foreach my $bkgrd (keys %{$picks}){
+    warn "[".scalar(localtime())."] Repetition $num out of ".$reps."\n" if (++$num%100 == 0);
     #$rows = get_bits(\@{$$picks{$bkgrd}}, $sth);
     $rows = get_bits(\@{$$picks{$bkgrd}}, $dbh);
     $backmvps += scalar @$rows; #$backmvps is the total number of background probes analysed
     unless (scalar @$rows == scalar @foundmvps){
-        print "Background " . $bkgrd . " only " . scalar @$rows . " probes out of " . scalar @foundmvps . "\n";
+        warn "Background " . $bkgrd . " only " . scalar @$rows . " probes out of " . scalar @foundmvps . "\n";
       }
     my $result = process_bits($rows, $cells, $data);
     foreach my $cell (keys %{$$result{'CELLS'}}){
@@ -437,7 +439,9 @@ foreach my $bkgrd (keys %{$picks}){
   }
 
 $dbh->disconnect();
+warn "[".scalar(localtime())."] All repetitions done.\n";
 
+warn "[".scalar(localtime())."] Calculating p-values...\n";
 #Having got the test overlaps and the bkgd overlaps now calculate p values and output 
 #the table to be read into R for plotting.
 
@@ -531,9 +535,12 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
 #say "$filename\t$pos positive lines at FDR = $fdr at p value <= 0.05";
 
 
+warn "[".scalar(localtime())."] Generating plots...\n";
 unless (defined $noplot){
     #Plotting and table routines
     Chart($filename, $lab, $out_dir, $tissues, $cells, $label, $t1, $t2, $data); # basic pdf plot
     dChart($filename, $lab, $out_dir, $data, $label, $t1, $t2); # rCharts Dimple chart
     table($filename, $lab, $out_dir); # Datatables chart
   }
+
+warn "[".scalar(localtime())."] Done.\n";
