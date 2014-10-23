@@ -266,9 +266,9 @@ sub get_bits{
 
     my ($mvps, $dbh) = @_;
     my @results;
-    my $args = join ("','", @$mvps);
-    my $sth = $dbh->prepare("SELECT * FROM bits WHERE probeid IN ('$args')");
-    $sth->execute();
+    my $sql = "SELECT * FROM bits WHERE probeid IN (?". (",?" x (@$mvps - 1)).")";
+    my $sth = $dbh->prepare($sql); #get the blocks form the ld table
+    $sth->execute(@$mvps);
     my $result = $sth->fetchall_arrayref();
     $sth->finish();
     foreach my $row (@{$result}){
@@ -315,9 +315,9 @@ sub prox_filter{
     foreach my $mvp (@$mvps){
         $mvps{$mvp} = 1;
       }
-    my $args = join ("','", @$mvps);
-    my $sth = $dbh->prepare("SELECT probeid,proxy_probes FROM proxy_filter WHERE probeid IN ('$args')"); #get the blocks form the ld table
-    $sth->execute();
+    my $sql = "SELECT probeid,proxy_probes FROM proxy_filter WHERE probeid IN (?". (",?" x (@$mvps - 1)).")";
+    my $sth = $dbh->prepare($sql); #get the blocks form the ld table
+    $sth->execute(@$mvps);
     my $result = $sth->fetchall_arrayref();
     $sth->finish();
     foreach my $row (@{$result}){
@@ -347,7 +347,15 @@ Read the correct cell list based on data (erc -encode). Also gets the tissue nam
 sub get_cells{
     # read the correct cell list based on data (erc -encode). Also gets the tissue names for the cells.
     my ($data, $dbh) = @_;
-    my $table = join('_', "cells", $data);
+
+    my $table = "cells_".$data;
+
+    # Check that the table exists in the DB (note, some magic here that might be SQLite-specific)
+    my @tables = grep {/^cells_/} map {$_ =~ s/"//g; $_ =~ s/^main\.//; $_} $dbh->tables();
+    if (!grep {/$table/} @tables) {
+        die "The database does not contain information for the data background provided.\n";
+    }
+
     my $sth = $dbh->prepare("SELECT shortcell,tissue,file,acc FROM $table");
     $sth->execute();
     my $ver = $sth->fetchall_arrayref();
