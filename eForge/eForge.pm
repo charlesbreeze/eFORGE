@@ -83,65 +83,65 @@ sub process_file {
                 my $pval;
                 ($rs, $pval) = split /\s+/, $_;
                 next unless $pval >= $filter;
-	      }
+              }
             else{
                 ($rs, undef) = split /\s+/, $_; # remove anything that is not supposed to be there :-)
-	      }
+              }
             my @rsid = split /\:/, $rs;
             my $rsid = pop @rsid; # take the last one for want of a better idea.
             push @snps, $rsid;
-	  }
-    }
+          }
+      }
     elsif ($format =~ /ian/){
       while (<$fh>){
             my ($chr, $beg, $end, $rsid, $p, $pval) = split "\t", $_;
             if (defined $filter) {
                 next unless $pval >= $filter;
-	      }
+              }
             my @rsid = split /\:/, $rsid; # to deal with multiple rsids
             $rsid = pop @rsid; # take the last one for want of a better idea. Can't take all as they are the same thing.
             push @snps, $rsid;
-	  }
-    }
+          }
+      }
     elsif ($format =~ /vcf/){
       while (<$fh>){
             next if /^#/;
             my ($chr, $beg, $rsid) = split "\t", $_;
             unless ($chr =~ /^chr/){
                 $chr = "chr". $chr;
-	      }
+              }
             if ($rsid =~ /^cg\d+/){
                 push @snps, $rsid;
-	      }
+              }
             else {
                 my $loc = "$chr:$beg-$beg";
                 #get the rsid from the db
                 $rsid = fetch_rsid($loc, $sth);
                 push @snps, $rsid if defined $rsid;
-	      }
-	  }
-    }
+              }
+          }
+      }
     elsif ($format =~ /bed|tabix/){
       while (<$fh>){
             my $loc;
             if ($format =~/bed/){
                 next if /^track/;
-		chomp;
-		my ($chr, $beg, $end) = split "\t", $_;
+                chomp;
+                my ($chr, $beg, $end) = split "\t", $_;
                 unless ($chr =~ /^chr/){
                     $chr = "chr". $chr;
-		  }
+                  }
                 $loc = "$chr:$end-$end";
-	      }
+              }
             elsif ($format =~ /tabix/){
                 chomp;
                 $loc = $_;
-	      }
+              }
             #get the $rsid from the db
             my $rsid = fetch_rsid($loc, $sth);
             push @snps, $rsid if defined $rsid;
-	  }
-    }
+          }
+      }
     return @snps;
   }
 
@@ -150,10 +150,11 @@ sub process_file {
 Identifies the bins that each of the probes in a probe hash lies in, and then picks matching probes for the number of reps specified.
 
 =cut
+
 #it is not enough to change match, we also have to change bkgrdstat and process_bits and get_bits
 #(we don't use "assign" as we do not use percentile bins so no point in changing "assign")
 sub match{
-  #we take out the percentile bins ($per):
+    #we take out the percentile bins ($per):
     #my ($mvps, $bkgd, $datadir, $per, $reps) = @_;
     my ($mvps, $bkgd, $datadir, $reps) = @_;
     #my ($bins, $params, %bins, %params);
@@ -161,16 +162,16 @@ sub match{
     # load up the stored hashes that contain the bins of mvps by feature and cpg island relationship.
     # These are precalculated according to the parameters that are hard coded above.
     # the hash to load is defined by the bkgd option - defaults to '450k'
-        $bins = $datadir . "/mvp_bins";
-        #$bins = $datadir . "snp_bins.$per";
-        #$params = $datadir . "snp_params.$per";
+    $bins = $datadir . "/mvp_bins";
+    #$bins = $datadir . "snp_bins.$per";
+    #$params = $datadir . "snp_params.$per";
     
     #took params out, do not need params
     #if (-e $bins && -e $params){
     if (-e $bins){
         %bins = %{ retrieve($bins) };
         #took params out, do not need params
-	#%params = %{ retrieve($params)};
+        #%params = %{ retrieve($params)};
       }
     
     my (%picks);
@@ -182,20 +183,20 @@ sub match{
         my ($feature, $cpg_island_relationship) = split("\t", join("\t", $$mvps{'MVPS'}{$cg}{'PARAMS'}));
         #$cg is the test mvp, $cgid is the matched mvp.
 
-	#range has to be the number of probes to choose from in that hash subclass
-	my $range=scalar @{$bins{$feature}{$cpg_island_relationship}};
-	
+        #range has to be the number of probes to choose from in that hash subclass
+        my $range=scalar @{$bins{$feature}{$cpg_island_relationship}};
+
         for (my $n = 1; $n <= $reps; $n++) {
             my ($mvp_string, $cgid);
             while (1){
                 my $pick = int(rand($range));
                 $mvp_string = ${$bins{$feature}{$cpg_island_relationship}}[$pick]; #pick the $pick'th element in the array as the chosen mvp
                 #(undef, undef, undef, $cgid) = split /\t/,  $mvp_string; #did not set the splitting on, check whether this can be done
-		$cgid=$mvp_string;
+                $cgid=$mvp_string;
                 last unless $cgid eq $cg; # must not pick the test mvp itself.
-	      }
+              }
             push @{$picks{$n}}, $cgid; # each $n array is a set of probes matching the test set/ it is allowed to pick the same probe more than once in this background selection
-	  }
+          }
       }
     return \%picks;
   }
@@ -237,10 +238,10 @@ sub process_bits{
         my ($location, $probeid, $sum, $bit, $feature, $cpg_island_relationship);
         if ($data eq "erc"){
             ($location, $probeid, undef, undef, $bit, $sum, $feature, $cpg_island_relationship) =  @$row;
-	  }
+          }
         else{
             ($location, $probeid, $bit, $sum, undef, undef, $feature, $cpg_island_relationship) = @$row;
-	  }
+          }
         $test{'MVPS'}{$probeid}{'SUM'} = $sum;
         $test{'MVPS'}{$probeid}{'PARAMS'} = join("\t", $feature, $cpg_island_relationship);
         my @bits = split "", $bit;
@@ -249,7 +250,7 @@ sub process_bits{
             $test{'CELLS'}{$cell}{'COUNT'} += $bits[$index];
             push @{$test{'CELLS'}{$cell}{'MVPS'}}, $probeid if $bits[$index] == 1;
             $index++;
-	  }
+          }
       }
     return \%test;
   }
@@ -307,32 +308,33 @@ Filter MVPs from the MVP list if they are within 1 kb of each other. The rationa
 =cut
 
 sub prox_filter{
-my ($mvps, $dbh) = @_;
-my %prox_excluded; # a hash to store MVPs found in proximity (1 kb) with an MVP in the list
-my @mvps_filtered; # The list of MVPs filtered
-my %mvps;
-foreach my $mvp (@$mvps){
-$mvps{$mvp} = 1;
-}
-my $args = join ("','", @$mvps);
-my $sth = $dbh->prepare("SELECT probeid,proxy_probes FROM proxy_filter WHERE probeid IN ('$args')"); #get the blocks form the ld table
-$sth->execute();
-my $result = $sth->fetchall_arrayref();
-$sth->finish();
-foreach my $row (@{$result}){
-my ($mvp, $block) = @$row;
-next if exists $prox_excluded{$mvp}; # if the mvp is in the proximity filtered set already ignore it
-push @mvps_filtered, $mvp; # if this is the first time it is seen, add it to the filtered mvps, and remove anything in proximity with it
-next if $block =~ /NONE/; # nothing is in proximity
-my (@block) = split (/\|/, $block);
-foreach my $proxmvp (@block){
-if (exists $mvps{$proxmvp}) {
-$prox_excluded{$proxmvp} = $mvp; #Add to the excluded mvps, if it is in proximity with the current mvp, and it its one of the test mvps.
-say "$proxmvp excluded for proximity (1 kb) with $mvp";
-}
-}
-}
-return (\%prox_excluded, @mvps_filtered);#note that if an MVP doesn't exist in the proximity file it will be rejected regardless, may need to add these back
+    my ($mvps, $dbh) = @_;
+    my %prox_excluded; # a hash to store MVPs found in proximity (1 kb) with an MVP in the list
+    my @mvps_filtered; # The list of MVPs filtered
+    my %mvps;
+    foreach my $mvp (@$mvps){
+        $mvps{$mvp} = 1;
+      }
+    my $args = join ("','", @$mvps);
+    my $sth = $dbh->prepare("SELECT probeid,proxy_probes FROM proxy_filter WHERE probeid IN ('$args')"); #get the blocks form the ld table
+    $sth->execute();
+    my $result = $sth->fetchall_arrayref();
+    $sth->finish();
+    foreach my $row (@{$result}){
+        my ($mvp, $block) = @$row;
+        next if exists $prox_excluded{$mvp}; # if the mvp is in the proximity filtered set already ignore it
+        push @mvps_filtered, $mvp; # if this is the first time it is seen, add it to the filtered mvps, and remove anything in proximity with it
+        next if $block =~ /NONE/; # nothing is in proximity
+        my (@block) = split (/\|/, $block);
+        foreach my $proxmvp (@block){
+            if (exists $mvps{$proxmvp}) {
+                $prox_excluded{$proxmvp} = $mvp; #Add to the excluded mvps, if it is in proximity with the current mvp, and it its one of the test mvps.
+                say "$proxmvp excluded for proximity (1 kb) with $mvp";
+              }
+          }
+      }
+    #note that if an MVP doesn't exist in the proximity file it will be rejected regardless, may need to add these back
+    return (\%prox_excluded, @mvps_filtered);
 }
 
 
@@ -380,28 +382,28 @@ Assign any maf, gc, tss values to the percentile bins
 #    foreach my $pc (@{$$params{'gc'}}){
 #      if ($gc <= $pc) {
 #            $i = $n;
-#	  }  
+#          }  
 #        else{
 #            $n++;
-#	  }
+#          }
 #    }
 #    $n=1;
 #    foreach my $pc (@{$$params{'tss'}}){
 #      if ($tss <= $pc) {
 #            $j = $n;
-#	  }
+#          }
 #        else{
 #            $n++;
-#	  }
+#          }
 #    }
 #    $n=1;
 #    foreach my $pc (@{$$params{'maf'}}){
 #      if ($maf <= $pc) {
 #            $k = $n;
-#	  }
+#          }
 #        else{
 #            $n++;
-#	  }
+#          }
 #    }
 #    return ($i, $j, $k);
 #  }
