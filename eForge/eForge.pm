@@ -330,7 +330,6 @@ sub prox_filter{
         foreach my $proxmvp (@block){
             if (exists $mvps{$proxmvp}) {
                 $prox_excluded{$proxmvp} = $mvp; #Add to the excluded mvps, if it is in proximity with the current mvp, and it its one of the test mvps.
-                say "$proxmvp excluded for proximity (1 kb) with $mvp";
               }
           }
       }

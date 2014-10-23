@@ -345,6 +345,10 @@ my ($prox_excluded, $output, $input);
 unless(defined $noproxy){
     $input = scalar @mvps;
     ($prox_excluded, @mvps) = prox_filter(\@mvps, $dbh);
+    while (my ($excluded_mvp, $mvp) = each %$prox_excluded) {
+        warn "$excluded_mvp excluded for proximity (1 kb) with $mvp\n";
+    }
+
     $output = scalar @mvps;
 }
 
