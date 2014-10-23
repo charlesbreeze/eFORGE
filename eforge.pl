@@ -166,8 +166,7 @@ use Scalar::Util qw(looks_like_number);
 use eForge::eStats;
 use eForge::ePlot;
 use eForge::eForge;
-use Data::Dumper;
-use DateTime;
+use Data::UUID;
 
 
 my $cwd = getcwd;
@@ -175,7 +174,7 @@ my $cwd = getcwd;
 
 
 my ($bkgd, $data, $peaks, $label, $file, $format, $min_mvps, $bkgrdstat, $noplot, $reps,
- $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, @mvplist);
+ $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, $out_dir, @mvplist);
 
 GetOptions (
     'data=s'     => \$data,
@@ -193,6 +192,7 @@ GetOptions (
     'noproxy'    => \$noproxy,
     'depletion'  => \$depletion,
     'filter=f'   => \$filter,
+    'out_dir=s'  => \$out_dir,
     'help|h|?'   => \$help,
     'man|m'      => \$man,
 
@@ -201,6 +201,12 @@ GetOptions (
 
 pod2usage(1) if ($help);
 pod2usage(-verbose => 2) if ($man);
+
+if (!$out_dir) {
+    my $ug = new Data::UUID;
+    $out_dir = $ug->to_hexstring($ug->create());
+}
+
 
 # the minimum number of mvps allowed for test. Set to 5 as we have binomial p
 unless (defined $min_mvps){
@@ -430,19 +436,11 @@ $dbh->disconnect();
 
 #Having got the test overlaps and the bkgd overlaps now calculate p values and output 
 #the table to be read into R for plotting.
-my $time = DateTime->now(time_zone=>'local');
-#previous version: my $time = time(); # time is used to label the output directories.
-my $resultsdir;
-if (defined $peaks){
-    $resultsdir = "$cwd/$lab.peaks.$time";
-  }
-else{
-    $resultsdir = "$cwd/$lab.$time";
-  }
 
-mkdir $resultsdir;
+
+mkdir $out_dir;
 my $filename = "$lab.chart.tsv";
-open my $ofh, ">", "$resultsdir/$filename" or die "Cannot open $resultsdir/$filename: $!";
+open my $ofh, ">", "$out_dir/$filename" or die "Cannot open $out_dir/$filename: $!";
 #should grab a process number for unique name here (for the above line)
 print $ofh join("\t", "Zscore", "Pvalue", "Cell", "Tissue", "File", "Probe", "Number", "Accession") ."\n";
 
@@ -463,7 +461,7 @@ $t2 = $t2/$tissuecount;
 $t1 = -log10($t1);
 $t2 = -log10($t2);
 
-open my $bfh, ">", "background.tsv" or die "Cannot open background.tsv";
+open my $bfh, ">", "$out_dir/background.tsv" or die "Cannot open background.tsv";
 
 
 
@@ -531,9 +529,9 @@ open my $bfh, ">", "background.tsv" or die "Cannot open background.tsv";
 
 	     unless (defined $noplot){
     #Plotting and table routines
-    Chart($filename, $lab, $resultsdir, $tissues, $cells, $label, $t1, $t2, $data); # basic pdf plot
-    dChart($filename, $lab, $resultsdir, $data, $label, $t1, $t2); # rCharts Dimple chart
-    table($filename, $lab, $resultsdir); # Datatables chart
+    Chart($filename, $lab, $out_dir, $tissues, $cells, $label, $t1, $t2, $data); # basic pdf plot
+    dChart($filename, $lab, $out_dir, $data, $label, $t1, $t2); # rCharts Dimple chart
+    table($filename, $lab, $out_dir); # Datatables chart
   }
 
 ########check lines below and above (a bit less for the above, check above until next check
