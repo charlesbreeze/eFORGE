@@ -202,7 +202,7 @@ d1\$save('$chart', cdn = F)\n";
 
     system "R --no-save --quiet --slave < $rfile\n";
     if ($web) {
-        system "sed -e \"s/src='.*\\\/js/src='\\\/libraries\\\/dimple\\\/js/\" -i \"\" $resultsdir/$chart";
+        system "sed -e \"s/src='.*\\\/js/src='\\\/libraries\\\/dimple\\\/js/\" -i\"\" $resultsdir/$chart";
       }
 
   }
@@ -237,7 +237,7 @@ sub table{
     dt\$save('$chart', cdn = F)";
     system "R --no-save --quiet --slave < $rfile";
     if ($web) {
-        system "sed -e \"s/href='.*\\\/css/href='\\\/libraries\\\/datatables\\\/css/; s/src='.*\\\/js/src='\\\/libraries\\\/datatables\\\/js/\" -i \"\" $resultsdir/$chart";
+        system "sed -e \"s/href='.*\\\/css/href='\\\/libraries\\\/datatables\\\/css/; s/src='.*\\\/js/src='\\\/libraries\\\/datatables\\\/js/\" -i\"\" $resultsdir/$chart";
       }
   }
 
