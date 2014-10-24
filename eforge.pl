@@ -166,8 +166,7 @@ use Scalar::Util qw(looks_like_number);
 use eForge::eStats;
 use eForge::ePlot;
 use eForge::eForge;
-use Data::Dumper;
-use DateTime;
+use Data::UUID;
 
 
 my $cwd = getcwd;
@@ -175,7 +174,7 @@ my $cwd = getcwd;
 
 
 my ($bkgd, $data, $peaks, $label, $file, $format, $min_mvps, $bkgrdstat, $noplot, $reps,
- $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, @mvplist);
+ $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, $out_dir, @mvplist, $web);
 
 GetOptions (
     'data=s'     => \$data,
@@ -189,10 +188,12 @@ GetOptions (
     'noplot'     => \$noplot,
     'reps=i'     => \$reps,
     'thresh=s'   => \$thresh,
-    'proxy=f'    => \$proxy,
+    'proxy=s'    => \$proxy,
     'noproxy'    => \$noproxy,
     'depletion'  => \$depletion,
     'filter=f'   => \$filter,
+    'out_dir=s'  => \$out_dir,
+    'web'        => \$web,
     'help|h|?'   => \$help,
     'man|m'      => \$man,
 
@@ -201,6 +202,11 @@ GetOptions (
 
 pod2usage(1) if ($help);
 pod2usage(-verbose => 2) if ($man);
+
+if (!$out_dir) {
+    my $ug = new Data::UUID;
+    $out_dir = $ug->to_hexstring($ug->create());
+}
 
 # the minimum number of mvps allowed for test. Set to 5 as we have binomial p
 unless (defined $min_mvps){
@@ -290,6 +296,7 @@ my @mvps;
 
 # A series of data file formats to accept.
 
+warn "[".scalar(localtime())."] Processing input...\n";
 if (defined $file){
   if (defined $filter) {
     unless ($format eq "ian" or $format eq "probeid"){
@@ -309,10 +316,10 @@ elsif (@mvplist){
 
 else{
 # Test MVPs from Liu Y et al. Nat Biotechnol 2013  Pulmonary_function.snps.bed (*put EWAS bedfile here)
-# If no options are given it will run on the default set of MVPs
-	warn "No probe input given, so running on default set of probes, a set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014.";
-    @mvps = qw(cg13430807 cg10480329 cg06297318 cg19301114 cg23244761 cg26872907 cg18066690 cg04468741 cg16636767 cg10624395 cg20918393);
-      }
+     # If no options are given it will run on the default set of MVPs
+     warn "No probe input given, so running on default set of probes, a set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014.";
+     @mvps = qw(cg13430807 cg10480329 cg06297318 cg19301114 cg23244761 cg26872907 cg18066690 cg04468741 cg16636767 cg10624395 cg20918393);
+  }
 
 
 # Remove redundancy in the input
@@ -337,9 +344,13 @@ my @origmvps = @mvps;
 
 my ($prox_excluded, $output, $input);
 unless(defined $noproxy){
-$input = scalar @mvps;
-($prox_excluded, @mvps) = prox_filter(\@mvps, $dbh);
-$output = scalar @mvps;
+    $input = scalar @mvps;
+    ($prox_excluded, @mvps) = prox_filter(\@mvps, $dbh);
+    while (my ($excluded_mvp, $mvp) = each %$prox_excluded) {
+        warn "$excluded_mvp excluded for proximity (1 kb) with $mvp\n";
+    }
+
+    $output = scalar @mvps;
 }
 
 # Check we have enough MVPs
@@ -379,12 +390,12 @@ foreach my $probeid (@origmvps){
 }
 
 if (scalar @missing > 0) {
-    print "The following " . scalar @missing . " MVPs have not been analysed because they were not found on the Illumina  Infinium HumanMethylation450 BeadChip\n";
-    print join("\n", @missing) . "\n";
+    warn "The following " . scalar @missing . " MVPs have not been analysed because they were not found on the Illumina  Infinium HumanMethylation450 BeadChip\n";
+    warn join("\n", @missing) . "\n";
   }
 if (defined $proxy) {
   if ($output < $input) {
-    say "For $label, $input MVPs provided, " . scalar @mvps . " retained, " . scalar @missing . " not analysed, "  . scalar(keys %$prox_excluded) . " proximity filtered at 1 kb";
+    warn "For $label, $input MVPs provided, " . scalar @mvps . " retained, " . scalar @missing . " not analysed, "  . scalar(keys %$prox_excluded) . " proximity filtered at 1 kb\n";
       }
 }
 
@@ -394,7 +405,7 @@ if (defined $proxy) {
 
 my @foundmvps = keys %{$$test{'MVPS'}};
 my $mvpcount = scalar @foundmvps;
-print "Test MVPs analysed $mvpcount\n";
+warn "[".scalar(localtime())."] Running the analysis with $mvpcount MVPs...\n";
 
 
 # identify the feature and cpg island relationship, and then make bkgrd picks (old version just below)
@@ -410,12 +421,14 @@ my %bkgrd; #this hash is going to store the bkgrd overlaps
 # Get the bits for the background sets and process
 my $backmvps;
 
+my $num = 0;
 foreach my $bkgrd (keys %{$picks}){
+    warn "[".scalar(localtime())."] Repetition $num out of ".$reps."\n" if (++$num%100 == 0);
     #$rows = get_bits(\@{$$picks{$bkgrd}}, $sth);
     $rows = get_bits(\@{$$picks{$bkgrd}}, $dbh);
     $backmvps += scalar @$rows; #$backmvps is the total number of background probes analysed
     unless (scalar @$rows == scalar @foundmvps){
-        print "Background " . $bkgrd . " only " . scalar @$rows . " probes out of " . scalar @foundmvps . "\n";
+        warn "Background " . $bkgrd . " only " . scalar @$rows . " probes out of " . scalar @foundmvps . "\n";
       }
     my $result = process_bits($rows, $cells, $data);
     foreach my $cell (keys %{$$result{'CELLS'}}){
@@ -427,22 +440,16 @@ foreach my $bkgrd (keys %{$picks}){
   }
 
 $dbh->disconnect();
+warn "[".scalar(localtime())."] All repetitions done.\n";
 
+warn "[".scalar(localtime())."] Calculating p-values...\n";
 #Having got the test overlaps and the bkgd overlaps now calculate p values and output 
 #the table to be read into R for plotting.
-my $time = DateTime->now(time_zone=>'local');
-#previous version: my $time = time(); # time is used to label the output directories.
-my $resultsdir;
-if (defined $peaks){
-    $resultsdir = "$cwd/$lab.peaks.$time";
-  }
-else{
-    $resultsdir = "$cwd/$lab.$time";
-  }
 
-mkdir $resultsdir;
+
+mkdir $out_dir;
 my $filename = "$lab.chart.tsv";
-open my $ofh, ">", "$resultsdir/$filename" or die "Cannot open $resultsdir/$filename: $!";
+open my $ofh, ">", "$out_dir/$filename" or die "Cannot open $out_dir/$filename: $!";
 #should grab a process number for unique name here (for the above line)
 print $ofh join("\t", "Zscore", "Pvalue", "Cell", "Tissue", "File", "Probe", "Number", "Accession") ."\n";
 
@@ -463,17 +470,17 @@ $t2 = $t2/$tissuecount;
 $t1 = -log10($t1);
 $t2 = -log10($t2);
 
-open my $bfh, ">", "background.tsv" or die "Cannot open background.tsv";
+open my $bfh, ">", "$out_dir/background.tsv" or die "Cannot open background.tsv";
 
 
 
 ###ncmp is a function from Sort::Naturally
-	     foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) || ncmp($a,$b)} @$cells){
-	       # above line sorts by the tissues alphabetically (from $tissues hash values)
+foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) || ncmp($a,$b)} @$cells){
+    # above line sorts by the tissues alphabetically (from $tissues hash values)
 
-	       # ultimately want a data frame of names(results)<-c("Zscore", "Cell", "Tissue", "File", "MVPs")
+    # ultimately want a data frame of names(results)<-c("Zscore", "Cell", "Tissue", "File", "MVPs")
     say $bfh join("\t", @{$bkgrd{$cell}});
-    my $teststat = $$test{'CELLS'}{$cell}{'COUNT'}; #number of overlaps for the test MVPs
+    my $teststat = ($$test{'CELLS'}{$cell}{'COUNT'} or 0); #number of overlaps for the test MVPs
 
     # binomial pvalue, probability of success is derived from the background overlaps over the tests for this cell
     # $backmvps is the total number of background mvps analysed
@@ -529,55 +536,12 @@ open my $bfh, ">", "background.tsv" or die "Cannot open background.tsv";
 #say "$filename\t$pos positive lines at FDR = $fdr at p value <= 0.05";
 
 
-	     unless (defined $noplot){
+warn "[".scalar(localtime())."] Generating plots...\n";
+unless (defined $noplot){
     #Plotting and table routines
-    Chart($filename, $lab, $resultsdir, $tissues, $cells, $label, $t1, $t2, $data); # basic pdf plot
-    dChart($filename, $lab, $resultsdir, $data, $label, $t1, $t2); # rCharts Dimple chart
-    table($filename, $lab, $resultsdir); # Datatables chart
+    Chart($filename, $lab, $out_dir, $tissues, $cells, $label, $t1, $t2, $data); # basic pdf plot
+    dChart($filename, $lab, $out_dir, $data, $label, $t1, $t2, $web); # rCharts Dimple chart
+    table($filename, $lab, $out_dir, $web); # Datatables chart
   }
 
-########check lines below and above (a bit less for the above, check above until next check
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+warn "[".scalar(localtime())."] Done.\n";
