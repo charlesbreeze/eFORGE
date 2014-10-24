@@ -188,7 +188,7 @@ GetOptions (
     'noplot'     => \$noplot,
     'reps=i'     => \$reps,
     'thresh=s'   => \$thresh,
-    'proxy=f'    => \$proxy,
+    'proxy=s'    => \$proxy,
     'noproxy'    => \$noproxy,
     'depletion'  => \$depletion,
     'filter=f'   => \$filter,
@@ -315,10 +315,10 @@ elsif (@mvplist){
 
 else{
 # Test MVPs from Liu Y et al. Nat Biotechnol 2013  Pulmonary_function.snps.bed (*put EWAS bedfile here)
-# If no options are given it will run on the default set of MVPs
-	warn "No probe input given, so running on default set of probes, a set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014.";
-    @mvps = qw(cg13430807 cg10480329 cg06297318 cg19301114 cg23244761 cg26872907 cg18066690 cg04468741 cg16636767 cg10624395 cg20918393);
-      }
+     # If no options are given it will run on the default set of MVPs
+     warn "No probe input given, so running on default set of probes, a set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014.";
+     @mvps = qw(cg13430807 cg10480329 cg06297318 cg19301114 cg23244761 cg26872907 cg18066690 cg04468741 cg16636767 cg10624395 cg20918393);
+  }
 
 
 # Remove redundancy in the input
