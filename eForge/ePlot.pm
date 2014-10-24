@@ -163,9 +163,9 @@ Make dimple interactive chart.
 =cut
 
 sub dChart{
+    my ($filename, $lab, $resultsdir, $data, $label, $t1, $t2, $web) = @_;
 
     print "Making dChart.\n";
-    my ($filename, $lab, $resultsdir, $data, $label, $t1, $t2) = @_;
     my $chart = "$lab.dchart.html";
     my $Rdir = $resultsdir;
     my $rfile = "$Rdir/$lab.dChart.R";
@@ -200,7 +200,11 @@ d1\$colorAxis(
 d1\$addParams(title=\"$label overlaps with $data DHS\")
 d1\$save('$chart', cdn = F)\n";
 
-system "R --no-save --quiet --slave < $rfile";
+    system "R --no-save --quiet --slave < $rfile\n";
+    if ($web) {
+        system "sed -e \"s/src='.*\\\/js/src='\\\/libraries\\\/dimple\\\/js/\" -i\"\" $resultsdir/$chart";
+      }
+
   }
 
 =head1 SUBROUTINES/METHODS
@@ -210,9 +214,10 @@ system "R --no-save --quiet --slave < $rfile";
 =cut
 
 sub table{
+    my ($filename, $lab, $resultsdir, $web) = @_;
+
     # Make Datatables table
     print "Making Table.\n";
-    my ($filename, $lab, $resultsdir) = @_;
     my $chart = "$lab.table.html";
     my $Rdir = $resultsdir;
     my $rfile = "$Rdir/$lab.table.R";
@@ -227,10 +232,13 @@ sub table{
       sScrollY= \"600\",
       bPaginate= F,
       sScrollX= \"100%\",
-      sScrollXInner= \"110%\"
+      width= \"680px\"
     )
     dt\$save('$chart', cdn = F)";
     system "R --no-save --quiet --slave < $rfile";
+    if ($web) {
+        system "sed -e \"s/href='.*\\\/css/href='\\\/libraries\\\/datatables\\\/css/; s/src='.*\\\/js/src='\\\/libraries\\\/datatables\\\/js/\" -i\"\" $resultsdir/$chart";
+      }
   }
 
 =head1 SUBROUTINES/METHODS
