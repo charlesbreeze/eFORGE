@@ -239,7 +239,7 @@ cg20918393', 10, 60)]),
 
 sub validate_form {
     my $data;
-    my $validated_args;
+    my $validated_args = ["--web"];
     my @error_messages;
     
     my $input_data;

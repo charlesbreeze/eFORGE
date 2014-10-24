@@ -174,7 +174,7 @@ my $cwd = getcwd;
 
 
 my ($bkgd, $data, $peaks, $label, $file, $format, $min_mvps, $bkgrdstat, $noplot, $reps,
- $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, $out_dir, @mvplist);
+ $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, $out_dir, @mvplist, $web);
 
 GetOptions (
     'data=s'     => \$data,
@@ -193,6 +193,7 @@ GetOptions (
     'depletion'  => \$depletion,
     'filter=f'   => \$filter,
     'out_dir=s'  => \$out_dir,
+    'web'        => \$web,
     'help|h|?'   => \$help,
     'man|m'      => \$man,
 
@@ -539,8 +540,8 @@ warn "[".scalar(localtime())."] Generating plots...\n";
 unless (defined $noplot){
     #Plotting and table routines
     Chart($filename, $lab, $out_dir, $tissues, $cells, $label, $t1, $t2, $data); # basic pdf plot
-    dChart($filename, $lab, $out_dir, $data, $label, $t1, $t2); # rCharts Dimple chart
-    table($filename, $lab, $out_dir); # Datatables chart
+    dChart($filename, $lab, $out_dir, $data, $label, $t1, $t2, $web); # rCharts Dimple chart
+    table($filename, $lab, $out_dir, $web); # Datatables chart
   }
 
 warn "[".scalar(localtime())."] Done.\n";
