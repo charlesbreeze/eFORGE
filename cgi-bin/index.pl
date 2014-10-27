@@ -880,7 +880,9 @@ sub print_download_page {
     print Template::header("eFORGE &gt; Download");
     print Template::content_box("Download",
     "The code is available on GitHub:
-    <a href=\"https://github.com/charlesbreeze/eFORGE\">https://github.com/charlesbreeze/eFORGE</a>");
+    <a href=\"https://github.com/charlesbreeze/eFORGE\">https://github.com/charlesbreeze/eFORGE</a>",
+    "You also need to download the <a href=\"$WEB_ROOT_OUTDIR/eforge.db\">eforge.db</a> and
+    <a href=\"$WEB_ROOT_OUTDIR/mvp_bins\">mvp_bins files.");
     print Template::content_box("License",
     "<strong>eforge.pl</strong> Functional analysis of EWAS DMPs
        <br \><br \>
