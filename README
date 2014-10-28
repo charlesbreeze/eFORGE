@@ -61,7 +61,7 @@ It takes a series of command line options as follows
 -label : a name for the files that are generated and for the plot titles
        where there is a title.
 
-- format : for the input data format. If this is location data e.g.
+-format : for the input data format. If this is location data e.g.
          bed format, the probeid is obtained from
          the sqlite3 database.
  
