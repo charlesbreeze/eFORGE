@@ -1,5 +1,3 @@
-eFORGE
-======
 eFORGE is the epigenetic equivalent of the FORGE tool. For details of the FORGE analysis approach see documentation in the FORGE web version at
  
 http://www.1000genomes.org/forge-analysis
