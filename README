@@ -6,11 +6,17 @@ http://www.1000genomes.org/forge-analysis
 the following Perl dependencies.
  
 use 5.012;
+
 use warnings;
+
 use DBI;
+
 use Sort::Naturally;
+
 use Cwd;
+
 use Storable;
+
 use Getopt::Long;
  
 2. The sqlite3 db file that stores the bitstrings. This file is called eforge.db currently.
@@ -34,6 +40,7 @@ install_github('rCharts', 'ramnathv', ref = "dev")
 The input data is one of several options.
  
 a. A list of 450k probeids (DMPs)
+
 b. BED format (for 450k probes)
  
 The analysis requires a minimum of 5 DMPs (this is not a strict limit but
@@ -48,9 +55,12 @@ chosen, but this is really for information only.
 It takes a series of command line options as follows
  
 -f : the file to run on
+
 -data : whether to analyse ENCODE (encode) or Epigenome Roadmap (erc) data
+
 -label : a name for the files that are generated and for the plot titles
        where there is a title.
+
 - format : for the input data format. If this is location data e.g.
          bed format, the probeid is obtained from
          the sqlite3 database.
@@ -67,7 +77,11 @@ OUTPUT
 there are several outputs generated
  
 1. A pdf static chart, that would be good for download.
+
 2. A d3 interactive chart.
+
 3. A Datatables table.
+
 4. R code files for generating the charts and the table.
+
 5. There's also a tsv file of the results.
