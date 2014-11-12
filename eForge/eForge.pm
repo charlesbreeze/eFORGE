@@ -15,6 +15,7 @@ Version 0.01
 
 =cut
 
+my $MAX_SQL_VARIABLES = 999;
 our $VERSION = '0.01';
 our (@ISA, @EXPORT);
 use Exporter;
@@ -270,16 +271,23 @@ sub get_bits{
 
     my ($mvps, $dbh) = @_;
     my @results;
+    
+    for (my $loop = 0; $loop * $MAX_SQL_VARIABLES < @$mvps; $loop++) {
+        my $start = $loop * $MAX_SQL_VARIABLES;
+        my $end = ($loop + 1) * $MAX_SQL_VARIABLES - 1;
+        $end = @$mvps -1 if ($end >= @$mvps);
 
-    my $sql = "SELECT * FROM bits WHERE probeid IN (?". (",?" x (@$mvps - 1)).")";
-    my $sth = $dbh->prepare($sql); #get the blocks form the ld table
-    $sth->execute(@$mvps);
+        my $sql = "SELECT * FROM bits WHERE probeid IN (?". (",?" x ($end - $start)).")";
+        my $sth = $dbh->prepare($sql); #get the blocks form the ld table
+        $sth->execute(@$mvps[$start..$end]);
+        
+        my $result = $sth->fetchall_arrayref();
+        $sth->finish();
+        foreach my $row (@{$result}){
+          push @results, $row;
+        }
+      }
 
-    my $result = $sth->fetchall_arrayref();
-    $sth->finish();
-    foreach my $row (@{$result}){
-      push @results, $row;
-    }
     return \@results;# return the bitstring line from the database
   }
 
@@ -321,20 +329,26 @@ sub prox_filter{
     foreach my $mvp (@$mvps){
         $mvps{$mvp} = 1;
       }
-    my $sql = "SELECT probeid,proxy_probes FROM proxy_filter WHERE probeid IN (?". (",?" x (@$mvps - 1)).")";
-    my $sth = $dbh->prepare($sql); #get the blocks form the ld table
-    $sth->execute(@$mvps);
-    my $result = $sth->fetchall_arrayref();
-    $sth->finish();
-    foreach my $row (@{$result}){
-        my ($mvp, $block) = @$row;
-        next if exists $prox_excluded{$mvp}; # if the mvp is in the proximity filtered set already ignore it
-        push @mvps_filtered, $mvp; # if this is the first time it is seen, add it to the filtered mvps, and remove anything in proximity with it
-        next if $block =~ /NONE/; # nothing is in proximity
-        my (@block) = split (/\|/, $block);
-        foreach my $proxmvp (@block){
-            if (exists $mvps{$proxmvp}) {
-                $prox_excluded{$proxmvp} = $mvp; #Add to the excluded mvps, if it is in proximity with the current mvp, and it its one of the test mvps.
+    for (my $loop = 0; $loop * $MAX_SQL_VARIABLES < @$mvps; $loop++) {
+        my $start = $loop * $MAX_SQL_VARIABLES;
+        my $end = ($loop + 1) * $MAX_SQL_VARIABLES - 1;
+        $end = @$mvps -1 if ($end >= @$mvps);
+
+        my $sql = "SELECT probeid,proxy_probes FROM proxy_filter WHERE probeid IN (?". (",?" x ($end - $start)).")";
+        my $sth = $dbh->prepare($sql); #get the blocks form the ld table
+        $sth->execute(@$mvps[$start..$end]);
+        my $result = $sth->fetchall_arrayref();
+        $sth->finish();
+        foreach my $row (@{$result}){
+            my ($mvp, $block) = @$row;
+            next if exists $prox_excluded{$mvp}; # if the mvp is in the proximity filtered set already ignore it
+            push @mvps_filtered, $mvp; # if this is the first time it is seen, add it to the filtered mvps, and remove anything in proximity with it
+            next if $block =~ /NONE/; # nothing is in proximity
+            my (@block) = split (/\|/, $block);
+            foreach my $proxmvp (@block){
+                if (exists $mvps{$proxmvp}) {
+                    $prox_excluded{$proxmvp} = $mvp; #Add to the excluded mvps, if it is in proximity with the current mvp, and it its one of the test mvps.
+                  }
               }
           }
       }
