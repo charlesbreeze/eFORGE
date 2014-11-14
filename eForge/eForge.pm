@@ -236,6 +236,8 @@ Processes bitstrings to get a count of overlaps for each cell type.
 sub process_bits{
     my ($rows, $cells, $data) = @_;
     my %test;
+    my @test_cells;
+    my @indexes = 0..(@$cells-1);
     foreach my $row (@{$rows}){
         my ($location, $probeid, $sum, $bit_string, $feature, $cpg_island_relationship);
         if ($data eq "erc"){
@@ -246,17 +248,22 @@ sub process_bits{
           }
         $test{'MVPS'}{$probeid}{'SUM'} = $sum;
         $test{'MVPS'}{$probeid}{'PARAMS'} = join("\t", $feature, $cpg_island_relationship);
-        my $index = 0;
         die if (scalar(@$cells) ne length($bit_string));
-        foreach my $cell (@$cells){
+        foreach my $index (@indexes) {
             ## $bit_string is a string made of 0s and 1s. If it is a 1 for this position, count and push
             if (substr($bit_string, $index, 1)) {
-                $test{'CELLS'}{$cell}{'COUNT'}++;
-                push @{$test{'CELLS'}{$cell}{'MVPS'}}, $probeid;
+                $test_cells[$index][0]++;
+                push @{$test_cells[$index][1]}, $probeid;
             }
-            $index++;
           }
       }
+    my $index = 0;
+    foreach my $cell (@$cells){
+        $test{'CELLS'}{$cell}{'COUNT'} = $test_cells[$index][0] if ($test_cells[$index][0]);
+        $test{'CELLS'}{$cell}{'MVPS'} = $test_cells[$index][1] if ($test_cells[$index][1]);
+        $index++;
+      }
+
     return \%test;
   }
 
@@ -278,14 +285,13 @@ sub get_bits{
         $end = @$mvps -1 if ($end >= @$mvps);
 
         my $sql = "SELECT * FROM bits WHERE probeid IN (?". (",?" x ($end - $start)).")";
-        my $sth = $dbh->prepare($sql); #get the blocks form the ld table
+        my $sth = $dbh->prepare_cached($sql); #get the blocks form the ld table
         $sth->execute(@$mvps[$start..$end]);
         
-        my $result = $sth->fetchall_arrayref();
-        $sth->finish();
-        foreach my $row (@{$result}){
-          push @results, $row;
+        while (my $row = $sth->fetchrow_arrayref()) {
+          push @results, [@$row];
         }
+        $sth->finish();
       }
 
     return \@results;# return the bitstring line from the database
