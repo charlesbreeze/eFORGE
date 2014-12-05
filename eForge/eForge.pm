@@ -133,7 +133,7 @@ sub process_file {
                 unless ($chr =~ /^chr/){
                     $chr = "chr". $chr;
                   }
-                $loc = "$chr:$end-$end";
+                $loc = "$chr:$beg-$beg";
               }
             elsif ($format =~ /tabix/){
                 chomp;
