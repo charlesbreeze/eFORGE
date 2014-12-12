@@ -1111,7 +1111,7 @@ sub refresh_usage_stats {
             );
     }
     
-    run(command => ["du", "-hs", $absolute_root_outdir, "|", "awk", "-e", "{print \$1}", ">",
+    run(command => ["du", "-hs", $absolute_root_outdir, "|", "gawk", "{print \$1}", ">",
         "$absolute_root_outdir/du.txt"]);
     run(command => ["ls", "-d", "$absolute_root_outdir/0x*", "|", "wc", "-l", ">",
         "$absolute_root_outdir/num.txt"]);
