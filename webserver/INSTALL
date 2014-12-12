@@ -1,0 +1,117 @@
+This instructions relate to the installation of the eFORGE webserver.
+
+This is based on a VM running Scientific Linux with Perl 5.10.1. You may need to adapt these
+commands if you wish to install the webserver on a different system.
+
+Step-by-step guide
+==================
+
+1. Log into the VM
+------------------
+
+    ssh USER@eforge.cs.ucl.ac.uk
+
+2. Download the eForge package and install the dependencies
+-----------------------------------------------------------
+
+2.a. The code lives in GitHub, although the databases and mvp_bins file are not publicly available
+yet. For the time being:
+
+    cd
+    
+    git clone https://github.com/jherrero/eFORGE.git
+    
+    rsync -avP SERVER:eforge.db eFORGE
+    rsync -avP SERVER:mvp_bins eFORGE
+    rsync -avP SERVER:proximity_filter.db eFORGE
+
+2.b. Install Perl dependencies
+
+Just test the code
+
+    perl eforge.pl
+
+and install the missing packages using cpan.
+
+    sudo cpan i Sort::Naturally
+    sudo cpan i Config::IniFiles
+    sudo cpan -i Data::UUID
+    sudo cpan -i Module::Build
+    sudo cpan -i Params::Validate
+
+!! Note that the original version required DateTime and that it did not install cleanly. That
+dependency is now gone and we use the Data::UUID to get a unique ID for each run.
+
+2.c. Install R and R packages rjson, rCharts and RSQLite (for the log):
+
+    sudo yum install R
+
+    sudo R
+ 
+    install.packages("rjson");
+    install.packages("devtools"); # In case you don't have this in your system
+ 
+    require(devtools);
+    install_github('ramnathv/rCharts');
+ 
+    install.packages("RSQLite")
+
+
+2.d. Run the software and test that you get the PDF and the dimple chart:
+
+    perl eforge.pl
+
+You must find a new directory called "0x*" with several files, including a .pdf and a  .dchart.html.
+Check that these work. If the .dchart.html cannot be open. By default, the HTML links to the
+location of the js code on the local machine. For the server, this should point at a public URL
+server by the server itself.
+
+3. Install the Apache web browser
+---------------------------------
+
+3.a. Install the package:
+
+    sudo yum install httpd.x86_64
+
+3.b. Create some directories for hosting the code, log and result files:
+
+    sudo mkdir /var/www/bin         # to hold the code
+    sudo mkdir /var/www/log         # to hold the log
+    sudo chown apache /var/www/log  # the user under which you run apache (see the line "User" in
+                                    # /etc/httpd/conf/httpd.conf)
+    sudo mkdir /var/www/html/files  # to hold the result files
+    sudo chown apache /var/www/html/files   # the user under which you run apache (see the line
+                                            # "User" in /etc/httpd/conf/httpd.conf)
+
+3.c. Copy the webserver files to the right directories 
+
+    sudo rsync -avPL ~/eFORGE/webserver/cgi-bin /var/www/cgi-bin/
+    sudo rsync -avPL ~/eFORGE/webserver/bin /var/www/bin/
+    sudo rsync -avPL ~/eFORGE/webserver/html/ /var/www/html/
+
+3.e. Add links to the database files for the Downloads page:
+
+    cd /var/www/html/files
+    sudo ln -s ../../bin/eforge.db .
+    sudo ln -s ../../bin/mvp_bins .
+
+3.f. Configure Apache to forward all "directory" requests to the eFORGE cgi:
+
+    sudo vi /etc/httpd/conf.d/dir_module.conf
+
+    #
+    # DirectoryIndex: sets the file that Apache will serve if a directory
+    # is requested.
+    #
+    <IfModule dir_module>
+        DirectoryIndex index.html /cgi-bin/index.pl
+    </IfModule>
+
+3.g. Copy the rCharts libraries to the html path: 
+
+    sudo rsync -avP /usr/lib64/R/library/rCharts/libraries /var/www/html/
+
+3.h Re-start Apache 
+
+    sudo /etc/init.d/httpd restart
+
