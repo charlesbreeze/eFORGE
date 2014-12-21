@@ -988,7 +988,7 @@ sub print_about_page {
     "eFORGE was developed by <a href=\"http://www.ucl.ac.uk/cancer/medical-genomics/mg_staff\">Charles
     Breeze</a> while on secondment at the
     <a href=\"http://www.ebi.ac.uk\">European Bioinformatics Institute</a> as part of the
-    <a href=\"http://www.epitrain.eu\">EpiTrain Integrated Training
+    <a href=\"http://www.epitrain.eu\">EpiTrain Initial Training
     Network</a>.",
     "The system is inspired by the <a href=\"http://www.1000genomes.org/forge-analysis\">FORGE
     tool</a> developed by <a href=\"http://www.ebi.ac.uk/about/people/ian-dunham\">Ian Dunham</a>.",

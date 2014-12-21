@@ -80,12 +80,12 @@ sub Chart{
         $index++;
     }
 
-    open my $rfh, ">", "$rfile";
+    open my $rfh, ">", $rfile;
 #results\$Class<-cut(results\$Pvalue, breaks =c(min(results\$Pvalue), $t1, $t2, max(results\$Pvalue)), labels=FALSE, include.lowest=TRUE) # 99 and 95% CIs 1, 2, 3
 $t1 = sprintf("%.2f", $t1);
 $t2 = sprintf("%.2f", $t2);
     print $rfh "setwd(\"$Rdir\")
-results<-read.table(\"$filename\",header=TRUE,sep=\"\t\")
+results<-read.table(\"$filename\",header=TRUE,sep=\"\\t\")
 results\$Class<-cut(results\$Pvalue, breaks =c(min(results\$Pvalue), $t1, $t2, max(results\$Pvalue)), labels=FALSE, include.lowest=TRUE)
 pdf(\"$chart\", width=22.4, height=7)
 palette(c(\"$ns\",\"$msig\",\"$sig\"))
@@ -117,7 +117,7 @@ palette(\"default\")\n";
       }
     print $rfh "dev.off()\n";
 #run the R code
-    system "R --no-save --quiet --slave < $rfile";
+    system("R", "--no-save", "--quiet", "--slave", "--file=$rfile");
   }
 
 =head1 SUBROUTINES/METHODS
@@ -135,9 +135,9 @@ sub rChart{
     my $chart = "$lab.rchart.html";
     my $Rdir = $resultsdir;
     my $rfile = "$Rdir/$lab.rChart.R";
-    open my $rcfh, ">", "$rfile";
+    open my $rcfh, ">", $rfile;
     print $rcfh "setwd(\"$Rdir\")
-results<-read.table(\"$filename\", header = TRUE, sep=\"\t\")
+results<-read.table(\"$filename\", header = TRUE, sep=\"\\t\")
 results\$Colour<- 0 + (results\$Pvalue < $t2) + (results\$Pvalue < $t1)  # 99 and 95% CIs
 require(rCharts)
 r1 <- rPlot(Pvalue ~ Cell, data=results, color=\"bin(Colour, 0.25)\", type=\"point\", tooltip = \"function(item){ return (item.Pvalue + '\\\\n' + item.Cell + '\\\\n' + item.Tissue + '\\\\n' + item.File + '\\\\n' + item.Probe + '\\\\n' + item.Accession + '\\\\n')}\")
@@ -151,7 +151,7 @@ r1\$guides(x = list(numticks = length(unique(results\$Cell)), levels=results\$Ce
 r1\$save('$chart', cdn = F)
 ##r1\$show() #makes a temp file\n";
 
-system "R --no-save --quiet --slave < $rfile";
+system("R", "--no-save", "--quiet", "--slave", "--file=$rfile");
   }
 
 =head1 SUBROUTINES/METHODS
@@ -169,9 +169,9 @@ sub dChart{
     my $chart = "$lab.dchart.html";
     my $Rdir = $resultsdir;
     my $rfile = "$Rdir/$lab.dChart.R";
-   open my $rcfh, ">", "$rfile";
+   open my $rcfh, ">", $rfile;
     print $rcfh "setwd(\"$Rdir\")
-results<-read.table(\"$filename\", header = TRUE, sep=\"\t\")
+results<-read.table(\"$filename\", header = TRUE, sep=\"\\t\")
 results\$Class<-cut(results\$Pvalue, breaks =c(min(results\$Pvalue), $t1, $t2, max(results\$Pvalue)), labels=FALSE, include.lowest=TRUE) # 99 and 95% CIs 1, 2, 3
 require(rCharts)
 d1 <- dPlot(
@@ -200,9 +200,9 @@ d1\$colorAxis(
 d1\$addParams(title=\"$label overlaps with $data DHS\")
 d1\$save('$chart', cdn = F)\n";
 
-    system "R --no-save --quiet --slave < $rfile\n";
+    system("R", "--no-save", "--quiet", "--slave", "--file=$rfile");
     if ($web) {
-        system "sed -e \"s/src='.*\\\/js/src='\\\/libraries\\\/dimple\\\/js/\" -i\"\" $resultsdir/$chart";
+        system("sed", "-e \"s/src='.*\\\/js/src='\\\/libraries\\\/dimple\\\/js/\"", "-i\"\"", "$resultsdir/$chart");
       }
 
   }
@@ -221,9 +221,9 @@ sub table{
     my $chart = "$lab.table.html";
     my $Rdir = $resultsdir;
     my $rfile = "$Rdir/$lab.table.R";
-    open my $rcfh, ">", "$rfile";
+    open my $rcfh, ">", $rfile;
     print $rcfh "setwd(\"$Rdir\")
-    data<-read.table(\"$filename\", header = TRUE, sep=\"\t\")
+    data<-read.table(\"$filename\", header = TRUE, sep=\"\\t\")
     results<-data.frame(data\$Cell, data\$Tissue, data\$Accession, data\$Pvalue, data\$Probe)
     names(results)<-c(\"Cell\", \"Tissue\", \"Accession\", \"Pvalue\", \"Probe\")
     require(rCharts)
@@ -235,7 +235,7 @@ sub table{
       width= \"680px\"
     )
     dt\$save('$chart', cdn = F)";
-    system "R --no-save --quiet --slave < $rfile";
+    system("R", "--no-save", "--quiet", "--slave", "--file=$rfile");
     if ($web) {
         system "sed -e \"s/href='.*\\\/css/href='\\\/libraries\\\/datatables\\\/css/; s/src='.*\\\/js/src='\\\/libraries\\\/datatables\\\/js/\" -i\"\" $resultsdir/$chart";
       }
