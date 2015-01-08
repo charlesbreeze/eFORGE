@@ -164,10 +164,18 @@ sub match{
     # load up the stored hashes that contain the bins of mvps by feature and cpg island relationship.
     # These are precalculated according to the parameters that are hard coded above.
     # the hash to load is defined by the bkgd option - defaults to '450k'
-    $bins = $datadir . "/mvp_bins";
+    #$bins = $datadir . "/mvp_bins";
     #$bins = $datadir . "snp_bins.$per";
     #$params = $datadir . "snp_params.$per";
-    
+
+    if ($bkgd =~ "27k"){
+        $bins = $datadir . "/mvp_27k_bins";
+        }
+        else{
+        $bins = $datadir . "/mvp_bins";
+
+        }
+    print "Using this file as hash for array background:$bins\n";    
     #took params out, do not need params
     #if (-e $bins && -e $params){
     if (-e $bins){

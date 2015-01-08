@@ -180,6 +180,7 @@ GetOptions (
     'data=s'     => \$data,
     'peaks'      => \$peaks,
     'bkgrd'      => \$bkgrdstat,
+    'bkgd=s'     => \$bkgd,
     'label=s'    => \$label,
     'f=s'        => \$file,
     'format=s'   => \$format,
@@ -222,6 +223,11 @@ unless (defined $data ){
 unless (defined $label){
     $label = "No label given";
   }
+  
+if ($bkgd =~ "27k"){
+    $label = "$label" . " 27k array background";
+}
+else {$label = "$label" . " 450k array background";}
 
 if (defined $depletion){
     $label = "$label" . " Depletion Analysis";
