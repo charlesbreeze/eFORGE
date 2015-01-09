@@ -175,7 +175,7 @@ sub match{
         $bins = $datadir . "/mvp_bins";
 
         }
-    print "Using this file as hash for array background:$bins\n";    
+
     #took params out, do not need params
     #if (-e $bins && -e $params){
     if (-e $bins){

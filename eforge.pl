@@ -225,17 +225,19 @@ unless (defined $label){
   }
   
 if ($bkgd =~ "27k"){
-    $label = "$label" . " 27k array background";
+    $bkgd = "27k";
 }
-else {$label = "$label" . " 450k array background";}
+else {
+    $bkgd = "450k";
+}
 
 if (defined $depletion){
-    $label = "$label" . " Depletion Analysis";
+    $label = "$label.depletion";
   }
 
 #regexp puts underscores where labels before
 (my $lab = $label) =~ s/\s/_/g;
-$lab = "$lab.$data";
+$lab = "$lab.$bkgd.$data";
 #format for reading from file
 unless (defined $format){
     $format = 'probeid';
@@ -258,12 +260,6 @@ my $per = 10;
 # number of sets to analyse for bkgrd.
 unless (defined $reps){
     $reps = 1000;
-  }
-
-
-# Which array(s) to use for background
-unless (defined $bkgd){
-    $bkgd = "450k";
   }
 
 
@@ -416,6 +412,7 @@ warn "[".scalar(localtime())."] Running the analysis with $mvpcount MVPs...\n";
 
 # identify the feature and cpg island relationship, and then make bkgrd picks (old version just below)
 #my $picks = match(\%$test, $bkgd, $datadir, $per, $reps);
+warn "[".scalar(localtime())."] Loading the $bkgd background...\n";
 my $picks = match(\%$test, $bkgd, $datadir, $reps);
 
 ########check below lines:
