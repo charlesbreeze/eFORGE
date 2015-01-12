@@ -202,7 +202,7 @@ d1\$save('$chart', cdn = F)\n";
 
     system("R", "--no-save", "--quiet", "--slave", "--file=$rfile");
     if ($web) {
-        system("sed", "-e \"s/src='.*\\\/js/src='\\\/libraries\\\/dimple\\\/js/\"", "-i\"\"", "$resultsdir/$chart");
+        system("sed", "-e", "s/src='.*\\\/js/src='\\\/libraries\\\/dimple\\\/js/", "-i\"\"", "$resultsdir/$chart");
       }
 
   }
