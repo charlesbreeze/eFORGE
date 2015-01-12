@@ -185,19 +185,28 @@ cg20918393', 10, 60)]),
                 filefield('data_file','starting value', 58)]),
             td(["Provide file URL:",
                 textfield('data_url', '', 58)]),
+            th({-colspan=>2}, ["<hr>"]),
+
+            ## ================================================================
+            ## Option section
+            ## ================================================================
+            th(["Input Options", ""]),
             td(["Input file format:",
                 popup_menu('data_format', ['probeid', 'bed'], 'probeid', {'probeid'=>'Probe list',
                     'bed'=>'BED file'})]),
+            td(["Name (optional):",
+                textfield('label', '', 58)]),
+            td(["Platform:",
+                popup_menu('bkgd', ['450k', '27k'], '450k', {'450k'=>'Illumina 450K methylation array',
+                    '27k'=>'Illumina 27k methylation array'})]),
 
             th({-colspan=>2}, ["<hr>"]),
 
             ## ================================================================
             ## Option section
             ## ================================================================
-            th(["Options", ""]),
-            td(["Name for this data (optional):",
-                textfield('label', '', 58)]),
-            td(["Analysis data from:",
+            th(["Analysis Options", ""]),
+            td(["Analyse data from:",
                 radio_group('ref_data', ['erc'], 'erc', 'true', {'erc'=>' Epigenome Roadmap',
                     'encode'=>' Encode'} )]),
             td(["",
@@ -281,6 +290,14 @@ sub validate_form {
         $label=~s/\W/_/g;
     }
     push(@$validated_args, "--label", $label) if ($label);
+
+    my $bkgd = param("bkgd");
+    if (!$bkgd or ($bkgd ne "450k" and $bkgd ne "27k")) {
+        $bkgd =~ s/\W/_/g;
+        push(@error_messages, "Unknown platform &quot;$bkgd&quot;. Please".
+            " specify a valid one.");
+    }
+    push(@$validated_args, "--bkgd", param("bkgd"));
 
     my $ref_data = param("ref_data");
     if (!$ref_data or ($ref_data ne "erc" and $ref_data ne "encode")) {
@@ -795,9 +812,13 @@ sub print_help_page {
            chrN.  However we will also accept chomosomes as just N (ensembl)
            and 1-based format where beg and end are the same*.
            <br \>",
+       "<strong>Platform</strong><br \><br \>
+           Select which Illumina methylation array has been used to generate these data (450k or
+           27k).
+           <br \>",
        "<strong>Maximum number of probes</strong><br \><br \>
            The web version is limited to 1000 probes. While it is possible to input a larger number
-           of probes with the standalone version, however you must consider how the background
+           of probes with the standalone version, you must consider how the background
            selection occurs.
            <br \>",
     );
@@ -941,8 +962,9 @@ sub print_download_page {
     print Template::content_box("Download",
     "The code is available on GitHub:
     <a href=\"https://github.com/charlesbreeze/eFORGE\">https://github.com/charlesbreeze/eFORGE</a>",
-    "You also need to download the <a href=\"$WEB_ROOT_OUTDIR/eforge.db\">eforge.db</a> and
-    <a href=\"$WEB_ROOT_OUTDIR/mvp_bins\">mvp_bins files.");
+    "You also need to download the <a href=\"$WEB_ROOT_OUTDIR/eforge.db\">eforge.db</a>,
+    <a href=\"$WEB_ROOT_OUTDIR/mvp_450k_bins\">mvp_450k_bins</a> and
+    <a href=\"$WEB_ROOT_OUTDIR/mvp_27k_bins\">mvp_27k_bins</a> files.");
     print Template::content_box("License",
     "<strong>eforge.pl</strong> Functional analysis of EWAS DMPs
        <br \><br \>

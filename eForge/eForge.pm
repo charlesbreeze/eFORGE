@@ -171,11 +171,11 @@ sub match{
     if ($bkgd =~ "27k"){
         $bins = $datadir . "/mvp_27k_bins";
         }
-        else{
-        $bins = $datadir . "/mvp_bins";
+    else{
+        $bins = $datadir . "/mvp_450k_bins";
 
         }
-    print "Using this file as hash for array background:$bins\n";    
+
     #took params out, do not need params
     #if (-e $bins && -e $params){
     if (-e $bins){
@@ -183,6 +183,9 @@ sub match{
         #took params out, do not need params
         #%params = %{ retrieve($params)};
       }
+    else{
+        die "Cannot retrieve the file $bins\n";
+    }
     
     my (%picks);
 
