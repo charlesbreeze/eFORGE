@@ -14,16 +14,18 @@ Step-by-step guide
 2. Download the eForge package and install the dependencies
 -----------------------------------------------------------
 
-2.a. The code lives in GitHub, although the databases and mvp_bins file are not publicly available
-yet. For the time being:
+2.a. The code lives in GitHub and the databases and mvp_*_bins files are available through the
+webserver.
 
     cd
     
     git clone https://github.com/jherrero/eFORGE.git
     
-    rsync -avP SERVER:eforge.db eFORGE
-    rsync -avP SERVER:mvp_bins eFORGE
-    rsync -avP SERVER:proximity_filter.db eFORGE
+    cd eFORGE
+
+    wget http://eforge.cs.ucl.ac.uk/files/eforge.db
+    wget http://eforge.cs.ucl.ac.uk/files/mvp_450k_bins
+    wget http://eforge.cs.ucl.ac.uk/files/mvp_27k_bins
 
 2.b. Install Perl dependencies
 
@@ -93,7 +95,8 @@ server by the server itself.
 
     cd /var/www/html/files
     sudo ln -s ../../bin/eforge.db .
-    sudo ln -s ../../bin/mvp_bins .
+    sudo ln -s ../../bin/mvp_450k_bins .
+    sudo ln -s ../../bin/mvp_27k_bins .
 
 3.f. Configure Apache to forward all "directory" requests to the eFORGE cgi:
 
