@@ -407,7 +407,6 @@ if (defined $proxy) {
 
 my @foundmvps = keys %{$$test{'MVPS'}};
 my $mvpcount = scalar @foundmvps;
-warn "[".scalar(localtime())."] Running the analysis with $mvpcount MVPs...\n";
 
 
 # identify the feature and cpg island relationship, and then make bkgrd picks (old version just below)
@@ -424,6 +423,7 @@ my %bkgrd; #this hash is going to store the bkgrd overlaps
 # Get the bits for the background sets and process
 my $backmvps;
 
+warn "[".scalar(localtime())."] Running the analysis with $mvpcount MVPs...\n";
 my $num = 0;
 foreach my $bkgrd (keys %{$picks}){
     warn "[".scalar(localtime())."] Repetition $num out of ".$reps."\n" if (++$num%100 == 0);
