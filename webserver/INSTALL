@@ -87,8 +87,8 @@ server by the server itself.
 
 3.c. Copy the webserver files to the right directories 
 
-    sudo rsync -avPL ~/eFORGE/webserver/cgi-bin /var/www/cgi-bin/
-    sudo rsync -avPL ~/eFORGE/webserver/bin /var/www/bin/
+    sudo rsync -avPL ~/eFORGE/webserver/cgi-bin/ /var/www/cgi-bin/
+    sudo rsync -avPL ~/eFORGE/webserver/bin/ /var/www/bin/
     sudo rsync -avPL ~/eFORGE/webserver/html/ /var/www/html/
 
 3.e. Add links to the database files for the Downloads page:
