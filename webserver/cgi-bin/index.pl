@@ -443,16 +443,15 @@ sub run_tool {
         print INDEX Template::start($title, $breadcrumbs, $left_menu, $colour, $right_column);
 
         if (!$ok) {
+            my @output = qx"cat $absolute_outdir/$STDOUT_FILE";
             print INDEX Template::header("Error");
             print INDEX Template::error_box("Error while running eForge.pl: $err.",
-                map({"ERR: $_"} @$stderr_buff),
-                map({"OUT: $_"} @$stdout_buff),
+                "OUTPUT:", @output,
                 );
 
             print OUTPUT Template::header("Error");
             print OUTPUT Template::error_box("Error while running eForge.pl: $err.",
-                map({"ERR: $_"} @$stderr_buff),
-                map({"OUT: $_"} @$stdout_buff),
+                "OUTPUT:", @output,
                 );
 
         } else {
