@@ -446,12 +446,14 @@ sub run_tool {
             my @output = qx"cat $absolute_outdir/$STDOUT_FILE";
             print INDEX Template::header("Error");
             print INDEX Template::error_box("Error while running eForge.pl: $err.",
-                "OUTPUT:", @output,
+                "OUTPUT:",
+                textarea('output', join("", @output), 10, 90),
                 );
 
             print OUTPUT Template::header("Error");
             print OUTPUT Template::error_box("Error while running eForge.pl: $err.",
-                "OUTPUT:", @output,
+                "OUTPUT:",
+                textarea('output', join("", @output), 10, 90),
                 );
 
         } else {
