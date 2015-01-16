@@ -357,7 +357,7 @@ unless(defined $noproxy){
 
 # Check we have enough MVPs
 if (scalar @mvps < $min_mvps){
-    pod2usage(-verbose => 2, -message => "Fewer than $min_mvps MVPs. Analysis not run\n\n", -noperldoc => 1);
+    die "Fewer than $min_mvps MVPs. Analysis not run\n";
   }
 
 
