@@ -171,9 +171,13 @@ use Data::UUID;
 
 my $cwd = getcwd;
 
+my $bkgd_label = {
+    '450k' => 'Illumina Infinium HumanMethylation450 BeadChip',
+    '27k' => 'Illumina Infinium HumanMethylation27 BeadChip',
+    };
 
-
-my ($bkgd, $data, $peaks, $label, $file, $format, $min_mvps, $bkgrdstat, $noplot, $reps,
+my $bkgd = '450k'; # Default value
+my ($data, $peaks, $label, $file, $format, $min_mvps, $bkgrdstat, $noplot, $reps,
  $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, $out_dir, @mvplist, $web);
 
 GetOptions (
@@ -224,11 +228,8 @@ unless (defined $label){
     $label = "No label given";
   }
   
-if ($bkgd =~ "27k"){
-    $bkgd = "27k";
-}
-else {
-    $bkgd = "450k";
+if (!grep {$bkgd =~ /^$_/i and $bkgd = $_} keys %$bkgd_label) {
+    die "Background (--bkgd) must be one of: ".join(", ", keys %$bkgd_label)."\n";
 }
 
 if (defined $depletion){
@@ -357,7 +358,7 @@ unless(defined $noproxy){
 
 # Check we have enough MVPs
 if (scalar @mvps < $min_mvps){
-    pod2usage(-verbose => 2, -message => "Fewer than $min_mvps MVPs. Analysis not run\n\n", -noperldoc => 1);
+    die "Fewer than $min_mvps MVPs. Analysis not run\n";
   }
 
 
@@ -392,7 +393,7 @@ foreach my $probeid (@origmvps){
 }
 
 if (scalar @missing > 0) {
-    warn "The following " . scalar @missing . " MVPs have not been analysed because they were not found on the Illumina  Infinium HumanMethylation450 BeadChip\n";
+    warn "The following " . scalar @missing . " MVPs have not been analysed because they were not found on the ".$bkgd_label->{$bkgd}."\n";
     warn join("\n", @missing) . "\n";
   }
 if (defined $proxy) {
