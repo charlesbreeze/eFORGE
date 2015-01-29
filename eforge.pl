@@ -173,7 +173,7 @@ my $cwd = getcwd;
 
 my $bkgd_label = {
     '450k' => 'Illumina Infinium HumanMethylation450 BeadChip',
-    '27k' => 'Illumina Infinium HumanMethylation27 BeadChip',
+    '27k' => 'Illumina Infinium HumanMethylation27 BeadChip (450k array subset)',
     };
 
 my $bkgd = '450k'; # Default value
