@@ -51,34 +51,6 @@ sub Chart{
     #set some colors
     my ($sig, $msig, $ns, $abline, $tline) = qw(red palevioletred1 steelblue3 lightpink1 burlywood3); #alternate msig = pink2
 
-    # make plot, first calculate where dividing lines are:
-    my (@lines, @label_pos, @labels, @tissue_txt);
-    my $n = 1;
-    my $last = '0';
-    foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) || ncmp($a,$b)} @$cells) {
-        my $tissue = $$tissues{$cell}{'tissue'};
-        push @tissue_txt, $tissue;
-        unless ($tissue eq $last){
-            push @lines, $n-0.5;
-            push @labels, $tissue;
-	  }
-        $n++;
-        $last = $tissue;
-      }
-
-    my $length = scalar @tissue_txt;
-    my $index = 0;
-    foreach my $value (@lines) {
-      if (defined $lines[$index+1]){
-            my $pos = $value + ($lines[$index+1]-$value)/2;
-            push @label_pos, $pos;
-	  }
-        else {
-            my $pos = $value + ($length-$value)/2;
-            push @label_pos, $pos;
-	  }
-        $index++;
-    }
 
     open my $rfh, ">", $rfile;
 #results\$Class<-cut(results\$Pvalue, breaks =c(min(results\$Pvalue), $t1, $t2, max(results\$Pvalue)), labels=FALSE, include.lowest=TRUE) # 99 and 95% CIs 1, 2, 3
@@ -87,35 +59,51 @@ $t2 = sprintf("%.2f", $t2);
     print $rfh "setwd(\"$Rdir\")
 results<-read.table(\"$filename\",header=TRUE,sep=\"\\t\")
 results\$Class<-cut(results\$Pvalue, breaks =c(min(results\$Pvalue), $t1, $t2, max(results\$Pvalue)), labels=FALSE, include.lowest=TRUE)
-pdf(\"$chart\", width=22.4, height=7)
-palette(c(\"$ns\",\"$msig\",\"$sig\"))
-#ymin1 = min(results\$Pvalue, na.rm=TRUE)*1.1
+results\$Class2 <- cut(results\$Qvalue, breaks =c(0, 0.01, 0.05, 1), labels=FALSE, include.lowest=TRUE)
+pdf(\"$chart\", width=22.4, height=8)
 ymin1= min(results\$Pvalue, na.rm=TRUE)*1.1
 ymax1 = max(results\$Pvalue, na.rm=TRUE)*1.1
 ymax = max(c(abs(ymin1),ymax1))
 ymin = -ymin1
-par(mar=c(9,4,3,1)+0.1)
-plot(results\$Pvalue,ylab=\"-log10 binomial P\",xlab=\"\",main=\"MVPs in DNase1 sites (probably TF sites) in cell lines for $data $label\",ylim=c(ymin,ymax), las=2, las=2, pch=19,col=results\$Class, xaxt='n')
-axis(1, seq(1,length(results\$Cell)),labels=results\$Cell, las=2, cex.axis=0.7)
-mtext(1,text=\"Cell\",line=7,cex=1.2)
-abline(h=$t1, col=\"$abline\")
-#abline(h=-$t2, col=\"$abline\", lty=2)
-abline(h=$t2, col=\"$abline\", lty=2)
-text(c(-0.5),$t1+0.2,c(\"P = $t1\"),col=\"$abline\",adj=1,cex=0.8)
-#text(c(-0.5),-$t1+0.16,c(\"1%\"),col=\"$abline\",adj=1,cex=0.8)
-text(c(-0.5),$t2+0.2,c(\"P = $t2\"),col=\"$abline\",adj=1,cex=0.8)
-#text(c(-0.5),-$t2+0.16,c(\"0.1%\"),col=\"$abline\",adj=1,cex=0.8)
-palette(\"default\")\n";
+par(mar=c(11.5,4,3,1)+0.1)
+tissue.cell.order <- unique(results[, c(\"Tissue\", \"Cell\")])
+tissue.cell.order <- tissue.cell.order[order(tissue.cell.order[,1], tissue.cell.order[,2]), ]
+results\$Cell <- factor(results\$Cell, levels=tissue.cell.order[,2])
 
-    foreach my $pos (@lines){
-        print $rfh "lines(c($pos,$pos),c(-22,22),lty=6,col=\"#00000070\")\n" unless $pos == 0.5;
-      }
-    $index = 0;
-    foreach my $tissue (@labels){
-        print $rfh "text(c(" . $label_pos[$index] . "),ymax,c(\"" . $tissue . "\"),col=\"$tline\",adj=1,srt=90,cex=0.8)\n";
-        $index++;
-      }
-    print $rfh "dev.off()\n";
+palette(c(\"$sig\",\"$msig\",\"white\"))
+
+plot(NA,ylab=\"-log10 binomial P\",xlab=\"\",main=\"MVPs in DNase1 sites (probably TF sites) in cell lines for $data $label\",ylim=c(ymin,ymax), las=2, pch=19, col = results\$Class2, xaxt='n', xlim=c(0,length(levels(results\$Cell))))
+
+abline(h=par('yaxp')[1]:par('yaxp')[2],lty=1, lwd=0.1, col='#e0e0e0')
+
+points(results\$Cell, results\$Pvalue, pch=19, col = results\$Class2, xaxt='n')
+
+palette(c('black', '$msig', '$ns'))
+
+points(results\$Cell, results\$Pvalue, pch=1, col = results\$Class2, xaxt='n')
+
+palette(c(\"$ns\",\"$msig\",\"$sig\"))
+
+axis(1, seq(1,length(levels(results\$Cell))),labels=levels(results\$Cell), las=2, cex.axis=0.7)
+
+mtext(1,text=\"Cell\",line=7,cex=1.2)
+
+legend('topleft', pch=19, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.005, 0.025), box.col='white', title='FDR q-value', text.col='white', bg='white')
+
+palette(c('$ns', '$msig', 'black'))
+
+legend('topleft', pch=1, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.005, 0.025), box.col='darkgrey', title='FDR q-value')
+
+tissues <- c(0, cumsum(summary(tissue.cell.order[,'Tissue'])))
+
+abline(v=tissues[2:(length(tissues)-1)]+0.5,lty=6,col='#a0a0a0')
+
+text((tissues[1:(length(tissues)-1)] + tissues[2:length(tissues)]) / 2 + 0.5, ymax, names(tissues[2:length(tissues)]), col=\"$tline\", adj=1, srt=90, cex=0.8) 
+
+palette(\"default\")
+dev.off()
+";
+
 #run the R code
     system("R", "--no-save", "--quiet", "--slave", "--file=$rfile");
   }
@@ -173,11 +161,15 @@ sub dChart{
     print $rcfh "setwd(\"$Rdir\")
 results<-read.table(\"$filename\", header = TRUE, sep=\"\\t\")
 results\$Class<-cut(results\$Pvalue, breaks =c(min(results\$Pvalue), $t1, $t2, max(results\$Pvalue)), labels=FALSE, include.lowest=TRUE) # 99 and 95% CIs 1, 2, 3
+results\$Class2 <- cut(results\$Qvalue, breaks =c(0, 0.01, 0.05, 1), labels=FALSE, include.lowest=TRUE)
+tissue.cell.order <- unique(results[, c(\"Tissue\", \"Cell\")])
+tissue.cell.order <- tissue.cell.order[order(tissue.cell.order[,1], tissue.cell.order[,2]), ]
+tissues <- c(0, cumsum(summary(tissue.cell.order[,'Tissue'])))
 require(rCharts)
 d1 <- dPlot(
   y = \"Pvalue\",
-  x = c(\"Cell\", \"Tissue\", \"Probe\", \"Number\", \"Accession\", \"Pvalue\"),
-  groups = \"Class\",
+  x = c(\"Cell\"),
+  groups = c(\"Tissue\", \"Cell\", \"Probe\", \"Number\", \"Accession\", \"Pvalue\"),
   data = results,
   type = \"bubble\",
   width = 2000,
@@ -186,7 +178,7 @@ d1 <- dPlot(
   id = \"chart.$lab\"
 )\n";
     if ($data =~ /erc/){
-    print $rcfh "d1\$xAxis( type = \"addCategoryAxis\", grouporderRule = \"Tissue\", orderRule = \"Cell\")\n";
+    print $rcfh "d1\$xAxis( type = \"addCategoryAxis\", grouporderRule = \"Cell\", orderRule = tissue.cell.order[,2])\n";
   }
 else {
     print $rcfh "d1\$xAxis( type = \"addCategoryAxis\", grouporderRule = \"Tissue\", orderRule = \"Number\")\n";
@@ -195,8 +187,22 @@ else {
 print $rcfh "d1\$yAxis( type = \"addMeasureAxis\" )
 d1\$colorAxis(
    type = \"addColorAxis\",
-   colorSeries = \"Class\",
-   palette = c(\"lightblue\",\"pink\",\"red\") )
+   colorSeries = \"Class2\",
+   palette = c('red', 'pink', 'lightblue'))
+
+d1\$defaultColors(rep('lightgrey', 2))
+
+d1\$layer(
+  x = 'tissue',
+  y = 'y',
+  groups = c('y', 'tissue'),
+  data = data.frame(tissue = rep(tissues[2:(length(tissues)-1)]/max(tissues)*100, each=2), y = rep(c(-10,20), length(tissues)-2), col=rep(1, 2*(length(tissues)-2)))
+  ,type=\"line\"
+  ,lineWeight=2
+  ,xAxis = list(   type = 'addMeasureAxis', overrideMin=0, overrideMax=100)
+  ,yAxis = list(   type = 'addMeasureAxis', overrideMin=0, overrideMax=10)
+)
+
 d1\$addParams(title=\"$label overlaps with $data DHS\")
 d1\$save('$chart', cdn = F)\n";
 
