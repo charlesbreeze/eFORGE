@@ -92,7 +92,7 @@ legend('topleft', pch=19, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1
 
 palette(c('$ns', '$msig', 'black'))
 
-legend('topleft', pch=1, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.005, 0.025), box.col='darkgrey', title='FDR q-value')
+legend('topleft', pch=1, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='darkgrey', title='FDR q-value')
 
 tissues <- c(0, cumsum(summary(tissue.cell.order[,'Tissue'])))
 
