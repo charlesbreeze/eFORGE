@@ -88,7 +88,7 @@ axis(1, seq(1,length(levels(results\$Cell))),labels=levels(results\$Cell), las=2
 
 mtext(1,text=\"Cell\",line=7,cex=1.2)
 
-legend('topleft', pch=19, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.005, 0.025), box.col='white', title='FDR q-value', text.col='white', bg='white')
+legend('topleft', pch=19, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='white', title='FDR q-value', text.col='white', bg='white')
 
 palette(c('$ns', '$msig', 'black'))
 
