@@ -167,6 +167,7 @@ use eForge::eStats;
 use eForge::ePlot;
 use eForge::eForge;
 use Data::UUID;
+use Statistics::Multtest qw(BY);
 
 
 my $cwd = getcwd;
@@ -452,11 +453,6 @@ warn "[".scalar(localtime())."] Calculating p-values...\n";
 
 
 mkdir $out_dir;
-my $filename = "$lab.chart.tsv";
-open my $ofh, ">", "$out_dir/$filename" or die "Cannot open $out_dir/$filename: $!";
-#should grab a process number for unique name here (for the above line)
-print $ofh join("\t", "Zscore", "Pvalue", "Cell", "Tissue", "File", "Probe", "Number", "Accession") ."\n";
-
 my $n = 1;
 my $pos = 0;
 
@@ -478,6 +474,8 @@ open my $bfh, ">", "$out_dir/background.tsv" or die "Cannot open background.tsv"
 
 
 
+my @results;
+my @pvalues;
 ###ncmp is a function from Sort::Naturally
 foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) || ncmp($a,$b)} @$cells){
     # above line sorts by the tissues alphabetically (from $tissues hash values)
@@ -512,8 +510,11 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
     if ($pbinom >1) {
       $pbinom=1;
       }
+    # Store the p-values in natural scale (i.e. before log transformation) for FDR correction
+    push(@pvalues, $pbinom);
     $pbinom = -log10($pbinom);
-    # Z score calculation
+
+    # Z score calculation (note: this is here only for legacy reasons. Z-scores assume normal distribution)
     my $mean = mean(@{$bkgrd{$cell}});
     my $sd = std(@{$bkgrd{$cell}});
     my $zscore;
@@ -523,6 +524,7 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
     else{
         $zscore = sprintf("%.3f", ($teststat-$mean)/$sd);
       }
+
     if ($pbinom <=$t2){
         $pos++;
       }
@@ -530,14 +532,23 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
     $mvp_string = join(",", @{$$test{'CELLS'}{$cell}{'MVPS'}}) if defined $$test{'CELLS'}{$cell}{'MVPS'};
     # This gives the list of overlapping MVPs for use in the tooltips. If there are a lot of them this can be a little useless
     my ($shortcell, undef) = split('\|', $cell); # undo the concatenation from earlier to deal with identical cell names.
-    print $ofh join("\t", $zscore, $pbinom, $shortcell, $$tissues{$cell}{'tissue'}, $$tissues{$cell}{'file'}, $mvp_string, $n, $$tissues{$cell}{'acc'}) . "\n";
+
+    push(@results, [$zscore, $pbinom, $shortcell, $$tissues{$cell}{'tissue'}, $$tissues{$cell}{'file'}, $mvp_string, $n, $$tissues{$cell}{'acc'}]);
     $n++;
-  }
+}
+close($bfh);
 
+# Correct the p-values for multiple testing using the Benjamini-Yekutieli FDR control method
+my $qvalues = BY(\@pvalues);
 
-# fdr calculation isn't valid currently
-#my $fdr = fdr($pos, $mvpcount, $cellcount);
-#say "$filename\t$pos positive lines at FDR = $fdr at p value <= 0.05";
+# Write the results to a tab-separated file
+my $filename = "$lab.chart.tsv";
+open my $ofh, ">", "$out_dir/$filename" or die "Cannot open $out_dir/$filename: $!";
+print $ofh join("\t", "Zscore", "Pvalue", "Cell", "Tissue", "File", "Probe", "Number", "Accession", "Qvalue"), "\n";
+for (my $i = 0; $i < @results; $i++) {
+    print $ofh join("\t", @{$results[$i]}, $qvalues->[$i]), "\n";
+}
+close($ofh);
 
 
 warn "[".scalar(localtime())."] Generating plots...\n";
