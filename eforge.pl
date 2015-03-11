@@ -501,14 +501,7 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
     $pbinom = -log10($pbinom);
 
     # Z score calculation (note: this is here only for legacy reasons. Z-scores assume normal distribution)
-    my $mean = mean(@{$bkgrd{$cell}});
-    my $sd = std(@{$bkgrd{$cell}});
-    my $zscore;
-    if ($sd == 0){
-        $zscore = "NA";
-    } else {
-        $zscore = sprintf("%.3f", ($teststat-$mean)/$sd);
-    }
+    my $zscore = zscore($teststat, $bkgrd{$cell});
 
     my $mvp_string = "";
     $mvp_string = join(",", @{$$test{'CELLS'}{$cell}{'MVPS'}}) if defined $$test{'CELLS'}{$cell}{'MVPS'};
