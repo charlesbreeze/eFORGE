@@ -179,7 +179,7 @@ my $bkgd_label = {
 
 my $bkgd = '450k'; # Default value
 my ($data, $peaks, $label, $file, $format, $min_mvps, $bkgrdstat, $noplot, $reps,
- $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, $out_dir, @mvplist, $web);
+    $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, $out_dir, @mvplist, $web);
 
 GetOptions (
     'data=s'     => \$data,
@@ -215,35 +215,35 @@ if (!$out_dir) {
 }
 
 # the minimum number of mvps allowed for test. Set to 5 as we have binomial p
-unless (defined $min_mvps){
+unless (defined $min_mvps) {
     $min_mvps = 5;
-  }
+}
 
 # define which data we are dealing with for the bitstrings, erc or encode
-unless (defined $data ){
+unless (defined $data ) {
     $data = "erc";
-  }
+}
 
 # Label for plots
-unless (defined $label){
+unless (defined $label) {
     $label = "No label given";
-  }
+}
   
 if (!grep {$bkgd =~ /^$_/i and $bkgd = $_} keys %$bkgd_label) {
     die "Background (--bkgd) must be one of: ".join(", ", keys %$bkgd_label)."\n";
 }
 
-if (defined $depletion){
+if (defined $depletion) {
     $label = "$label.depletion";
-  }
+}
 
 #regexp puts underscores where labels before
 (my $lab = $label) =~ s/\s/_/g;
 $lab = "$lab.$bkgd.$data";
 #format for reading from file
-unless (defined $format){
+unless (defined $format) {
     $format = 'probeid';
-  }
+}
 
 
 # Read the config file, eforge.ini
@@ -260,38 +260,29 @@ my $per = 10;
 
 
 # number of sets to analyse for bkgrd.
-unless (defined $reps){
+unless (defined $reps) {
     $reps = 1000;
-  }
+}
 
 
 # Define the thresholds to use.
 my ($t1, $t2);
-if (defined $thresh){
+if (defined $thresh) {
     ($t1, $t2) = split(",", $thresh);
     unless (looks_like_number($t1) && looks_like_number($t2)){
         die "You must specify numerical p value thresholds in a comma separated list";
-      }
-  }
-else{
+    }
+} else {
     $t1 = 0.05; # set binomial p values, bonferroni is applied later based on number of samples (cells)
     $t2 = 0.01;
-  }
+}
 
 # Set proximity filter
-unless (defined $noproxy){
-$proxy="1 kb";
+unless (defined $noproxy) {
+    $proxy="1 kb";
 }
 
-my $dsn;
-if (defined $peaks){
-    #$dsn = "dbi:SQLite:dbname=" . $datadir . "eforge_peaks.db";
-    $dsn = "dbi:SQLite:dbname=" . $datadir . "/eforge.db";
-    }
-else{
-    #$dsn = "dbi:SQLite:dbname=" . $datadir . "eforge.db";
-  $dsn = "dbi:SQLite:dbname=" . $datadir . "/eforge.db";
-}
+my $dsn = "dbi:SQLite:dbname=" . $datadir . "/eforge.db";
 my $dbh = DBI->connect($dsn, "", "") or die $DBI::errstr;
 
 # mvps need to come either from a file or a list
@@ -301,43 +292,40 @@ my @mvps;
 # A series of data file formats to accept.
 
 warn "[".scalar(localtime())."] Processing input...\n";
-if (defined $file){
-  if (defined $filter) {
-    unless ($format eq "ian" or $format eq "probeid"){
+
+if (defined $file) {
+    if (defined $filter) {
+        unless ($format eq "ian" or $format eq "probeid") {
             warn "You have specified p value filtering, but this isn't implemented for files of format $format. No filtering will happen."
-	  }
-  }
+	    }
+    }
     my $sth = $dbh->prepare("SELECT probeid FROM bits WHERE location = ?");
     open my $fh, "<", $file or die "cannot open file $file : $!";
     @mvps = process_file($fh, $format, $sth, $filter);
-}
 
-
-elsif (@mvplist){
+} elsif (@mvplist) {
     @mvps = split(/,/,join(',',@mvplist));
-  }
 
-
-else{
-# Test MVPs from Liu Y et al. Nat Biotechnol 2013  Pulmonary_function.snps.bed (*put EWAS bedfile here)
-     # If no options are given it will run on the default set of MVPs
-     warn "No probe input given, so running on default set of probes, a set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014.";
-     @mvps = qw(cg13430807 cg10480329 cg06297318 cg19301114 cg23244761 cg26872907 cg18066690 cg04468741 cg16636767 cg10624395 cg20918393);
-  }
+} else{
+    # Test MVPs from Liu Y et al. Nat Biotechnol 2013  Pulmonary_function.snps.bed (*put EWAS bedfile here)
+    # If no options are given it will run on the default set of MVPs
+    warn "No probe input given, so running on default set of probes, a set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014.";
+    @mvps = qw(cg13430807 cg10480329 cg06297318 cg19301114 cg23244761 cg26872907 cg18066690 cg04468741 cg16636767 cg10624395 cg20918393);
+}
 
 
 # Remove redundancy in the input
 
 my %nonredundant;
-foreach my $mvp (@mvps){
+foreach my $mvp (@mvps) {
     $nonredundant{$mvp}++;
-  }
+}
 
 
-foreach my $mvp (keys %nonredundant){
-  if ($nonredundant{$mvp} > 1) {
+foreach my $mvp (keys %nonredundant) {
+    if ($nonredundant{$mvp} > 1) {
         say "$mvp is present " . $nonredundant{$mvp} . " times in the input. Analysing only once."
-      }
+    }
 }
 
 @mvps = keys %nonredundant;
@@ -347,7 +335,7 @@ my @origmvps = @mvps;
 #######!!!!!### proximity filtering starts below:
 
 my ($prox_excluded, $output, $input);
-unless(defined $noproxy){
+unless(defined $noproxy) {
     $input = scalar @mvps;
     ($prox_excluded, @mvps) = prox_filter(\@mvps, $dbh);
     while (my ($excluded_mvp, $mvp) = each %$prox_excluded) {
@@ -358,9 +346,9 @@ unless(defined $noproxy){
 }
 
 # Check we have enough MVPs
-if (scalar @mvps < $min_mvps){
+if (scalar @mvps < $min_mvps) {
     die "Fewer than $min_mvps MVPs. Analysis not run\n";
-  }
+}
 
 
 # get the cell list array and the hash that connects the cells and tissues
@@ -373,9 +361,9 @@ my $rows = get_bits(\@mvps, $dbh);
 my $test = process_bits($rows, $cells, $data);
 
 # generate stats on the background selection
-if (defined $bkgrdstat){
+if (defined $bkgrdstat) {
     bkgrdstat($test, $lab, "test");
-  }
+}
 
 
 
@@ -384,23 +372,23 @@ if (defined $bkgrdstat){
 #(in subroutines process_bits etc)
 
 my @missing;
-foreach my $probeid (@origmvps){
-  if (defined $proxy) {
-    next if exists $$prox_excluded{$probeid};
-  }
-  unless (exists $$test{'MVPS'}{$probeid}){
+foreach my $probeid (@origmvps) {
+    if (defined $proxy) {
+        next if exists $$prox_excluded{$probeid};
+    }
+    unless (exists $$test{'MVPS'}{$probeid}) {
         push @missing, $probeid;
-      }
+    }
 }
 
 if (scalar @missing > 0) {
     warn "The following " . scalar @missing . " MVPs have not been analysed because they were not found on the ".$bkgd_label->{$bkgd}."\n";
     warn join("\n", @missing) . "\n";
-  }
+}
 if (defined $proxy) {
-  if ($output < $input) {
-    warn "For $label, $input MVPs provided, " . scalar @mvps . " retained, " . scalar @missing . " not analysed, "  . scalar(keys %$prox_excluded) . " proximity filtered at 1 kb\n";
-      }
+    if ($output < $input) {
+        warn "For $label, $input MVPs provided, " . scalar @mvps . " retained, " . scalar @missing . " not analysed, "  . scalar(keys %$prox_excluded) . " proximity filtered at 1 kb\n";
+    }
 }
 
 # only pick background mvps matching mvps that had bitstrings originally.
@@ -427,22 +415,22 @@ my $backmvps;
 
 warn "[".scalar(localtime())."] Running the analysis with $mvpcount MVPs...\n";
 my $num = 0;
-foreach my $bkgrd (keys %{$picks}){
+foreach my $bkgrd (keys %{$picks}) {
     warn "[".scalar(localtime())."] Repetition $num out of ".$reps."\n" if (++$num%100 == 0);
     #$rows = get_bits(\@{$$picks{$bkgrd}}, $sth);
     $rows = get_bits(\@{$$picks{$bkgrd}}, $dbh);
     $backmvps += scalar @$rows; #$backmvps is the total number of background probes analysed
-    unless (scalar @$rows == scalar @foundmvps){
+    unless (scalar @$rows == scalar @foundmvps) {
         warn "Background " . $bkgrd . " only " . scalar @$rows . " probes out of " . scalar @foundmvps . "\n";
-      }
+    }
     my $result = process_bits($rows, $cells, $data);
-    foreach my $cell (keys %{$$result{'CELLS'}}){
+    foreach my $cell (keys %{$$result{'CELLS'}}) {
         push @{$bkgrd{$cell}}, $$result{'CELLS'}{$cell}{'COUNT'}; # accumulate the overlap counts by cell
-      }
-    if (defined $bkgrdstat){
+    }
+    if (defined $bkgrdstat) {
         bkgrdstat($result, $lab, $bkgrd);
-      }
-  }
+    }
+}
 
 $dbh->disconnect();
 warn "[".scalar(localtime())."] All repetitions done.\n";
@@ -454,17 +442,17 @@ warn "[".scalar(localtime())."] Calculating p-values...\n";
 
 mkdir $out_dir;
 my $n = 1;
-my $pos = 0;
 
 my %tissuecount;
-foreach my $cell (keys %$tissues){
+foreach my $cell (keys %$tissues) {
     my $tissue = $$tissues{$cell}{'tissue'};
     $tissuecount{$tissue}++;
-  }
+}
 
 
+# bonferroni correction by number of tissues
 my $tissuecount = scalar keys %tissuecount;
-$t1 = $t1/$tissuecount; # bonferroni correction by number of tissues
+$t1 = $t1/$tissuecount;
 $t2 = $t2/$tissuecount;
 
 $t1 = -log10($t1);
@@ -488,28 +476,26 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
     # $backmvps is the total number of background mvps analysed
     # $tests is the number of overlaps found over all the background tests
     my $tests;
-    foreach (@{$bkgrd{$cell}}){
-        $tests+= $_;
-      }
+    foreach (@{$bkgrd{$cell}}) {
+        $tests += $_;
+    }
     my $p = sprintf("%.6f", $tests/$backmvps);
 
     # binomial probability for $teststat or more hits out of $mvpcount mvps
     # sum the binomial for each k out of n above $teststat
     my $pbinom;
-    unless (defined $depletion){
-    foreach my $k ($teststat .. $mvpcount){
-        $pbinom += binomial($k, $mvpcount, $p);
-      }
-                               }
-    if (defined $depletion){
-    foreach my $k (0 .. $teststat){
-        $pbinom += binomial($k, $mvpcount, $p);
-      }
-
+    if (defined $depletion) {
+        foreach my $k (0 .. $teststat) {
+            $pbinom += binomial($k, $mvpcount, $p);
+        }
+    } else {
+        foreach my $k ($teststat .. $mvpcount) {
+            $pbinom += binomial($k, $mvpcount, $p);
+        }
     }
     if ($pbinom >1) {
-      $pbinom=1;
-      }
+        $pbinom=1;
+    }
     # Store the p-values in natural scale (i.e. before log transformation) for FDR correction
     push(@pvalues, $pbinom);
     $pbinom = -log10($pbinom);
@@ -520,14 +506,10 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
     my $zscore;
     if ($sd == 0){
         $zscore = "NA";
-      }
-    else{
+    } else {
         $zscore = sprintf("%.3f", ($teststat-$mean)/$sd);
-      }
+    }
 
-    if ($pbinom <=$t2){
-        $pos++;
-      }
     my $mvp_string = "";
     $mvp_string = join(",", @{$$test{'CELLS'}{$cell}{'MVPS'}}) if defined $$test{'CELLS'}{$cell}{'MVPS'};
     # This gives the list of overlapping MVPs for use in the tooltips. If there are a lot of them this can be a little useless
