@@ -19,7 +19,7 @@ our $VERSION = '0.01';
 our (@ISA, @EXPORT);
 use Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(mean variance std log10 binomial factorial fdr); # Symbols to export by default
+@EXPORT = qw(mean variance std zscore log10 binomial factorial fdr); # Symbols to export by default
 
 
 
@@ -94,6 +94,27 @@ sub log10 {
     my $n = shift;
     return log($n)/log(10);
   }
+
+=head2 zscore
+
+Calculates the z-score for a given result and an array of values
+
+=cut
+
+sub zscore {
+    my ($teststat, $values) = @_;
+    my $zscore;
+
+    my $mean = mean(@$values);
+    my $sd = std($values);
+    if ($sd == 0) {
+        $zscore = "NA";
+    } else {
+        $zscore = sprintf("%.3f", ($teststat-$mean)/$sd);
+    }
+
+    return $zscore;
+}
 
 =head2 binomial
 
