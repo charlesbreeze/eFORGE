@@ -441,22 +441,6 @@ warn "[".scalar(localtime())."] Calculating p-values...\n";
 
 
 mkdir $out_dir;
-my $n = 1;
-
-my %tissuecount;
-foreach my $cell (keys %$tissues) {
-    my $tissue = $$tissues{$cell}{'tissue'};
-    $tissuecount{$tissue}++;
-}
-
-
-# bonferroni correction by number of tissues
-my $tissuecount = scalar keys %tissuecount;
-$t1 = $t1/$tissuecount;
-$t2 = $t2/$tissuecount;
-
-$t1 = -log10($t1);
-$t2 = -log10($t2);
 
 open my $bfh, ">", "$out_dir/background.tsv" or die "Cannot open background.tsv";
 
@@ -498,7 +482,7 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
     }
     # Store the p-values in natural scale (i.e. before log transformation) for FDR correction
     push(@pvalues, $pbinom);
-    $pbinom = -log10($pbinom);
+    $pbinom = sprintf("%.2e", $pbinom);
 
     # Z score calculation (note: this is here only for legacy reasons. Z-scores assume normal distribution)
     my $zscore = zscore($teststat, $bkgrd{$cell});
@@ -508,18 +492,18 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
     # This gives the list of overlapping MVPs for use in the tooltips. If there are a lot of them this can be a little useless
     my ($shortcell, undef) = split('\|', $cell); # undo the concatenation from earlier to deal with identical cell names.
 
-    push(@results, [$zscore, $pbinom, $shortcell, $$tissues{$cell}{'tissue'}, $$tissues{$cell}{'file'}, $mvp_string, $n, $$tissues{$cell}{'acc'}]);
-    $n++;
+    push(@results, [$zscore, $pbinom, $shortcell, $$tissues{$cell}{'tissue'}, $$tissues{$cell}{'file'}, $mvp_string, $$tissues{$cell}{'acc'}]);
 }
 close($bfh);
 
 # Correct the p-values for multiple testing using the Benjamini-Yekutieli FDR control method
 my $qvalues = BY(\@pvalues);
+$qvalues = [map {sprintf("%.2e", $_)} @$qvalues];
 
 # Write the results to a tab-separated file
 my $filename = "$lab.chart.tsv";
 open my $ofh, ">", "$out_dir/$filename" or die "Cannot open $out_dir/$filename: $!";
-print $ofh join("\t", "Zscore", "Pvalue", "Cell", "Tissue", "File", "Probe", "Number", "Accession", "Qvalue"), "\n";
+print $ofh join("\t", "Zscore", "Pvalue", "Cell", "Tissue", "File", "Probe", "Accession", "Qvalue"), "\n";
 for (my $i = 0; $i < @results; $i++) {
     print $ofh join("\t", @{$results[$i]}, $qvalues->[$i]), "\n";
 }

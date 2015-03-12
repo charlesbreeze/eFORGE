@@ -59,10 +59,10 @@ $t2 = sprintf("%.2f", $t2);
 results<-read.table('$filename', header=TRUE,sep='\\t')
 
 # Class splits the data into non-significant, marginally significant and significant according to $t1 and $t2 (in -log10 scale)
-results\$Class<-cut(results\$Pvalue, breaks =c(min(results\$Pvalue), $t1, $t2, max(results\$Pvalue)), labels=FALSE, include.lowest=TRUE)
+results\$Class <- cut(results\$Pvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE, include.lowest=TRUE)
 
 # Class splits the data into non-significant, marginally significant and significant according to q-value (B-Y FDR adjusted)
-results\$Class2 <- cut(results\$Qvalue, breaks =c(0, 0.01, 0.05, 1), labels=FALSE, include.lowest=TRUE)
+results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE, include.lowest=TRUE)
 
 # Re-order the entries according to tissue first and then cell type/line
 tissue.cell.order <- unique(results[, c('Tissue', 'Cell')])
@@ -71,7 +71,7 @@ results\$Cell <- factor(results\$Cell, levels=tissue.cell.order[,2])
 
 # Plot an empty chart first
 pdf('$chart', width=22.4, height=8)
-ymax = max(results\$Pvalue, na.rm=TRUE)*1.1
+ymax = max(-log10(results\$Pvalue), na.rm=TRUE)*1.1
 ymin = -0.1
 par(mar=c(11.5,4,3,1)+0.1)
 plot(NA,ylab='-log10 binomial P', xlab='', main='MVPs in DNase1 sites (probably TF sites) in cell lines for $data $label',
@@ -81,12 +81,14 @@ plot(NA,ylab='-log10 binomial P', xlab='', main='MVPs in DNase1 sites (probably 
 abline(h=par('yaxp')[1]:par('yaxp')[2],lty=1, lwd=0.1, col='#e0e0e0')
 
 # Add points (internal color first)
+palette(c('white', '$msig', '$sig'))
 palette(c('$sig', '$msig', 'white'))
-points(results\$Cell, results\$Pvalue, pch=19, col = results\$Class2, xaxt='n')
+points(results\$Cell, -log10(results\$Pvalue), pch=19, col = results\$Class2, xaxt='n')
 
 # Add contour to the points
+palette(c('$ns', '$msig', 'black'))
 palette(c('black', '$msig', '$ns'))
-points(results\$Cell, results\$Pvalue, pch=1, col = results\$Class2, xaxt='n')
+points(results\$Cell, -log10(results\$Pvalue), pch=1, col = results\$Class2, xaxt='n')
 
 # Add X-axis
 axis(1, seq(1,length(levels(results\$Cell))), labels=levels(results\$Cell), las=2, cex.axis=0.7)
@@ -132,10 +134,12 @@ sub dChart{
 results<-read.table(\"$filename\", header = TRUE, sep=\"\\t\")
 
 # Class splits the data into non-significant, marginally significant and significant according to $t1 and $t2 (in -log10 scale)
-results\$Class<-cut(results\$Pvalue, breaks =c(min(results\$Pvalue), $t1, $t2, max(results\$Pvalue)), labels=FALSE, include.lowest=TRUE)
+results\$Class <- cut(results\$Pvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE, include.lowest=TRUE)
 
 # Class splits the data into non-significant, marginally significant and significant according to q-value (B-Y FDR adjusted)
-results\$Class2 <- cut(results\$Qvalue, breaks =c(0, 0.01, 0.05, 1), labels=FALSE, include.lowest=TRUE)
+results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE, include.lowest=TRUE)
+
+results\$log10pvalue <- -log10(results\$Pvalue)
 
 # Re-order the entries according to tissue first and then cell type/line
 tissue.cell.order <- unique(results[, c('Tissue', 'Cell')])
@@ -146,7 +150,7 @@ require(rCharts)
 
 # Create a dimple plot, showing p-value vs cell, split data by tissue, cell, probe, etc to see individual points instead of aggregate avg
 d1 <- dPlot(
-  y = 'Pvalue',
+  y = 'log10pvalue',
   x = c('Cell'),
   groups = c('Cell', 'Tissue', 'Accession', 'Pvalue', 'Qvalue', 'Probe'),
   data = results,
