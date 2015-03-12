@@ -106,7 +106,7 @@ sub zscore {
     my $zscore;
 
     my $mean = mean(@$values);
-    my $sd = std($values);
+    my $sd = std(@$values);
     if ($sd == 0) {
         $zscore = "NA";
     } else {
