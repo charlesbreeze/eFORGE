@@ -172,14 +172,12 @@ d1\$colorAxis(
    colorSeries = 'Class2',
    palette = c('red', 'pink', 'lightblue'))
 
-# Include title
-d1\$addParams(title='$label overlaps with $data DHS')
-
 labels.string = paste(paste0(\"
     myChart.svg.append('text')
       .attr('x', 0)
       .attr('y', 0)
       .attr('font-size', 14)
+      .attr('font-family', 'Arial')
       .style('fill', '#CDAA7D')
       .attr('transform', 'translate(\", (89 + 1850 * (tissues[1:(length(tissues)-1)] +  tissues[2:length(tissues)]) / (2 * max(tissues))), \",60) rotate(90)')
       .attr('text-anchor', 'top')
@@ -200,6 +198,15 @@ d1\$setTemplate(afterScript = paste0(\"
   <script>
     myChart.draw()
     myChart.axes[2].titleShape.text('-log10 binomial P')
+    myChart.svg.append('text')
+      .attr('x', 1000)
+      .attr('y', 30)
+      .attr('font-size', 20)
+      .attr('font-family', 'Arial')
+      .attr('font-weight', 'bold')
+      .style('fill', 'black')
+      .attr('text-anchor', 'middle')
+      .text('MVPs in DNase1 sites (probably TF sites) in cell lines for $data $label')
     \", labels.string, \"
     \", lines.string, \"
     myChart.svg.append('line')
