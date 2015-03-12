@@ -80,6 +80,11 @@ plot(NA,ylab='-log10 binomial P', xlab='', main='MVPs in DNase1 sites (probably 
 # Add horizontal guide lines for the Y-axis
 abline(h=par('yaxp')[1]:par('yaxp')[2],lty=1, lwd=0.1, col='#e0e0e0')
 
+# Add vertical lines and labels to separate the tissues
+tissues <- c(0, cumsum(summary(tissue.cell.order[,'Tissue'])))
+abline(v=tissues[2:(length(tissues)-1)]+0.5, lty=6, col='$tline')
+text((tissues[1:(length(tissues)-1)] + tissues[2:length(tissues)]) / 2 + 0.5, ymax, names(tissues[2:length(tissues)]), col='$tline', adj=1, srt=90, cex=1.4) 
+
 # Add points (internal color first)
 palette(c('$sig', '$msig', 'white'))
 points(results\$Cell, -log10(results\$Pvalue), pch=19, col = results\$Class2, xaxt='n')
@@ -99,11 +104,6 @@ legend('topleft', pch=19, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1
 # Add contour to the points in the legend
 palette(c('$ns', '$msig', 'black'))
 legend('topleft', pch=1, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='darkgrey', title='FDR q-value')
-
-# Add vertical lines and labels to separate the tissues
-tissues <- c(0, cumsum(summary(tissue.cell.order[,'Tissue'])))
-abline(v=tissues[2:(length(tissues)-1)]+0.5, lty=6, col='$tline')
-text((tissues[1:(length(tissues)-1)] + tissues[2:length(tissues)]) / 2 + 0.5, ymax, names(tissues[2:length(tissues)]), col='$tline', adj=1, srt=90, cex=0.8) 
 
 palette('default')
 dev.off()
@@ -146,6 +146,13 @@ tissues <- c(0, cumsum(summary(tissue.cell.order[,'Tissue'])))
 
 require(rCharts)
 
+dplot.height=1000
+dplot.width=2000
+bounds.x=60
+bounds.y=50
+bounds.height=dplot.height - 300
+bounds.width=dplot.width - bounds.x - 20
+
 # Create a dimple plot, showing p-value vs cell, split data by tissue, cell, probe, etc to see individual points instead of aggregate avg
 d1 <- dPlot(
   y = 'log10pvalue',
@@ -153,9 +160,9 @@ d1 <- dPlot(
   groups = c('Cell', 'Tissue', 'Accession', 'Pvalue', 'Qvalue', 'Probe'),
   data = results,
   type = 'bubble',
-  width = 2000,
-  height = 1500,
-  bounds = list(x=90,y=50,height=600,width=1850),
+  width = dplot.width,
+  height = dplot.height,
+  bounds = list(x=bounds.x, y=bounds.y, height=bounds.height, width=bounds.width),
   id = 'chart.$lab'
 )
 
@@ -171,23 +178,23 @@ d1\$colorAxis(
    palette = c('red', 'pink', 'lightblue'))
 
 labels.string = paste(paste0(\"
-    myChart.svg.append('text')
+    myChart.svg.insert('text', 'g')
       .attr('x', 0)
       .attr('y', 0)
-      .attr('font-size', 14)
+      .attr('font-size', 20)
       .attr('font-family', 'Arial')
       .style('fill', '#CDAA7D')
-      .attr('transform', 'translate(\", (89 + 1850 * (tissues[1:(length(tissues)-1)] +  tissues[2:length(tissues)]) / (2 * max(tissues))), \",60) rotate(90)')
+      .attr('transform', 'translate(\", (bounds.x - 5 + bounds.width * (tissues[1:(length(tissues)-1)] +  tissues[2:length(tissues)]) / (2 * max(tissues))), \",60) rotate(90)')
       .attr('text-anchor', 'top')
       .text('\", names(tissues[2:length(tissues)]), \"')
 \"), collapse='')
 
 lines.string = paste(paste0(\"
     myChart.svg.append('line')
-      .attr('x1', \", (90 + 1850 * tissues[2:(length(tissues)-1)]/ max(tissues)), \")
+      .attr('x1', \", (bounds.x + bounds.width * tissues[2:(length(tissues)-1)]/ max(tissues)), \")
       .attr('y1', 50)
-      .attr('x2', \", (90 + 1850 * tissues[2:(length(tissues)-1)]/ max(tissues)), \")
-      .attr('y2', 650)
+      .attr('x2', \", (bounds.x + bounds.width * tissues[2:(length(tissues)-1)]/ max(tissues)), \")
+      .attr('y2', \", (50 + bounds.height), \")
       .style('stroke', 'rgb(205,170,125)')
       .style('stroke-dasharray', '10,3,3,3')
 \"), collapse='')
@@ -197,9 +204,9 @@ d1\$setTemplate(afterScript = paste0(\"
     myChart.draw()
     myChart.axes[2].titleShape.text('-log10 binomial P')
     myChart.svg.append('text')
-      .attr('x', 1000)
-      .attr('y', 30)
-      .attr('font-size', 20)
+      .attr('x', \", (dplot.width / 2), \")
+      .attr('y', \", (bounds.y / 2), \")
+      .attr('font-size', 24)
       .attr('font-family', 'Arial')
       .attr('font-weight', 'bold')
       .style('fill', 'black')
@@ -208,10 +215,10 @@ d1\$setTemplate(afterScript = paste0(\"
     \", labels.string, \"
     \", lines.string, \"
     myChart.svg.append('line')
-      .attr('x1', \", (90 + 1850), \")
-      .attr('y1', 50)
-      .attr('x2', \", (90 + 1850), \")
-      .attr('y2', 650)
+      .attr('x1', \", (bounds.x + bounds.width), \")
+      .attr('y1', \", bounds.y, \")
+      .attr('x2', \", (bounds.x + bounds.width), \")
+      .attr('y2', \", (bounds.y + bounds.height), \")
       .style('stroke', 'rgb(0,0,0)')
   </script>
 \"))
