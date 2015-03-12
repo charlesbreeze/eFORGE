@@ -48,7 +48,7 @@ sub Chart{
     my $chart = "$lab.chart.pdf";
     my $rfile = "$Rdir/$lab.chart.R";
     #set some colors
-    my ($sig, $msig, $ns, $abline, $tline, $tsline) = ('red', 'palevioletred1', 'steelblue3', 'lightpink1', 'burlywood3', '#e0e0e0'); #alternate msig = pink2
+    my ($sig, $msig, $ns, $abline, $tline) = qw(red palevioletred1 steelblue3 lightpink1 burlywood3); #alternate msig = pink2
 
 
     open my $rfh, ">", $rfile;
@@ -102,7 +102,7 @@ legend('topleft', pch=1, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1,
 
 # Add vertical lines and labels to separate the tissues
 tissues <- c(0, cumsum(summary(tissue.cell.order[,'Tissue'])))
-abline(v=tissues[2:(length(tissues)-1)]+0.5, lty=6, col='$tsline')
+abline(v=tissues[2:(length(tissues)-1)]+0.5, lty=6, col='$tline')
 text((tissues[1:(length(tissues)-1)] + tissues[2:length(tissues)]) / 2 + 0.5, ymax, names(tissues[2:length(tissues)]), col='$tline', adj=1, srt=90, cex=0.8) 
 
 palette('default')
@@ -148,7 +148,7 @@ require(rCharts)
 d1 <- dPlot(
   y = 'Pvalue',
   x = c('Cell'),
-  groups = c('Tissue', 'Cell', 'Probe', 'Number', 'Accession', 'Pvalue'),
+  groups = c('Cell', 'Tissue', 'Accession', 'Pvalue', 'Qvalue', 'Probe'),
   data = results,
   type = 'bubble',
   width = 2000,
@@ -168,23 +168,45 @@ d1\$colorAxis(
    colorSeries = 'Class2',
    palette = c('red', 'pink', 'lightblue'))
 
-# Set default colors for the lines separating the tissue (we need an array here)
-d1\$defaultColors(rep('#e0e0e0', 2))
-
-# Include a layer with new axes to show the lines separating the tissues
-d1\$layer(
-  x = 'tissue',
-  y = 'y',
-  groups = c('y', 'tissue'),
-  data = data.frame(tissue = rep(tissues[2:(length(tissues))]/max(tissues)*100, each=2), y = rep(c(-10,20), length(tissues)-1), col=rep(1, 2*(length(tissues)-1))),
-  type = 'line',
-  lineWeight = 1,
-  xAxis = list(   type = 'addMeasureAxis', overrideMin=0, overrideMax=100),
-  yAxis = list(   type = 'addMeasureAxis', overrideMin=0, overrideMax=10)
-)
-
 # Include title
 d1\$addParams(title='$label overlaps with $data DHS')
+
+labels.string = paste(paste0(\"
+    myChart.svg.append('text')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('font-size', 14)
+      .style('fill', '#CDAA7D')
+      .attr('transform', 'translate(\", (89 + 1850 * (tissues[1:(length(tissues)-1)] +  tissues[2:length(tissues)]) / (2 * max(tissues))), \",60) rotate(90)')
+      .attr('text-anchor', 'top')
+      .text('\", names(tissues[2:length(tissues)]), \"')
+\"), collapse='')
+
+lines.string = paste(paste0(\"
+    myChart.svg.append('line')
+      .attr('x1', \", (90 + 1850 * tissues[2:(length(tissues)-1)]/ max(tissues)), \")
+      .attr('y1', 50)
+      .attr('x2', \", (90 + 1850 * tissues[2:(length(tissues)-1)]/ max(tissues)), \")
+      .attr('y2', 650)
+      .style('stroke', 'rgb(205,170,125)')
+      .style('stroke-dasharray', '10,3,3,3')
+\"), collapse='')
+
+d1\$setTemplate(afterScript = paste0(\"
+  <script>
+    myChart.draw()
+    myChart.axes[2].titleShape.text('-log10 binomial P')
+    \", labels.string, \"
+    \", lines.string, \"
+    myChart.svg.append('line')
+      .attr('x1', \", (90 + 1850), \")
+      .attr('y1', 50)
+      .attr('x2', \", (90 + 1850), \")
+      .attr('y2', 650)
+      .style('stroke', 'rgb(0,0,0)')
+  </script>
+\"))
+
 
 d1\$save('$chart', cdn = F)\n";
 
