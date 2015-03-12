@@ -59,7 +59,7 @@ $t2 = sprintf("%.2f", $t2);
 results<-read.table('$filename', header=TRUE,sep='\\t')
 
 # Class splits the data into non-significant, marginally significant and significant according to $t1 and $t2 (in -log10 scale)
-results\$Class <- cut(results\$Pvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE, include.lowest=TRUE)
+results\$Class <- cut(results\$Pvalue, breaks =c(0, $t2, $t1, 1)/length(unique(results[,'Tissue'])), labels=FALSE, include.lowest=TRUE)
 
 # Class splits the data into non-significant, marginally significant and significant according to q-value (B-Y FDR adjusted)
 results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE, include.lowest=TRUE)
@@ -81,12 +81,10 @@ plot(NA,ylab='-log10 binomial P', xlab='', main='MVPs in DNase1 sites (probably 
 abline(h=par('yaxp')[1]:par('yaxp')[2],lty=1, lwd=0.1, col='#e0e0e0')
 
 # Add points (internal color first)
-palette(c('white', '$msig', '$sig'))
 palette(c('$sig', '$msig', 'white'))
 points(results\$Cell, -log10(results\$Pvalue), pch=19, col = results\$Class2, xaxt='n')
 
 # Add contour to the points
-palette(c('$ns', '$msig', 'black'))
 palette(c('black', '$msig', '$ns'))
 points(results\$Cell, -log10(results\$Pvalue), pch=1, col = results\$Class2, xaxt='n')
 
@@ -134,7 +132,7 @@ sub dChart{
 results<-read.table(\"$filename\", header = TRUE, sep=\"\\t\")
 
 # Class splits the data into non-significant, marginally significant and significant according to $t1 and $t2 (in -log10 scale)
-results\$Class <- cut(results\$Pvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE, include.lowest=TRUE)
+results\$Class <- cut(results\$Pvalue, breaks =c(0, $t2, $t1, 1)/length(unique(results[,'Tissue'])), labels=FALSE, include.lowest=TRUE)
 
 # Class splits the data into non-significant, marginally significant and significant according to q-value (B-Y FDR adjusted)
 results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE, include.lowest=TRUE)
