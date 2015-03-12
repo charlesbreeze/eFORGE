@@ -48,7 +48,7 @@ sub Chart{
     my $chart = "$lab.chart.pdf";
     my $rfile = "$Rdir/$lab.chart.R";
     #set some colors
-    my ($sig, $msig, $ns, $abline, $tline) = qw(red palevioletred1 steelblue3 lightpink1 burlywood3); #alternate msig = pink2
+    my ($sig, $msig, $ns, $abline, $tline) = qw(red palevioletred1 steelblue3 lightpink1 brown); #alternate msig = pink2
 
 
     open my $rfh, ">", $rfile;
@@ -73,9 +73,9 @@ results\$Cell <- factor(results\$Cell, levels=tissue.cell.order[,2])
 pdf('$chart', width=22.4, height=8)
 ymax = max(-log10(results\$Pvalue), na.rm=TRUE)*1.1
 ymin = -0.1
-par(mar=c(11.5,4,3,1)+0.1)
-plot(NA,ylab='-log10 binomial P', xlab='', main='MVPs in DNase1 sites (probably TF sites) in cell lines for $data $label',
-    ylim=c(ymin,ymax), las=2, pch=19, col = results\$Class2, xaxt='n', xlim=c(0,length(levels(results\$Cell))))
+par(mar=c(15.5,4,3,1)+0.1)
+plot(NA,ylab='', xlab='', main='MVPs in DNase1 sites (probably TF sites) in cell lines for $data $label',
+    ylim=c(ymin,ymax), las=2, pch=19, col = results\$Class2, xaxt='n', xlim=c(0,length(levels(results\$Cell))), cex.main=2)
 
 # Add horizontal guide lines for the Y-axis
 abline(h=par('yaxp')[1]:par('yaxp')[2],lty=1, lwd=0.1, col='#e0e0e0')
@@ -94,8 +94,9 @@ palette(c('black', '$msig', '$ns'))
 points(results\$Cell, -log10(results\$Pvalue), pch=1, col = results\$Class2, xaxt='n')
 
 # Add X-axis
-axis(1, seq(1,length(levels(results\$Cell))), labels=levels(results\$Cell), las=2, cex.axis=0.7)
-mtext(1, text='Cell', line=7, cex=1.2)
+axis(1, seq(1,length(levels(results\$Cell))), labels=levels(results\$Cell), las=2, cex.axis=0.9)
+mtext(1, text='Cell', line=14, cex=1.4)
+mtext(2, text='-log10 binomial p-value', line=2, cex=1.4)
 
 # Add legend (internal color first)
 palette(c('white', '$msig', '$sig'))
@@ -146,7 +147,7 @@ tissues <- c(0, cumsum(summary(tissue.cell.order[,'Tissue'])))
 
 require(rCharts)
 
-dplot.height=1000
+dplot.height=900
 dplot.width=2000
 bounds.x=60
 bounds.y=50
@@ -166,7 +167,7 @@ d1 <- dPlot(
   id = 'chart.$lab'
 )
 
-# Force the order on te X-axis
+# Force the order on the X-axis
 d1\$xAxis( type = 'addCategoryAxis', grouporderRule = 'Cell', orderRule = tissue.cell.order[,2])
 
 d1\$yAxis( type = 'addMeasureAxis' )
@@ -183,7 +184,7 @@ labels.string = paste(paste0(\"
       .attr('y', 0)
       .attr('font-size', 20)
       .attr('font-family', 'Arial')
-      .style('fill', '#CDAA7D')
+      .style('fill', 'brown')
       .attr('transform', 'translate(\", (bounds.x - 5 + bounds.width * (tissues[1:(length(tissues)-1)] +  tissues[2:length(tissues)]) / (2 * max(tissues))), \",60) rotate(90)')
       .attr('text-anchor', 'top')
       .text('\", names(tissues[2:length(tissues)]), \"')
@@ -195,14 +196,18 @@ lines.string = paste(paste0(\"
       .attr('y1', 50)
       .attr('x2', \", (bounds.x + bounds.width * tissues[2:(length(tissues)-1)]/ max(tissues)), \")
       .attr('y2', \", (50 + bounds.height), \")
-      .style('stroke', 'rgb(205,170,125)')
+      .style('stroke', 'brown')
       .style('stroke-dasharray', '10,3,3,3')
 \"), collapse='')
 
 d1\$setTemplate(afterScript = paste0(\"
   <script>
     myChart.draw()
-    myChart.axes[2].titleShape.text('-log10 binomial P')
+    myChart.axes[1].titleShape
+        .style('font-size', 20)
+    myChart.axes[2].titleShape
+        .style('font-size', 20)
+        .text('-log10 binomial p-value')
     myChart.svg.append('text')
       .attr('x', \", (dplot.width / 2), \")
       .attr('y', \", (bounds.y / 2), \")
