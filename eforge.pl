@@ -179,7 +179,8 @@ my $bkgd_label = {
 
 my $bkgd = '450k'; # Default value
 my ($data, $peaks, $label, $file, $format, $min_mvps, $bkgrdstat, $noplot, $reps,
-    $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, $out_dir, @mvplist, $web);
+    $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, $out_dir, @mvplist,
+    $web, $autoopen);
 
 GetOptions (
     'data=s'     => \$data,
@@ -200,6 +201,7 @@ GetOptions (
     'filter=f'   => \$filter,
     'out_dir=s'  => \$out_dir,
     'web'        => \$web,
+    'autoopen'   => \$autoopen,
     'help|h|?'   => \$help,
     'man|m'      => \$man,
 
@@ -519,3 +521,9 @@ unless (defined $noplot){
   }
 
 warn "[".scalar(localtime())."] Done.\n";
+
+if ($autoopen) {
+    system("open $out_dir/$lab.table.html");
+    system("open $out_dir/$lab.dchart.html");
+    system("open $out_dir/$lab.chart.pdf");
+}
