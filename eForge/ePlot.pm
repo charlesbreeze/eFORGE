@@ -211,11 +211,20 @@ d1\$setTemplate(afterScript = paste0(\"
 d1\$save('$chart', cdn = F)\n";
 
     system("R", "--no-save", "--quiet", "--slave", "--file=$rfile");
-    if ($web) {
-        system("sed", "-e", "s/src='.*\\\/js/src='\\\/libraries\\\/dimple\\\/js/", "-i\"\"", "$resultsdir/$chart");
-      }
 
-  }
+    if ($web) {
+        open(FILE, "$resultsdir/$chart") or die;
+        my @lines = <FILE>;
+        close(FILE);
+        open(FILE, ">", "$resultsdir/$chart") or die;        
+        foreach my $line (@lines) {
+            $line =~ s/src='.*\/js/src='\/libraries\/dimple\/js/;
+            print FILE $line;
+        }
+        close(FILE);
+    }
+
+}
 
 
 =head2 table
@@ -243,11 +252,22 @@ dt <- dTable(
     width = '680px'
 )
 dt\$save('$chart', cdn = F)\n";
+
     system("R", "--no-save", "--quiet", "--slave", "--file=$rfile");
+
     if ($web) {
-        system "sed -e \"s/href='.*\\\/css/href='\\\/libraries\\\/datatables\\\/css/; s/src='.*\\\/js/src='\\\/libraries\\\/datatables\\\/js/\" -i\"\" $resultsdir/$chart";
-      }
-  }
+        open(FILE, "$resultsdir/$chart") or die;
+        my @lines = <FILE>;
+        close(FILE);
+        open(FILE, ">", "$resultsdir/$chart") or die;        
+        foreach my $line (@lines) {
+            $line =~ s/href='.*\/css/href='\/libraries\/datatables\/css/;
+            $line =~ s/src='.*\/js/src='\/libraries\/datatables\/js/;
+            print FILE $line;
+        }
+        close(FILE);
+    }
+}
 
 
 =head1 AUTHOR
