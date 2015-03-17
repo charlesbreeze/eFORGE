@@ -35,14 +35,9 @@ Just test the code
 
 and install the missing packages using cpan.
 
-    sudo cpan i Sort::Naturally
-    sudo cpan i Config::IniFiles
+    sudo cpan -i Sort::Naturally
+    sudo cpan -i Config::IniFiles
     sudo cpan -i Data::UUID
-    sudo cpan -i Module::Build
-    sudo cpan -i Params::Validate
-
-!! Note that the original version required DateTime and that it did not install cleanly. That
-dependency is now gone and we use the Data::UUID to get a unique ID for each run.
 
 2.c. Install R and R packages rjson, rCharts and RSQLite (for the log):
 
@@ -77,42 +72,57 @@ server by the server itself.
 
 3.b. Create some directories for hosting the code, log and result files:
 
-    sudo mkdir /var/www/bin         # to hold the code
-    sudo mkdir /var/www/log         # to hold the log
-    sudo chown apache /var/www/log  # the user under which you run apache (see the line "User" in
-                                    # /etc/httpd/conf/httpd.conf)
-    sudo mkdir /var/www/html/files  # to hold the result files
-    sudo chown apache /var/www/html/files   # the user under which you run apache (see the line
-                                            # "User" in /etc/httpd/conf/httpd.conf)
+    sudo mkdir /var/www/eFORGE/
+    cd /var/www/eFORGE/
+    sudo mkdir -p bin log cgi-bin html html/files
+    sudo chown apache log html/files # the user under which you run apache (see the line "User" in
+                                     # /etc/httpd/conf/httpd.conf)
 
 3.c. Copy the webserver files to the right directories 
 
-    sudo rsync -avPL ~/eFORGE/webserver/cgi-bin/ /var/www/cgi-bin/
-    sudo rsync -avPL ~/eFORGE/webserver/bin/ /var/www/bin/
-    sudo rsync -avPL ~/eFORGE/webserver/html/ /var/www/html/
+    sudo rsync -avPL ~/eFORGE/webserver/cgi-bin/ /var/www/eFORGE/cgi-bin/
+    sudo rsync -avPL ~/eFORGE/webserver/bin/ /var/www/eFORGE/bin/
+    sudo rsync -avPL ~/eFORGE/webserver/html/ /var/www/eFORGE/html/
+    sudo rsync -avPL ~/eFORGE/eforge.db /var/www/eFORGE/bin/
+    sudo rsync -avPL ~/eFORGE/mvp_450k_bins /var/www/eFORGE/bin/
+    sudo rsync -avPL ~/eFORGE/mvp_27k_bins /var/www/eFORGE/bin/
 
 3.e. Add links to the database files for the Downloads page:
 
-    cd /var/www/html/files
+    cd /var/www/eFORGE/html/files
     sudo ln -s ../../bin/eforge.db .
     sudo ln -s ../../bin/mvp_450k_bins .
     sudo ln -s ../../bin/mvp_27k_bins .
 
-3.f. Configure Apache to forward all "directory" requests to the eFORGE cgi:
+3.f. Configure an Apache VirtualHost for eFORGE:
 
-    sudo vi /etc/httpd/conf.d/dir_module.conf
+    cat > /etc/http/conf.d/eforge.conf
+<VirtualHost *:80>
+    ServerName eforge.cs.ucl.ac.uk
+    DocumentRoot /var/www/eFORGE/html
+    ScriptAlias /cgi-bin/  /var/www/eFORGE/cgi-bin/
 
-    #
-    # DirectoryIndex: sets the file that Apache will serve if a directory
-    # is requested.
-    #
     <IfModule dir_module>
         DirectoryIndex index.html /cgi-bin/index.pl
     </IfModule>
 
+    <Directory "/var/www/eFORGE/html">
+        Order allow,deny
+        Allow from all
+    </Directory>
+
+    <Directory "/var/www/eFORGE/cgi-bin">
+        AllowOverride None
+        Options None
+        Order allow,deny
+        Allow from all
+    </Directory>
+</VirtualHost>
+
+
 3.g. Copy the rCharts libraries to the html path: 
 
-    sudo rsync -avP /usr/lib64/R/library/rCharts/libraries /var/www/html/
+    sudo rsync -avP /usr/lib64/R/library/rCharts/libraries /var/www/eFORGE/html/
 
 3.h Re-start Apache 
 
