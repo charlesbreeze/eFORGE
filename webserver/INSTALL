@@ -38,6 +38,7 @@ and install the missing packages using cpan.
     sudo cpan -i Sort::Naturally
     sudo cpan -i Config::IniFiles
     sudo cpan -i Data::UUID
+    sudo cpan -i Statistics::Multtest
 
 2.c. Install R and R packages rjson, rCharts and RSQLite (for the log):
 
