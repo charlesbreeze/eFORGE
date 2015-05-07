@@ -1,7 +1,11 @@
 eFORGE is the epigenetic equivalent of the FORGE tool. For details of the FORGE analysis approach see documentation in the FORGE web version at
  
 http://www.1000genomes.org/forge-analysis
- 
+
+eFORGE is available as a web tool at 
+
+http://eforge.cs.ucl.ac.uk/
+
 1. The script itself is currently called eforge.pl written in Perl. It has
 the following Perl dependencies.
  
