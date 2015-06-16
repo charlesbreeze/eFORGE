@@ -251,12 +251,18 @@ sub process_bits{
     my @indexes = 0..(@$cells-1);
     foreach my $row (@{$rows}){
         my ($location, $probeid, $sum, $bit_string, $feature, $cpg_island_relationship);
-        if ($data eq "erc"){
-            ($location, $probeid, undef, undef, $bit_string, $sum, $feature, $cpg_island_relationship) =  @$row;
-          }
-        else{
-            ($location, $probeid, $bit_string, $sum, undef, undef, $feature, $cpg_island_relationship) = @$row;
-          }
+          if ($data eq "erc"){
+            ($location, $probeid, undef, undef, $bit_string, $sum, undef, undef, undef, undef, $feature, $cpg_island_relationship) =  @$row;
+	  }
+        elsif ($data eq "encode"){
+            ($location, $probeid, $bit_string, $sum, undef, undef, undef, undef, undef, undef, $feature, $cpg_island_relationship) = @$row;
+	  }
+	  elsif ($data eq "blueprint"){
+            ($location, $probeid, undef, undef, undef, undef, $bit_string, $sum, undef, undef, $feature, $cpg_island_relationship) = @$row;
+	  }
+	  elsif ($data eq "erc2"){
+            ($location, $probeid, undef, undef, undef, undef, undef, undef, $bit_string, $sum, $feature, $cpg_island_relationship) = @$row;
+	  }
         $test{'MVPS'}{$probeid}{'SUM'} = $sum;
         $test{'MVPS'}{$probeid}{'PARAMS'} = join("\t", $feature, $cpg_island_relationship);
         die if (scalar(@$cells) ne length($bit_string));
@@ -376,12 +382,12 @@ sub prox_filter{
 
 =head2 get_cells
 
-Read the correct cell list based on data (erc -encode). Also gets the tissue names for the cells.
+Read the correct cell list based on data (erc, erc2, blueprint or encode). Also gets the tissue names for the cells.
 
 =cut
 
 sub get_cells{
-    # read the correct cell list based on data (erc -encode). Also gets the tissue names for the cells.
+    # read the correct cell list based on data (erc, erc2, blueprint or encode). Also gets the tissue names for the cells.
     my ($data, $dbh) = @_;
 
     my $table = "cells_".$data;

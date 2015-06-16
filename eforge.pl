@@ -35,7 +35,7 @@ eForge functions, plotting options and stats are provided by eForge::eForge, eFo
 
 =item B<data>
 
-Dataset to analyse. Either ENCODE data ('encode') or Roadmap Epigenome data ('erc'). erc by default.
+Dataset to analyse. Either ENCODE data ('encode'), unconsolidated Roadmap Epigenome data ('erc'), consolidated Roadmap Epigenome data ('erc2'), or Blueprint data ('blueprint'). erc by default.
 
 =item B<peaks>
 
@@ -221,7 +221,7 @@ unless (defined $min_mvps) {
     $min_mvps = 5;
 }
 
-# define which data we are dealing with for the bitstrings, erc or encode
+# define which data we are dealing with for the bitstrings, erc, erc2, blueprint or encode
 unless (defined $data ) {
     $data = "erc";
 }
@@ -284,7 +284,7 @@ unless (defined $noproxy) {
     $proxy="1 kb";
 }
 
-my $dsn = "dbi:SQLite:dbname=" . $datadir . "/eforge.db";
+my $dsn = "dbi:SQLite:dbname=" . $datadir . "/eforge_1.1.db";
 my $dbh = DBI->connect($dsn, "", "") or die $DBI::errstr;
 
 # mvps need to come either from a file or a list
