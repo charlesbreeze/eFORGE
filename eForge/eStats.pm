@@ -180,7 +180,6 @@ sub fdr{
 
 =head1 AUTHOR
 
-Charles Breeze, C<< <cbreeze at ebi.ac.uk> >>
 Charles Breeze, C<< <c.breeze at ucl.ac.uk> >>
 
 =head1 BUGS
@@ -207,7 +206,7 @@ You can find documentation for this module with the perldoc command.
 
 eForge::eStats.pm
 
-Copyright (C) 2014  EMBL - European Bioinformatics Institute
+Copyright (C) 2015  EMBL - European Bioinformatics Institute and University College London
 
 This program is free software: you can redistribute it and/or modify it under the terms of
 the GNU General Public License as published by the Free Software Foundation, either version 3
@@ -216,7 +215,7 @@ that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warra
 or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. Neither
 the institution name nor the name eforge.pl can be used to endorse or promote products derived from
 this software without prior written permission. For written permission, please contact
-cbreeze@ebi.ac.uk or c.breeze@ucl.ac.uk . Products derived from this software may not be called eforge.pl nor may eforge.pl
+c.breeze@ucl.ac.uk . Products derived from this software may not be called eforge.pl nor may eforge.pl
 appear in their names without prior written permission of the developers. You should have received
 a copy of the GNU General Public License along with this program.  If not, see http://www.gnu.org/licenses/.
 

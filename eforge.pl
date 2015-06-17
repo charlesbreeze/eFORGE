@@ -129,7 +129,7 @@ Print this perldoc and exit.
 
 eforge.pl Functional analysis of EWAS MVPs
 
-Copyright (C) 2014  EMBL - European Bioinformatics Institute
+Copyright (C) 2015  EMBL - European Bioinformatics Institute and University College London
 
 This program is free software: you can redistribute it and/or modify it under the terms of
 the GNU General Public License as published by the Free Software Foundation, either version 3

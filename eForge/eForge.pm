@@ -460,7 +460,6 @@ Assign any maf, gc, tss values to the percentile bins
 
 =head1 AUTHOR
 
-Charles Breeze, C<< <cbreeze at ebi.ac.uk> >>
 Charles Breeze, C<< <c.breeze at ucl.ac.uk> >>
 
 =head1 SUPPORT
@@ -475,7 +474,7 @@ You can find documentation for this module with the perldoc command.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2014 Charles Breeze.
+Copyright 2015 Charles Breeze.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
