@@ -24,6 +24,7 @@ webserver.
     cd eFORGE
 
     wget http://eforge.cs.ucl.ac.uk/files/eforge.db
+    wget http://eforge.cs.ucl.ac.uk/files/eforge_1.1.db
     wget http://eforge.cs.ucl.ac.uk/files/mvp_450k_bins
     wget http://eforge.cs.ucl.ac.uk/files/mvp_27k_bins
 
@@ -85,6 +86,7 @@ server by the server itself.
     sudo rsync -avPL ~/eFORGE/webserver/bin/ /var/www/eFORGE/bin/
     sudo rsync -avPL ~/eFORGE/webserver/html/ /var/www/eFORGE/html/
     sudo rsync -avPL ~/eFORGE/eforge.db /var/www/eFORGE/bin/
+    sudo rsync -avPL ~/eFORGE/eforge_1.1.db /var/www/eFORGE/bin/
     sudo rsync -avPL ~/eFORGE/mvp_450k_bins /var/www/eFORGE/bin/
     sudo rsync -avPL ~/eFORGE/mvp_27k_bins /var/www/eFORGE/bin/
 
@@ -92,6 +94,7 @@ server by the server itself.
 
     cd /var/www/eFORGE/html/files
     sudo ln -s ../../bin/eforge.db .
+    sudo ln -s ../../bin/eforge_1.1.db .
     sudo ln -s ../../bin/mvp_450k_bins .
     sudo ln -s ../../bin/mvp_27k_bins .
 

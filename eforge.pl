@@ -172,6 +172,8 @@ use Statistics::Multtest qw(BY);
 
 my $cwd = getcwd;
 
+my $dbname = "eforge_1.1.db";
+
 my $bkgd_label = {
     '450k' => 'Illumina Infinium HumanMethylation450 BeadChip',
     '27k' => 'Illumina Infinium HumanMethylation27 BeadChip (450k array subset)',
@@ -284,7 +286,11 @@ unless (defined $noproxy) {
     $proxy="1 kb";
 }
 
-my $dsn = "dbi:SQLite:dbname=" . $datadir . "/eforge_1.1.db";
+
+unless (-s "$datadir/$dbname") {
+    die "Database $dbname not found or empty";
+}
+my $dsn = "dbi:SQLite:dbname=$datadir/$dbname";
 my $dbh = DBI->connect($dsn, "", "") or die $DBI::errstr;
 
 # mvps need to come either from a file or a list

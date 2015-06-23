@@ -963,13 +963,15 @@ sub print_download_page {
     print Template::content_box("Download",
     "The code is available on GitHub:
     <a href=\"https://github.com/charlesbreeze/eFORGE\">https://github.com/charlesbreeze/eFORGE</a>",
-    "You also need to download the <a href=\"$WEB_ROOT_OUTDIR/eforge.db\">eforge.db</a>,
-    <a href=\"$WEB_ROOT_OUTDIR/mvp_450k_bins\">mvp_450k_bins</a> and
-    <a href=\"$WEB_ROOT_OUTDIR/mvp_27k_bins\">mvp_27k_bins</a> files.");
+    "Additional files you will require:
+    <ul><li><a href=\"$WEB_ROOT_OUTDIR/eforge.db\">eforge.db</a> (for eFORGE v1.0)</li>
+    <li><a href=\"$WEB_ROOT_OUTDIR/eforge_1.1.db\">eforge_1.1.db</a> (for eFORGE v1.1)</li>
+    <li><a href=\"$WEB_ROOT_OUTDIR/mvp_450k_bins\">mvp_450k_bins</a></li>
+    <li><a href=\"$WEB_ROOT_OUTDIR/mvp_27k_bins\">mvp_27k_bins</a></li></ul>");
     print Template::content_box("License",
     "<strong>eforge.pl</strong> Functional analysis of EWAS DMPs
        <br \><br \>
-       Copyright (C) 2014  EMBL - European Bioinformatics Institute
+       Copyright (C) [2014-2015]  EMBL - European Bioinformatics Institute and University College London
        <br \><br \>
        This program is free software: you can redistribute it and/or modify it
        under the terms of the GNU General Public License as published by the
