@@ -207,16 +207,18 @@ cg20918393', 10, 60)]),
             ## ================================================================
             th(["Analysis Options", ""]),
             td(["Analyse data from:",
-                radio_group('ref_data', ['erc'], 'erc', 'true', {'erc'=>' Epigenome Roadmap',
-                    'encode'=>' Encode'} )]),
+                radio_group('ref_data', ['erc2'], 'erc2', 'true', {'erc2'=>' Consolidated Roadmap Epigenomics'} )]),
             td(["",
-                radio_group('ref_data', ['encode'], 'erc', 'true', {'erc'=>' Epigenome Roadmap',
-                    'encode'=>' Encode'} )]),
-            td(["Depletion:",
-                checkbox('depletion', '', 'on', '')]),
+                radio_group('ref_data', ['erc'], 'erc2', 'true', {'erc'=>' Roadmap Epigenomics (2012 data)'} )]),
+            td(["",
+                radio_group('ref_data', ['encode'], 'erc2', 'true', {'encode'=>' ENCODE'} )]),
+            td(["",
+                radio_group('ref_data', ['blueprint'], 'erc2', 'true', {'blueprint'=>' Blueprint'} )]),
             td(["Proximity:",
                 popup_menu('proxy', ['none', '1kb'], '1kb', {'1kb'=>'1 kb window',
                     'none'=>'No proxy'})]),
+            td(["Depletion:",
+                checkbox('depletion', '', 'on', '')]),
             td(["Background repetitions (100-1000):",
                 textfield('reps', '1000', 10)]),
             td(["Significance threshold:",
@@ -300,7 +302,7 @@ sub validate_form {
     push(@$validated_args, "--bkgd", param("bkgd"));
 
     my $ref_data = param("ref_data");
-    if (!$ref_data or ($ref_data ne "erc" and $ref_data ne "encode")) {
+    if (!$ref_data or ($ref_data ne "erc2" and $ref_data ne "erc" and $ref_data ne "encode" and $ref_data ne "blueprint")) {
         $ref_data =~ s/\W/_/g;
         push(@error_messages, "Unknown set of analysis data &quot;$ref_data&quot;. Please".
             " specify a valid one.");
