@@ -67,7 +67,10 @@ results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE,
 # Re-order the entries according to tissue first and then cell type/line
 tissue.cell.order <- unique(results[, c('Tissue', 'Cell')])
 tissue.cell.order <- tissue.cell.order[order(tissue.cell.order[,1], tissue.cell.order[,2]), ]
-results\$Cell <- factor(results\$Cell, levels=tissue.cell.order[,2])
+# Collapse into a single string (to support same cell type in different tissues)
+tissue.cell.order2 <- apply(tissue.cell.order, 1, paste, collapse = ' -- ')
+results\$TissueCell <- apply(results[, c('Tissue', 'Cell')], 1, paste, collapse = ' -- ')
+results\$TissueCell <- factor(results\$TissueCell, levels=tissue.cell.order2)
 
 # Plot an empty chart first
 pdf('$chart', width=22.4, height=8)
@@ -75,7 +78,7 @@ ymax = max(-log10(results\$Pvalue), na.rm=TRUE)*1.1
 ymin = -0.1
 par(mar=c(15.5,4,3,1)+0.1)
 plot(NA,ylab='', xlab='', main='MVPs in DNase1 sites (probably TF sites) in cell lines for $data $label',
-    ylim=c(ymin,ymax), las=2, pch=19, col = results\$Class2, xaxt='n', xlim=c(0,length(levels(results\$Cell))), cex.main=2)
+    ylim=c(ymin,ymax), las=2, pch=19, col = results\$Class2, xaxt='n', xlim=c(0,length(levels(results\$TissueCell))), cex.main=2)
 
 # Add horizontal guide lines for the Y-axis
 abline(h=par('yaxp')[1]:par('yaxp')[2],lty=1, lwd=0.1, col='#e0e0e0')
@@ -87,14 +90,14 @@ text((tissues[1:(length(tissues)-1)] + tissues[2:length(tissues)]) / 2 + 0.5, ym
 
 # Add points (internal color first)
 palette(c('$sig', '$msig', 'white'))
-points(results\$Cell, -log10(results\$Pvalue), pch=19, col = results\$Class2, xaxt='n')
+points(results\$TissueCell, -log10(results\$Pvalue), pch=19, col = results\$Class2, xaxt='n')
 
 # Add contour to the points
 palette(c('black', '$msig', '$ns'))
-points(results\$Cell, -log10(results\$Pvalue), pch=1, col = results\$Class2, xaxt='n')
+points(results\$TissueCell, -log10(results\$Pvalue), pch=1, col = results\$Class2, xaxt='n')
 
-# Add X-axis
-axis(1, seq(1,length(levels(results\$Cell))), labels=levels(results\$Cell), las=2, cex.axis=0.9)
+# Add X-axis (use cell name only and not TissueCell)
+axis(1, seq(1,length(tissue.cell.order[,2])), labels=tissue.cell.order[,2], las=2, cex.axis=0.9)
 mtext(1, text='Cell', line=14, cex=1.4)
 mtext(2, text='-log10 binomial p-value', line=2, cex=1.4)
 
@@ -143,6 +146,12 @@ results\$log10pvalue <- -log10(results\$Pvalue)
 # Re-order the entries according to tissue first and then cell type/line
 tissue.cell.order <- unique(results[, c('Tissue', 'Cell')])
 tissue.cell.order <- tissue.cell.order[order(tissue.cell.order[,1], tissue.cell.order[,2]), ]
+# Collapse into a single string (to support same cell type in different tissues)
+tissue.cell.order2 <- apply(tissue.cell.order, 1, paste, collapse = ' -- ')
+results\$TissueCell <- apply(results[, c('Tissue', 'Cell')], 1, paste, collapse = ' -- ')
+results\$TissueCell <- factor(results\$TissueCell, levels=tissue.cell.order2)
+
+# Count number of cell types for each tissue (to be able to draw the vertical separation lines afterwards
 tissues <- c(0, cumsum(summary(tissue.cell.order[,'Tissue'])))
 
 require(rCharts)
@@ -157,8 +166,8 @@ bounds.width=dplot.width - bounds.x - 20
 # Create a dimple plot, showing p-value vs cell, split data by tissue, cell, probe, etc to see individual points instead of aggregate avg
 d1 <- dPlot(
   y = 'log10pvalue',
-  x = c('Cell'),
-  groups = c('Cell', 'Tissue', 'Accession', 'Pvalue', 'Qvalue', 'Probe'),
+  x = c('TissueCell'),
+  groups = c('TissueCell', 'Accession', 'Pvalue', 'Qvalue', 'Probe'),
   data = results,
   type = 'bubble',
   width = dplot.width,
@@ -169,6 +178,7 @@ d1 <- dPlot(
 
 # Force the order on the X-axis
 d1\$xAxis( type = 'addCategoryAxis', grouporderRule = 'Cell', orderRule = tissue.cell.order[,2])
+d1\$xAxis( type = 'addCategoryAxis', grouporderRule = 'TissueCell', orderRule = as.factor(tissue.cell.order2))
 
 d1\$yAxis( type = 'addMeasureAxis' )
 
@@ -178,7 +188,9 @@ d1\$colorAxis(
    colorSeries = 'Class2',
    palette = c('red', 'pink', 'lightblue'))
 
+# Builds a JS string to add labels for tissues
 labels.string = paste(paste0(\"
+    // Adds labels for tissues
     myChart.svg.insert('text', 'g')
       .attr('x', 0)
       .attr('y', 0)
@@ -190,7 +202,9 @@ labels.string = paste(paste0(\"
       .text('\", names(tissues[2:length(tissues)]), \"')
 \"), collapse='')
 
+# Builds a JS string to add vertical lines to separate tissues
 lines.string = paste(paste0(\"
+    // Adds vertical lines between tissues
     myChart.svg.append('line')
       .attr('x1', \", (bounds.x + bounds.width * tissues[2:(length(tissues)-1)]/ max(tissues)), \")
       .attr('y1', 50)
@@ -200,14 +214,33 @@ lines.string = paste(paste0(\"
       .style('stroke-dasharray', '10,3,3,3')
 \"), collapse='')
 
+# Adds some JS to be run after building the plot to get the image we want
 d1\$setTemplate(afterScript = paste0(\"
   <script>
     myChart.draw()
+
+    // Substitutes TissueCell labels in X-axis by Cell labels
+    myChart.axes[1].shapes
+      .selectAll('text')
+        .text(function (d) { 
+           var i;
+           for (i = 0; i < data.length; i += 1) {
+               if (data[i].TissueCell === d) {
+                   return data[i].Cell;
+               }
+           }
+       });
+
+    // Adds title for X-axis
     myChart.axes[1].titleShape
         .style('font-size', 20)
+
+    // Adds title for Y-axis
     myChart.axes[2].titleShape
         .style('font-size', 20)
         .text('-log10 binomial p-value')
+
+    // Adds main title
     myChart.svg.append('text')
       .attr('x', \", (dplot.width / 2), \")
       .attr('y', \", (bounds.y / 2), \")
@@ -219,6 +252,7 @@ d1\$setTemplate(afterScript = paste0(\"
       .text('MVPs in DNase1 sites (probably TF sites) in cell lines for $data $label')
     \", labels.string, \"
     \", lines.string, \"
+    // Adds vertical line at the far right of the plot
     myChart.svg.append('line')
       .attr('x1', \", (bounds.x + bounds.width), \")
       .attr('y1', \", bounds.y, \")
