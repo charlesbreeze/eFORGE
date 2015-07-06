@@ -234,12 +234,13 @@ d1\$save('$chart', cdn = F)\n";
     system("R", "--no-save", "--quiet", "--slave", "--file=$rfile");
 
     if ($web) {
+        $web =~ s/\/$//;
         open(FILE, "$resultsdir/$chart") or die;
         my @lines = <FILE>;
         close(FILE);
         open(FILE, ">", "$resultsdir/$chart") or die;        
         foreach my $line (@lines) {
-            $line =~ s/src='.*\/js/src='\/libraries\/dimple\/js/;
+            $line =~ s/src='.*\/js/src='$web\/libraries\/dimple\/js/;
             print FILE $line;
         }
         close(FILE);
@@ -277,13 +278,14 @@ dt\$save('$chart', cdn = F)\n";
     system("R", "--no-save", "--quiet", "--slave", "--file=$rfile");
 
     if ($web) {
+        $web =~ s/\/$//;
         open(FILE, "$resultsdir/$chart") or die;
         my @lines = <FILE>;
         close(FILE);
         open(FILE, ">", "$resultsdir/$chart") or die;        
         foreach my $line (@lines) {
-            $line =~ s/href='.*\/css/href='\/libraries\/datatables\/css/;
-            $line =~ s/src='.*\/js/src='\/libraries\/datatables\/js/;
+            $line =~ s/href='.*\/css/href='$web\/libraries\/datatables\/css/;
+            $line =~ s/src='.*\/js/src='$web\/libraries\/datatables\/js/;
             print FILE $line;
         }
         close(FILE);

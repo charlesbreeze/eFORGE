@@ -200,7 +200,7 @@ GetOptions (
     'depletion'  => \$depletion,
     'filter=f'   => \$filter,
     'out_dir=s'  => \$out_dir,
-    'web'        => \$web,
+    'web=s'        => \$web,
     'autoopen'   => \$autoopen,
     'help|h|?'   => \$help,
     'man|m'      => \$man,
