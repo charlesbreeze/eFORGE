@@ -95,7 +95,12 @@ server by the server itself.
     sudo ln -s ../../bin/mvp_450k_bins .
     sudo ln -s ../../bin/mvp_27k_bins .
 
-3.f. Configure an Apache VirtualHost for eFORGE:
+3.f. Configure the Apache server
+
+You can choose to either run eFORGE on a VirtualHost (like http://eforge.cs.ucl.ac.uk/) or on a
+folder (like http://blic.cs.ucl.ac.uk/eFORGE).
+
+OPTION 1 -- Configure an Apache VirtualHost for eFORGE:
 
     cat > /etc/http/conf.d/eforge.conf
 <VirtualHost *:80>
@@ -119,6 +124,27 @@ server by the server itself.
         Allow from all
     </Directory>
 </VirtualHost>
+
+
+OPTION 2 -- Configure an Apache VirtualHost for eFORGE:
+
+    cat > /etc/http/conf.d/eforge.conf
+ScriptAlias /eFORGE/cgi-bin/  /var/www/eFORGE/cgi-bin/
+Alias "/eFORGE" "/var/www/eFORGE/html"
+
+<Directory "/var/www/eFORGE/html/">
+    Order allow,deny
+    Allow from all
+
+    DirectoryIndex index.html cgi-bin/index.pl
+</Directory>
+
+<Directory "/var/www/eFORGE/cgi-bin/">
+    AllowOverride None
+    Options None
+    Order allow,deny
+    Allow from all
+</Directory>
 
 
 3.g. Copy the rCharts libraries to the html path: 
