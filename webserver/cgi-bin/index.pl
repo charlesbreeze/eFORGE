@@ -47,7 +47,7 @@ my $STDOUT_FILE = "output.txt";
 my $colour="bright-blue";
 my $plot_colour="#29A6C9";
 
-my $title = "eFORGE";
+my $title = "eFORGE v1.1";
 
 my $breadcrumbs = [
     {"UCL Cancer Institute" => "http://www.ucl.ac.uk/cancer"},
@@ -57,7 +57,7 @@ my $breadcrumbs = [
 
 my $left_menu = [
     {"__logo__" => "$WEB_ROOT/img/logo.jpg"},
-    {"__title__" => "eFORGE"},
+    {"__title__" => $title},
     {"Start" => "$WEB_ROOT/"},
     {"Help" => "$WEB_ROOT/?help"},
     {"Documentation" => "$WEB_ROOT/?documentation"},
@@ -494,7 +494,7 @@ sub run_tool {
             my $web_outdir = get_web_outdir();
             my $url = $q->url(-base=>1)."$web_outdir/index.html";
             my @output = qx"cat $absolute_outdir/$STDOUT_FILE";
-            print INDEX Template::header("eFORGE");
+            print INDEX Template::header($title);
             print INDEX Template::content_box("Done.",
                 "<strong>".join(" ", "perl", "eforge.pl", "-f", "input.txt", @$validated_args).
                     "</strong>",
@@ -638,7 +638,7 @@ sub print_waiting_page {
     my $start = Template::start($title, $breadcrumbs, $left_menu, $colour, $right_column);
     $start =~ s/(\s+<title>)/<noscript><META HTTP-EQUIV="refresh" CONTENT="$REFRESH_TIME;URL=$url" id="reload"><\/noscript>$1/i;
     print $fh $start;
-    print $fh Template::header("eFORGE");
+    print $fh Template::header($title);
     print $fh Template::content_box("<div id=\"status_title\">Running...</div>",
         "<strong>".join(" ", "perl", "eforge.pl", "-f", "input.txt", @$validated_args).
             "</strong>",
@@ -825,7 +825,7 @@ sub print_main_page {
 sub print_help_page {
     print $q->header;
     print Template::start($title, $breadcrumbs, $left_menu, $colour, $right_column);
-    print Template::header("eFORGE &gt; Help");
+    print Template::header("$title &gt; Help");
 
     print_intro_box();
 
@@ -937,7 +937,7 @@ sub print_help_page {
 sub print_documentation_page {
     print $q->header;
     print Template::start($title, $breadcrumbs, $left_menu, $colour, $right_column);
-    print Template::header("eFORGE &gt; Documentation");
+    print Template::header("$title &gt; Documentation");
 
     print Template::content_box("eFORGE analysis tool",
        "The eFORGE (<u>e</u>xperimentally-derived <u>F</u>unctional element <u>O</u>verlap analysis of <u>R</u>e<u>G</u>ions from <u>E</u>WAS) tool performs a Functional Overlap analysis to identify tissue specific signal for a given set of EWAS DMPs.<br \>",
@@ -993,7 +993,7 @@ To estimate false positive rates, 1000 randomly chosen DMP sets for each of a se
 sub print_download_page {
     print $q->header;
     print Template::start($title, $breadcrumbs, $left_menu, $colour, $right_column);
-    print Template::header("eFORGE &gt; Download");
+    print Template::header("$title &gt; Download");
     print Template::content_box("Download",
     "The code is available on GitHub:
     <a href=\"https://github.com/charlesbreeze/eFORGE\">https://github.com/charlesbreeze/eFORGE</a>",
@@ -1042,7 +1042,7 @@ sub print_download_page {
 sub print_about_page {
     print $q->header;
     print Template::start($title, $breadcrumbs, $left_menu, $colour, $right_column);
-    print Template::header("eFORGE &gt; About");
+    print Template::header("$title &gt; About");
     print Template::content_box("eFORGE",
     "eFORGE was developed by <a href=\"http://www.ucl.ac.uk/cancer/medical-genomics/mg_staff\">Charles
     Breeze</a> while on secondment at the
