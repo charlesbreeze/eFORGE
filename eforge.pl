@@ -168,7 +168,7 @@ use eForge::ePlot;
 use eForge::eForge;
 use Data::UUID;
 use Statistics::Multtest qw(BY);
-
+#use Data::Dump 'dump';
 
 my $cwd = getcwd;
 
@@ -427,6 +427,7 @@ foreach my $bkgrd (keys %{$picks}) {
     warn "[".scalar(localtime())."] Repetition $num out of ".$reps."\n" if (++$num%100 == 0);
     #$rows = get_bits(\@{$$picks{$bkgrd}}, $sth);
     $rows = get_bits(\@{$$picks{$bkgrd}}, $dbh);
+    #dump @$rows;
     $backmvps += scalar @$rows; #$backmvps is the total number of background probes analysed
     unless (scalar @$rows == scalar @foundmvps) {
         warn "Background " . $bkgrd . " only " . scalar @$rows . " probes out of " . scalar @foundmvps . "\n";
