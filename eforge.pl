@@ -309,7 +309,7 @@ if (defined $file) {
     }
     my $sth = $dbh->prepare("SELECT probeid FROM bits WHERE location = ?");
     open my $fh, "<", $file or die "cannot open file $file : $!";
-    @$mvps = process_file($fh, $format, $sth, $filter);
+    $mvps = process_file($fh, $format, $sth, $filter);
 
 } elsif (@mvplist) {
     @$mvps = split(/,/,join(',',@mvplist));

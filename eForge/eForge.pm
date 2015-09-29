@@ -75,77 +75,49 @@ Processes various file formats.
 
 sub process_file {
     my ($fh, $format, $sth, $filter) = @_;
-    my @snps;
-    if ($format =~ /probeid/){
-      while (<$fh>){
+    my $probe_ids = [];
+
+    if ($format =~ /^probe/i) {
+        while (<$fh>) {
             next if /^#/;
             chomp;
-            my $rs;
+            my $probe_id;
             if (defined $filter) {
                 my $pval;
-                ($rs, $pval) = split /\s+/, $_;
+                ($probe_id, $pval) = split /\s+/, $_;
                 next unless $pval >= $filter;
-              }
-            else{
-                ($rs, undef) = split /\s+/, $_; # remove anything that is not supposed to be there :-)
-              }
-            my @rsid = split /\:/, $rs;
-            my $rsid = pop @rsid; # take the last one for want of a better idea.
-            push @snps, $rsid;
-          }
-      }
-    elsif ($format =~ /ian/){
-      while (<$fh>){
-            my ($chr, $beg, $end, $rsid, $p, $pval) = split "\t", $_;
-            if (defined $filter) {
-                next unless $pval >= $filter;
-              }
-            my @rsid = split /\:/, $rsid; # to deal with multiple rsids
-            $rsid = pop @rsid; # take the last one for want of a better idea. Can't take all as they are the same thing.
-            push @snps, $rsid;
-          }
-      }
-    elsif ($format =~ /vcf/){
-      while (<$fh>){
-            next if /^#/;
-            my ($chr, $beg, $rsid) = split "\t", $_;
+            } else {
+                ($probe_id, undef) = split /\s+/, $_; # remove anything that is not supposed to be there :-)
+            }
+            push @$probe_ids, $probe_id;
+        }
+
+    } elsif ($format =~ /^bed/i) {
+        while (<$fh>) {
+            next if /^track/;
+            chomp;
+            my ($chr, $beg, $end) = split "\t", $_;
+            next if (!defined($end));
             unless ($chr =~ /^chr/){
                 $chr = "chr". $chr;
-              }
-            if ($rsid =~ /^cg\d+/){
-                push @snps, $rsid;
-              }
-            else {
-                my $loc = "$chr:$beg-$beg";
-                #get the rsid from the db
-                $rsid = fetch_rsid($loc, $sth);
-                push @snps, $rsid if defined $rsid;
-              }
-          }
-      }
-    elsif ($format =~ /bed|tabix/){
-      while (<$fh>){
-            my $loc;
-            if ($format =~/bed/){
-                next if /^track/;
-                chomp;
-                my ($chr, $beg, $end) = split "\t", $_;
-                unless ($chr =~ /^chr/){
-                    $chr = "chr". $chr;
-                  }
-                $loc = "$chr:$beg-$beg";
-              }
-            elsif ($format =~ /tabix/){
-                chomp;
-                $loc = $_;
-              }
-            #get the $rsid from the db
-            my $rsid = fetch_rsid($loc, $sth);
-            push @snps, $rsid if defined $rsid;
-          }
-      }
-    return @snps;
-  }
+            }
+            my $loc = "$chr:$beg-$beg";
+            #get the $probe_id from the db
+            my $probe_id = fetch_probe_id($loc, $sth);
+            push @$probe_ids, $probe_id if defined $probe_id;
+        }
+
+    } elsif ($format =~ /^tabix/i) {
+        while (<$fh>) {
+            chomp;
+            my $loc = $_;
+            #get the $probe_id from the db
+            my $probe_id = fetch_probe_id($loc, $sth);
+            push @$probe_ids, $probe_id if defined $probe_id;
+        }
+    }
+    return $probe_ids;
+}
 
 =head2 match
 
@@ -320,23 +292,22 @@ gets the rsid for a SNP where a location is given.
 
 =cut
 
-sub fetch_rsid{
+sub fetch_probe_id {
     #gets the rsid for a SNP where a location is given
     my ($loc, $sth) = @_;
     $sth->execute($loc);
     my $result = $sth->fetchall_arrayref();
-    my $rsid;
-    foreach my $row (@{$result}){
-        $rsid = $$row[0];
-      }
+    my $probe_id;
+    foreach my $row (@{$result}) {
+        $probe_id = $$row[0];
+    }
     $sth->finish();
-    if (defined $rsid &&$rsid =~ /^cg\d+/){
-        return $rsid;
-      }
-    else{
+    if (defined $probe_id &&$rsid =~ /^cg\d+/) {
+        return $probe_id;
+    } else {
         return "no PROBEID match for $loc";
-      }
-  }
+    }
+}
 
 =head2 prox_filter
 
