@@ -302,7 +302,7 @@ sub fetch_probe_id {
         $probe_id = $$row[0];
     }
     $sth->finish();
-    if (defined $probe_id &&$rsid =~ /^cg\d+/) {
+    if (defined $probe_id && $probe_id =~ /^cg\d+/) {
         return $probe_id;
     } else {
         return "no PROBEID match for $loc";
