@@ -74,7 +74,7 @@ Processes various file formats.
 =cut
 
 sub process_file {
-    my ($fh, $format, $sth, $filter) = @_;
+    my ($fh, $format, $dbh, $filter) = @_;
     my $probe_ids = [];
 
     if ($format =~ /^probe/i) {
@@ -103,7 +103,7 @@ sub process_file {
             }
             my $loc = "$chr:$beg-$beg";
             #get the $probe_id from the db
-            my $probe_id = fetch_probe_id($loc, $sth);
+            my $probe_id = fetch_probe_id($dbh, $loc);
             push @$probe_ids, $probe_id if defined $probe_id;
         }
 
@@ -112,7 +112,7 @@ sub process_file {
             chomp;
             my $loc = $_;
             #get the $probe_id from the db
-            my $probe_id = fetch_probe_id($loc, $sth);
+            my $probe_id = fetch_probe_id($dbh, $loc);
             push @$probe_ids, $probe_id if defined $probe_id;
         }
     }
@@ -294,7 +294,10 @@ gets the rsid for a SNP where a location is given.
 
 sub fetch_probe_id {
     #gets the rsid for a SNP where a location is given
-    my ($loc, $sth) = @_;
+    my ($dbh, $loc) = @_;
+
+    my $sth = $dbh->prepare_cached("SELECT probeid FROM bits WHERE location = ?");
+
     $sth->execute($loc);
     my $result = $sth->fetchall_arrayref();
     my $probe_id;

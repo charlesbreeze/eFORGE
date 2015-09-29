@@ -307,9 +307,8 @@ if (defined $file) {
             warn "You have specified p value filtering, but this isn't implemented for files of format $format. No filtering will happen."
 	    }
     }
-    my $sth = $dbh->prepare("SELECT probeid FROM bits WHERE location = ?");
     open my $fh, "<", $file or die "cannot open file $file : $!";
-    $mvps = process_file($fh, $format, $sth, $filter);
+    $mvps = process_file($fh, $format, $dbh, $filter);
 
 } elsif (@mvplist) {
     @$mvps = split(/,/,join(',',@mvplist));
