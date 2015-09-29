@@ -294,7 +294,7 @@ my $dsn = "dbi:SQLite:dbname=$datadir/$dbname";
 my $dbh = DBI->connect($dsn, "", "") or die $DBI::errstr;
 
 # mvps need to come either from a file or a list
-my @mvps;
+my $mvps;
 
 
 # A series of data file formats to accept.
@@ -309,23 +309,23 @@ if (defined $file) {
     }
     my $sth = $dbh->prepare("SELECT probeid FROM bits WHERE location = ?");
     open my $fh, "<", $file or die "cannot open file $file : $!";
-    @mvps = process_file($fh, $format, $sth, $filter);
+    @$mvps = process_file($fh, $format, $sth, $filter);
 
 } elsif (@mvplist) {
-    @mvps = split(/,/,join(',',@mvplist));
+    @$mvps = split(/,/,join(',',@mvplist));
 
 } else{
     # Test MVPs from Liu Y et al. Nat Biotechnol 2013  Pulmonary_function.snps.bed (*put EWAS bedfile here)
     # If no options are given it will run on the default set of MVPs
     warn "No probe input given, so running on default set of probes, a set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014.";
-    @mvps = qw(cg13430807 cg10480329 cg06297318 cg19301114 cg23244761 cg26872907 cg18066690 cg04468741 cg16636767 cg10624395 cg20918393);
+    @$mvps = qw(cg13430807 cg10480329 cg06297318 cg19301114 cg23244761 cg26872907 cg18066690 cg04468741 cg16636767 cg10624395 cg20918393);
 }
 
 
 # Remove redundancy in the input
 
 my %nonredundant;
-foreach my $mvp (@mvps) {
+foreach my $mvp (@$mvps) {
     $nonredundant{$mvp}++;
 }
 
@@ -336,25 +336,25 @@ foreach my $mvp (keys %nonredundant) {
     }
 }
 
-@mvps = keys %nonredundant;
-my @origmvps = @mvps;
+@$mvps = keys %nonredundant;
+my @origmvps = @$mvps;
 
 
 #######!!!!!### proximity filtering starts below:
 
 my ($prox_excluded, $output, $input);
 unless(defined $noproxy) {
-    $input = scalar @mvps;
-    ($prox_excluded, @mvps) = prox_filter(\@mvps, $dbh);
+    $input = scalar @$mvps;
+    ($prox_excluded, @$mvps) = prox_filter($mvps, $dbh);
     while (my ($excluded_mvp, $mvp) = each %$prox_excluded) {
         warn "$excluded_mvp excluded for proximity (1 kb) with $mvp\n";
     }
 
-    $output = scalar @mvps;
+    $output = scalar @$mvps;
 }
 
 # Check we have enough MVPs
-if (scalar @mvps < $min_mvps) {
+if (scalar @$mvps < $min_mvps) {
     die "Fewer than $min_mvps MVPs. Analysis not run\n";
 }
 
@@ -363,7 +363,7 @@ if (scalar @mvps < $min_mvps) {
 my ($cells, $tissues) = get_cells($data, $dbh);
 
 # get the bit strings for the test mvps from the database file
-my $rows = get_bits(\@mvps, $dbh);
+my $rows = get_bits($mvps, $dbh);
 
 # unpack the bitstrings and store the overlaps by cell.
 my $test = process_bits($rows, $cells, $data);
@@ -395,7 +395,7 @@ if (scalar @missing > 0) {
 }
 if (defined $proxy) {
     if ($output < $input) {
-        warn "For $label, $input MVPs provided, " . scalar @mvps . " retained, " . scalar @missing . " not analysed, "  . scalar(keys %$prox_excluded) . " proximity filtered at 1 kb\n";
+        warn "For $label, $input MVPs provided, " . scalar @$mvps . " retained, " . scalar @missing . " not analysed, "  . scalar(keys %$prox_excluded) . " proximity filtered at 1 kb\n";
     }
 }
 
