@@ -25,7 +25,7 @@ my $debug = 0;
 ##
 
 # The location of the HTML pages for this server on the filesystem
-my $DOCUMENT_ROOT = "/var/www/eFORGE/html";
+my $DOCUMENT_ROOT = "/var/www/eFORGE.v1.1/html";
 
 # The base URL (without the server name) for this server. For instance:
 # Running on http://server.org/ -> $WEB_ROOT = ""
