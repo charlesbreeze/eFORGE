@@ -1,9 +1,5 @@
 package eForge::eStats;
 
-use 5.010;
-use strict;
-use warnings FATAL => 'all';
-
 =head1 NAME
 
 eForge::eStats - Stats for use in eForge
@@ -13,8 +9,6 @@ eForge::eStats - Stats for use in eForge
 Version 0.01
 
 =head1 LICENCE AND COPYRIGHT
-
-eforge.pl Functional analysis of EWAS MVPs
 
 Copyright (C) [2014-2015] EMBL - European Bioinformatics Institute and University College London
 
@@ -34,11 +28,20 @@ if not, write to the Free Software Foundation, Inc.,
 
 =head1 CONTACT
 
-Charles Breeze <c.breeze@ucl.ac.uk>
+Charles Breeze, C<< <c.breeze at ucl.ac.uk> >>
 
-Javier Herrero <javier.herrero@ucl.ac.uk>
+Javier Herrero, C<< <javier.herrero at ucl.ac.uk> >>
+
+=head1 ACKNOWLEDGEMENTS
+
+This software is based on the FORGE tool developed by Ian Dunham at the EMBL-EBI
 
 =cut
+
+
+use 5.010;
+use strict;
+use warnings FATAL => 'all';
 
 our $VERSION = '0.01';
 

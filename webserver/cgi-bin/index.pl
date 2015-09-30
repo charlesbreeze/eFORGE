@@ -31,7 +31,7 @@ my $DOCUMENT_ROOT = "/var/www/eFORGE/html";
 # Running on http://server.org/ -> $WEB_ROOT = ""
 # Running on http://server.org/tool/ -> $WEB_ROOT = "/tool"
 # IMPORTANT - DO NOT INCLUDE A TRAILING '/'
-my $WEB_ROOT = "";
+my $WEB_ROOT = "/eFORGE.v1.1";
 
 # The location of the files w.r.t. the base URL (DO NOT CHANGE)
 my $WEB_OUTDIR = "/files";
@@ -49,6 +49,10 @@ my $plot_colour="#29A6C9";
 
 my $title = "eFORGE v1.1";
 
+my $bkgd_conf = read_conf_file("$BIN_DIR/bkgd.conf");
+
+my $ref_data_conf = read_conf_file("$BIN_DIR/data.conf");
+
 my $breadcrumbs = [
     {"UCL Cancer Institute" => "http://www.ucl.ac.uk/cancer"},
     {"Cancer Biology" => "http://www.ucl.ac.uk/cancer/rescancerbiol/cancerbiology"},
@@ -63,6 +67,8 @@ my $left_menu = [
     {"Documentation" => "$WEB_ROOT/?documentation"},
     {"Download" => "$WEB_ROOT/?download"},
     {"About" => "$WEB_ROOT/?about"},
+    {"__title__" => "Previous versions"},
+    {"eFORGE v1.0" => "http://eforge.cs.ucl.ac.uk/eFORGE.v1.0"},
     {"__title__" => "UCL Cancer Institute"},
     {"Home" => "http://www.ucl.ac.uk/cancer/"},
     {"Medical Genomics" => "http://www.ucl.ac.uk/cancer/medical-genomics/medgenhome"},
@@ -103,6 +109,29 @@ if (param("keywords") and param("keywords") eq "help") {
 
 exit(0);
 
+sub read_conf_file {
+    my ($file) = @_;
+    open(CONF, $file) or die;
+    my $default;
+    my $values;
+    my $labels;
+    while (<CONF>) {
+        chomp;
+        if (/ \- \[([^\]]+)\]\s+(.+)/) {
+            my $key = $1;
+            my $label = $2;
+            push(@$values, $key);
+            $labels->{$key} = $label;
+        }
+    }
+    close(CONF);
+    my $conf_hash = {
+        'default' =>  $values->[0],
+        'values' => $values,
+        'labels' => $labels,
+    };
+    return $conf_hash;
+}
 
 =head2 get_outdir
 
@@ -229,8 +258,7 @@ cg20918393', 10, 60)]),
             td(["Name (optional):",
                 textfield('label', '', 58)]),
             td(["Platform:",
-                popup_menu('bkgd', ['450k', '27k'], '450k', {'450k'=>'Illumina 450K methylation array',
-                    '27k'=>'Illumina 27k methylation array'})]),
+                popup_menu('bkgd', $bkgd_conf->{'values'}, $bkgd_conf->{'default'}, $bkgd_conf->{'labels'})]),
 
             th({-colspan=>2}, ["<hr>"]),
 
@@ -239,13 +267,7 @@ cg20918393', 10, 60)]),
             ## ================================================================
             th(["Analysis Options", ""]),
             td(["Analyse data from:",
-                radio_group('ref_data', ['erc2'], 'erc2', 'true', {'erc2'=>' Consolidated Roadmap Epigenomics'} )]),
-            td(["",
-                radio_group('ref_data', ['erc'], 'erc2', 'true', {'erc'=>' Roadmap Epigenomics (2012 data)'} )]),
-            td(["",
-                radio_group('ref_data', ['encode'], 'erc2', 'true', {'encode'=>' ENCODE'} )]),
-            td(["",
-                radio_group('ref_data', ['blueprint'], 'erc2', 'true', {'blueprint'=>' Blueprint'} )]),
+                popup_menu('ref_data', $ref_data_conf->{'values'}, $ref_data_conf->{'default'}, $ref_data_conf->{'labels'})]),
             td(["Proximity:",
                 popup_menu('proxy', ['none', '1kb'], '1kb', {'1kb'=>'1 kb window',
                     'none'=>'No proxy'})]),
@@ -316,8 +338,9 @@ sub validate_form {
         $data_format =~ s/\W/_/g;
         push(@error_messages, "Data format &quot;$data_format&quot; is not valid. Please".
             " specify a valid one.");
+    } else {
+        push(@$validated_args, "--format", $data_format);
     }
-    push(@$validated_args, "--format", param("data_format"));
 
     my $label = param("label");
     if ($label and $label =~ /\W/) {
@@ -326,20 +349,22 @@ sub validate_form {
     push(@$validated_args, "--label", $label) if ($label);
 
     my $bkgd = param("bkgd");
-    if (!$bkgd or ($bkgd ne "450k" and $bkgd ne "27k")) {
+    if (!grep {$bkgd eq $_} @{$bkgd_conf->{'values'}}) {
         $bkgd =~ s/\W/_/g;
         push(@error_messages, "Unknown platform &quot;$bkgd&quot;. Please".
             " specify a valid one.");
+    } else {
+        push(@$validated_args, "--bkgd", $bkgd);
     }
-    push(@$validated_args, "--bkgd", param("bkgd"));
 
     my $ref_data = param("ref_data");
-    if (!$ref_data or ($ref_data ne "erc2" and $ref_data ne "erc" and $ref_data ne "encode" and $ref_data ne "blueprint")) {
+    if (!grep {$ref_data eq $_} @{$ref_data_conf->{'values'}}) {
         $ref_data =~ s/\W/_/g;
         push(@error_messages, "Unknown set of analysis data &quot;$ref_data&quot;. Please".
             " specify a valid one.");
+    } else {
+        push(@$validated_args, "--data", $ref_data);
     }
-    push(@$validated_args, "--data", param("ref_data"));
 
     my $depletion = param("depletion");
     if ($depletion and $depletion eq 'on') {

@@ -1,10 +1,5 @@
 package eForge::eForge;
 
-use 5.010;
-use strict;
-use warnings FATAL => 'all';
-use Storable;
-
 =head1 NAME
 
 eForge::eForge - Interface with the DB and various other common functions for eForge
@@ -33,18 +28,28 @@ if not, write to the Free Software Foundation, Inc.,
 
 =head1 CONTACT
 
-Charles Breeze <c.breeze@ucl.ac.uk>
+Charles Breeze, C<< <c.breeze at ucl.ac.uk> >>
 
-Javier Herrero <javier.herrero@ucl.ac.uk>
+Javier Herrero, C<< <javier.herrero at ucl.ac.uk> >>
+
+=head1 ACKNOWLEDGEMENTS
+
+This software is based on the FORGE tool developed by Ian Dunham at the EMBL-EBI
 
 =cut
+
+use 5.010;
+use strict;
+use warnings FATAL => 'all';
+use Storable;
+
 
 my $MAX_SQL_VARIABLES = 999;
 our $VERSION = '0.01';
 our (@ISA, @EXPORT);
 use Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(process_file match process_bits get_bits fetch_rsid fetch_loc get_cells assign bkgrdstat prox_filter);
+@EXPORT = qw(get_all_datasets get_all_arrays get_all_proxy_filters process_file match process_bits get_bits get_cells assign bkgrdstat prox_filter);
 
 =head1 SYNOPSIS
 
@@ -52,12 +57,13 @@ Provide functional modules for eForge
 
 =head1 EXPORT
 
+get_all_datasets
+get_all_arrays
+get_all_proxy_filters
 process_file
 match
 process_bits
 get_bits
-fetch_rsid
-fetch_loc
 get_cells
 assign
 bkgrdstat
@@ -91,14 +97,24 @@ sub bkgrdstat{
     say $bfh join("\t", $flag, "cpg_island_relationship", @cpg_island_relationship);
   }
 
+
 =head2 process_file
 
-Processes various file formats.
+ Arg[1]         : FILEHANDLE $input_fh
+ Arg[2]         : string $format
+ Arg[3]         : DB-connection-handle $dbh
+ Arg[4]         : string $bkgd
+ Arg[5]         : numeric $filter
+ Returns        : arrayref of $probe_ids (string)
+ Example        : my $probe_ids = process_file($fh, "probeid", $dbh, '450k', undef);
+ Description    : Reads the list of probe IDs or locations from the file. If the file contains
+                  locations, these will be translated into probe_ids
+ Exceptions     :
 
 =cut
 
 sub process_file {
-    my ($fh, $format, $dbh, $filter) = @_;
+    my ($fh, $format, $dbh, $bkgd, $filter) = @_;
     my $probe_ids = [];
 
     if ($format =~ /^probe/i) {
@@ -117,28 +133,27 @@ sub process_file {
         }
 
     } elsif ($format =~ /^bed/i) {
+        my $locations = [];
         while (<$fh>) {
             next if /^track/;
             chomp;
-            my ($chr, $beg, $end) = split "\t", $_;
-            next if (!defined($end));
+            my ($chr, $from, $to) = split "\t", $_;
+            next if (!defined($to));
             unless ($chr =~ /^chr/){
                 $chr = "chr". $chr;
             }
-            my $loc = "$chr:$beg-$beg";
-            #get the $probe_id from the db
-            my $probe_id = fetch_probe_id($dbh, $loc);
-            push @$probe_ids, $probe_id if defined $probe_id;
+            push(@$locations, [$chr, $from]);
         }
+        $probe_ids = fetch_all_probe_ids($dbh, $bkgd, $locations);
 
     } elsif ($format =~ /^tabix/i) {
+        my $locations = [];
         while (<$fh>) {
             chomp;
-            my $loc = $_;
-            #get the $probe_id from the db
-            my $probe_id = fetch_probe_id($dbh, $loc);
-            push @$probe_ids, $probe_id if defined $probe_id;
+            my ($chr, $from, $to) = $_ =~ /(.+)\:(\d+)\-(\d+)/;
+            push(@$locations, [$chr, $from]);
         }
+        $probe_ids = fetch_all_probe_ids($dbh, $bkgd, $locations);
     }
     return $probe_ids;
 }
@@ -236,50 +251,153 @@ sub match{
 
 =head2 process_bits
 
-Processes bitstrings to get a count of overlaps for each cell type.
+ Arg[1]         : arrayref of arrays $rows ($probe_id, $sum, $bit_string, $feature, $CGI_context)
+ Arg[2]         : arrayref of strings $cells (shortname for the cells in the dataset)
+ Arg[3]         : string $dataset
+ Returns        : hashref $stats
+ Example        : my $result = process_bits($rows, $cells, 'erc');
+ Description    : Returns a reference to a complex hash with stats from the rows. These are split
+                  into 'MVPS' and 'CELLS'. The former contains 'SUM' and 'PARAMS' for each probe ID
+                  while the latter contains 'COUNT' and 'MVPS' for each cell.
+ Exceptions     : Dies if the number of cells does not match the length of the bit string.
 
 =cut
 
-sub process_bits{
+sub process_bits {
     my ($rows, $cells, $data) = @_;
     my %test;
     my @test_cells;
     my @indexes = 0..(@$cells-1);
     foreach my $row (@{$rows}){
-        my ($location, $probeid, $sum, $bit_string, $feature, $cpg_island_relationship);
-          if ($data eq "erc"){
-            ($location, $probeid, undef, undef, $bit_string, $sum, undef, undef, undef, undef, $feature, $cpg_island_relationship) =  @$row;
-	  }
-        elsif ($data eq "encode"){
-            ($location, $probeid, $bit_string, $sum, undef, undef, undef, undef, undef, undef, $feature, $cpg_island_relationship) = @$row;
-	  }
-	  elsif ($data eq "blueprint"){
-            ($location, $probeid, undef, undef, undef, undef, $bit_string, $sum, undef, undef, $feature, $cpg_island_relationship) = @$row;
-	  }
-	  elsif ($data eq "erc2"){
-            ($location, $probeid, undef, undef, undef, undef, undef, undef, $bit_string, $sum, $feature, $cpg_island_relationship) = @$row;
-	  }
+        my ($probeid, $sum, $bit_string, $feature, $cpg_island_relationship) = @$row;
         $test{'MVPS'}{$probeid}{'SUM'} = $sum;
         $test{'MVPS'}{$probeid}{'PARAMS'} = join("\t", $feature, $cpg_island_relationship);
-        die if (scalar(@$cells) ne length($bit_string));
+        die "For $data, found ".scalar(@$cells)." cells for ".length($bit_string)." bits\n" if (scalar(@$cells) ne length($bit_string));
         foreach my $index (@indexes) {
             ## $bit_string is a string made of 0s and 1s. If it is a 1 for this position, count and push
             if (substr($bit_string, $index, 1)) {
                 $test_cells[$index][0]++;
                 push @{$test_cells[$index][1]}, $probeid;
             }
-          }
-      }
+        }
+    }
     my $index = 0;
     foreach my $cell (@$cells){
         $test{'CELLS'}{$cell}{'COUNT'} = $test_cells[$index][0] if ($test_cells[$index][0]);
         $test{'CELLS'}{$cell}{'MVPS'} = $test_cells[$index][1] if ($test_cells[$index][1]);
         $index++;
-      }
+    }
 
     return \%test;
-  }
+}
 
+
+=head2 get_all_datasets
+
+ Arg[1]         : DB-handle $dbh
+ Arg[2]         : (optional) string $species_name
+ Returns        : arrayref of hashes (tag/name)
+ Example        : my $all_datasets = get_all_dataset($dbh);
+ Description    : Returns the list of all datasets in the DB. It returns an arrayref of hashes. Each
+                  hash has two keys: 'tag' (string ID of the dataset) and 'name' (full name). You
+                  can limit the dataset to the ones available for a given species.
+ Exceptions     :
+
+=cut
+
+sub get_all_datasets {
+    my ($dbh, $species_name) = @_;
+    my $datasets;
+
+    my $sql = "SELECT dataset_tag, dataset_name FROM dataset ORDER BY dataset_id";
+    my @bind_params = ();
+    if ($species_name) {
+        $sql .= " WHERE species_name = ?";
+        push(@bind_params, $species_name);
+    }
+    my ($tag, $name);
+    my $sth = $dbh->prepare($sql);
+    $sth->execute(@bind_params);
+    $sth->bind_columns(\$tag, \$name);
+    while ($sth->fetch) {
+        push(@$datasets, {tag => $tag, name => $name});
+    }
+
+    return($datasets);
+}
+
+
+=head2 get_all_arrays
+
+ Arg[1]         : DB-handle $dbh
+ Arg[2]         : (optional) string $species_name
+ Returns        : arrayref of hashes (tag/name)
+ Example        : my $all_arrays = get_all_arrays($dbh);
+ Description    : Returns the list of all arrays in the DB. It returns an arrayref of hashes. Each
+                  hash has two keys: 'tag' (string ID of the array) and 'name' (full name). You
+                  can limit the arrays to the ones available for a given species.
+ Exceptions     :
+
+=cut
+
+sub get_all_arrays {
+    my ($dbh, $species_name) = @_;
+    my $arrays;
+
+    my $sql = "SELECT array_tag, array_name FROM array order by array_id";
+    my @bind_params = ();
+    if ($species_name) {
+        $sql .= " WHERE species_name = ?";
+        push(@bind_params, $species_name);
+    }
+    my ($tag, $name);
+    my $sth = $dbh->prepare($sql);
+    $sth->execute();
+    $sth->bind_columns(\$tag, \$name);
+    while ($sth->fetch) {
+        push(@$arrays, {tag => $tag, name => $name});
+    }
+
+    return($arrays);
+}
+
+
+=head2 get_all_proxy_filters
+
+ Arg[1]         : DB-handle $dbh
+ Arg[2]         : (optional) string $bkgd
+ Returns        : hashref of proxy-filters (string)
+ Example        : my $proxy_filters = get_all_proxy_filters($dbh, '450k');
+ Description    : Returns the list of proxy filters available in the DB. It returns a hashref whose
+                  keys are the bkgd names (i.e. array tags) and values are the name of the proxy
+                  filter. At the moment the schema supports just one proxy filter per array.
+                  If you provide a $bkgd, the result will be limited to that array. Note that you
+                  will still get a hashref with exactly the same structure. Only the content will
+                  be limited.
+ Exceptions     :
+
+=cut
+
+sub get_all_proxy_filters {
+    my ($dbh, $array_tag) = @_;
+    my $proxy_filters;
+
+    my $sql = "SELECT array_tag, description FROM proxy_filter_info JOIN array USING (array_id)";
+    my @bind_params = ();
+    if ($array_tag) {
+        $sql .= " WHERE array_tag = ?";
+        push(@bind_params, $array_tag);
+    }
+    my ($this_array_tag, $description);
+    my $sth = $dbh->prepare($sql);
+    $sth->execute();
+    $sth->bind_columns(\$this_array_tag, \$description);
+    while ($sth->fetch) {
+        $proxy_filters->{$this_array_tag} = $description;
+    }
+
+    return($proxy_filters);
+}
 
 =head2 get_bits
 
@@ -288,8 +406,7 @@ Get the bitstrings for an array of mvps from the sqlite db
 =cut
 
 sub get_bits{
-
-    my ($mvps, $dbh) = @_;
+    my ($dbh, $dataset_tag, $array_tag, $mvps) = @_;
     my @results;
     
     for (my $loop = 0; $loop * $MAX_SQL_VARIABLES < @$mvps; $loop++) {
@@ -297,43 +414,59 @@ sub get_bits{
         my $end = ($loop + 1) * $MAX_SQL_VARIABLES - 1;
         $end = @$mvps -1 if ($end >= @$mvps);
 
-        my $sql = "SELECT * FROM bits WHERE probeid IN (?". (",?" x ($end - $start)).")";
+        my $sql = "SELECT probe_id, sum, bit, gene_group, cgi_group
+            FROM probe_annotation
+            JOIN probe_bitstring USING (array_id, probe_id)
+            JOIN dataset USING (dataset_id)
+            JOIN array USING (array_id)
+            WHERE array_tag = ? and dataset_tag = ?
+            AND probe_id IN (?". (",?" x ($end - $start)).")";
         my $sth = $dbh->prepare_cached($sql); #get the blocks form the ld table
-        $sth->execute(@$mvps[$start..$end]);
+        $sth->execute($array_tag, $dataset_tag, @$mvps[$start..$end]);
         
         while (my $row = $sth->fetchrow_arrayref()) {
-          push @results, [@$row];
+            push @results, [@$row];
         }
         $sth->finish();
-      }
+    }
 
     return \@results;# return the bitstring line from the database
-  }
+}
 
-=head2 fetch_rsid
 
-gets the rsid for a SNP where a location is given.
+=head2 fetch_all_probe_ids
+
+ Arg[1]         : DB-handle $dbh
+ Arg[2]         : string $bkgd
+ Arg[3]         : arrayref of locations [$chr, $pos]
+ Returns        : arrayref of probe IDs (string)
+ Description    : Given a list of chromosome names and location pairs, the method fetches the name
+                  of the probe ID for that location. To do this successfully, this method requires
+                  to know the background (i.e. array) you want to translate the locations to.
+ Exceptions     :
 
 =cut
 
-sub fetch_probe_id {
+sub fetch_all_probe_ids {
     #gets the rsid for a SNP where a location is given
-    my ($dbh, $loc) = @_;
+    my ($dbh, $bkgd, $locations) = @_;
 
-    my $sth = $dbh->prepare_cached("SELECT probeid FROM bits WHERE location = ?");
+    my $sth = $dbh->prepare("SELECT probe_id
+                             FROM probe_mapping
+                             WHERE  chr_name = ? AND position = ?");
+    my $probe_ids = [];
 
-    $sth->execute($loc);
-    my $result = $sth->fetchall_arrayref();
-    my $probe_id;
-    foreach my $row (@{$result}) {
-        $probe_id = $$row[0];
+    foreach my $this_loc (@$locations) {
+        my ($chr, $pos) = @$this_loc;
+        $sth->execute($chr, $pos);
+        my $result = $sth->fetchall_arrayref();
+        my $probe_id;
+        foreach my $row (@{$result}) {
+            push(@$probe_ids, $$row[0]);
+        }
     }
     $sth->finish();
-    if (defined $probe_id && $probe_id =~ /^cg\d+/) {
-        return $probe_id;
-    } else {
-        return "no PROBEID match for $loc";
-    }
+    return $probe_ids;
 }
 
 =head2 prox_filter
@@ -355,7 +488,7 @@ sub prox_filter{
         my $end = ($loop + 1) * $MAX_SQL_VARIABLES - 1;
         $end = @$mvps -1 if ($end >= @$mvps);
 
-        my $sql = "SELECT probeid,proxy_probes FROM proxy_filter WHERE probeid IN (?". (",?" x ($end - $start)).")";
+        my $sql = "SELECT probe_id,proxy_probes FROM proxy_filter WHERE probe_id IN (?". (",?" x ($end - $start)).")";
         my $sth = $dbh->prepare($sql); #get the blocks form the ld table
         $sth->execute(@$mvps[$start..$end]);
         my $result = $sth->fetchall_arrayref();
@@ -377,83 +510,33 @@ sub prox_filter{
     return (\%prox_excluded, @mvps_filtered);
 }
 
-
 =head2 get_cells
 
 Read the correct cell list based on data (erc, erc2, blueprint or encode). Also gets the tissue names for the cells.
 
 =cut
 
-sub get_cells{
-    # read the correct cell list based on data (erc, erc2, blueprint or encode). Also gets the tissue names for the cells.
-    my ($data, $dbh) = @_;
+sub get_cells {
+    my ($dataset_tag, $dbh) = @_;
+    my $samples;
 
-    my $table = "cells_".$data;
-
-    # Check that the table exists in the DB (note, some magic here that might be SQLite-specific)
-    my @tables = grep {/^cells_/} map {$_ =~ s/"//g; $_ =~ s/^main\.//; $_} $dbh->tables();
-    if (!grep {/$table/} @tables) {
-        die "The database does not contain information for the data background provided.\n";
+    my $sth = $dbh->prepare("SELECT shortcell, tissue, datatype, file, acc FROM dataset JOIN sample USING (dataset_id) WHERE dataset_tag = ? ORDER BY sample_order");
+    $sth->execute($dataset_tag);
+    my ($shortcell, $tissue, $datatype, $file, $acc);
+    $sth->bind_columns(\$shortcell, \$tissue, \$datatype, \$file, \$acc);
+    my ($cells, $tissues);
+    while ($sth->fetch) {
+        $shortcell = "$shortcell|$file"; # Sometimes the same cell is used twice, with a differnt file so need to record separately (e.g. WI-38).
+        push @$cells, $shortcell;
+        $$tissues{$shortcell}{'tissue'} = $tissue; # this is the hash that is used to connect cells and tissues and ultimately provide the sorting order
+        $$tissues{$shortcell}{'datatype'} = $datatype;
+        $$tissues{$shortcell}{'file'} = $file;
+        $$tissues{$shortcell}{'acc'} = $acc;
     }
+#     use Data::Dumper;
+#     print Dumper %$tissues;
 
-    my $sth = $dbh->prepare("SELECT shortcell,tissue,file,acc FROM $table");
-    $sth->execute();
-    my $ver = $sth->fetchall_arrayref();
-    $sth->finish();
-    my ($cells, $tissues, $acc);
-    foreach my $row (@$ver){
-        my $cell = shift @$row;
-        my $tissue = shift @$row;
-        my $file = shift @$row;
-        my $acc = shift @$row;
-        $cell = "$cell|$file"; # Sometimes the same cell is used twice, with a differnt file so need to record separately (e.g. WI-38).
-        push @$cells, $cell;
-        $$tissues{$cell}{'tissue'} = $tissue; # this is the hash that is used to connect cells and tissues and ultimately provide the sorting order
-        $$tissues{$cell}{'file'} = $file;
-        $$tissues{$cell}{'acc'} = $acc;
-      }
-    #print Dumper %$tissues;
     return ($cells, $tissues); # return
-  }
-
-=head2 assign
-
-Assign any maf, gc, tss values to the percentile bins
-
-=cut
-
-#sub assign{
-#    #sub routine to assign any maf, gc, tss values to the percentile bins
-#    my ($gc, $tss, $maf, $params) = @_;
-#    my ($i, $j, $k);
-#    my $n = 1;
-#    foreach my $pc (@{$$params{'gc'}}){
-#      if ($gc <= $pc) {
-#            $i = $n;
-#          }  
-#        else{
-#            $n++;
-#          }
-#    }
-#    $n=1;
-#    foreach my $pc (@{$$params{'tss'}}){
-#      if ($tss <= $pc) {
-#            $j = $n;
-#          }
-#        else{
-#            $n++;
-#          }
-#    }
-#    $n=1;
-#    foreach my $pc (@{$$params{'maf'}}){
-#      if ($maf <= $pc) {
-#            $k = $n;
-#          }
-#        else{
-#            $n++;
-#          }
-#    }
-#    return ($i, $j, $k);
-#  }
+}
 
 1;

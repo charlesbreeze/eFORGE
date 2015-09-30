@@ -37,6 +37,8 @@ eForge functions, plotting options and stats are provided by eForge::eForge, eFo
 
 Dataset to analyse. Either ENCODE data ('encode'), unconsolidated Roadmap Epigenome data ('erc'), consolidated Roadmap Epigenome data ('erc2'), or Blueprint data ('blueprint'). erc by default.
 
+Use -data ? to get a list of available datasets on your local install.
+
 =item B<peaks>
 
 Use peaks instead of hotspots. Peaks are more stringent DNase1 peaks calls representing DNase hypersensitive sites, 
@@ -47,6 +49,8 @@ rather than hotspots which are regions of generalised DNase1 sensitivity or open
 Background is set at default to 450k array ('450k'), the Illumina Infinium HumanMethylation450 BeadChip.
 
 For the time being, it is suficient for MVPs to be on the 450k array. Probes within 1kb of each other will undergo filtering.
+
+Use -bkgd ? to get a list of available backgrounds on your local install.
 
 =item B<label>
 
@@ -147,7 +151,13 @@ if not, write to the Free Software Foundation, Inc.,
 
 =head1 CONTACT
 
-Charles Breeze <c.breeze@ucl.ac.uk>
+Charles Breeze, C<< <c.breeze at ucl.ac.uk> >>
+
+Javier Herrero, C<< <javier.herrero at ucl.ac.uk> >>
+
+=head1 ACKNOWLEDGEMENTS
+
+This software is based on the FORGE tool developed by Ian Dunham at the EMBL-EBI
 
 Javier Herrero <javier.herrero@ucl.ac.uk>
 
@@ -175,12 +185,8 @@ my $cwd = getcwd;
 
 my $dbname = "eforge_1.1.db";
 
-my $bkgd_label = {
-    '450k' => 'Illumina Infinium HumanMethylation450 BeadChip',
-    '27k' => 'Illumina Infinium HumanMethylation27 BeadChip (450k array subset)',
-    };
-
-my $bkgd = '450k'; # Default value
+my $bkgd; # Default value
+my $bkgd_label;
 my ($data, $peaks, $label, $file, $format, $min_mvps, $bkgrdstat, $noplot, $reps,
     $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, $out_dir, @mvplist,
     $web, $autoopen);
@@ -224,19 +230,83 @@ unless (defined $min_mvps) {
     $min_mvps = 5;
 }
 
-# define which data we are dealing with for the bitstrings, erc, erc2, blueprint or encode
-unless (defined $data ) {
-    $data = "erc";
-}
-
 # Label for plots
 unless (defined $label) {
     $label = "No label given";
 }
   
-if (!grep {$bkgd =~ /^$_/i and $bkgd = $_} keys %$bkgd_label) {
-    die "Background (--bkgd) must be one of: ".join(", ", keys %$bkgd_label)."\n";
+## ============================================================================
+## Connect to the DB
+## ============================================================================
+# This reads the config file and sets up the $datadir variable
+my $dirname = dirname(__FILE__);
+my $cfg = Config::IniFiles->new( -file => "$dirname/eforge.ini" );
+my $datadir = $cfg->val('Files', 'datadir');
+
+unless (-s "$datadir/$dbname") {
+    die "Database $dbname not found or empty";
 }
+my $dsn = "dbi:SQLite:dbname=$datadir/$dbname";
+my $dbh = DBI->connect($dsn, "", "") or die $DBI::errstr;
+## ============================================================================
+
+
+## ============================================================================
+## Check the dataset against the info on the DB
+## ============================================================================
+my $all_datasets = get_all_datasets($dbh);
+if (!defined($all_datasets)) {
+    die "Empty database: no dataset loaded!\n";
+} elsif (!defined($data)) {
+    $data = $all_datasets->[0]->{tag};
+    print "Using default dataset: [$data] ".$all_datasets->[0]->{name}."\n";
+} elsif ($data eq "?") {
+    print "Available datasets:\n - [".join("\n - [", map {$_->{tag}."] ".$_->{name}} @$all_datasets)."\n";
+    exit();
+} elsif (!grep {$_ eq $data} map {$_->{tag}} @$all_datasets) {
+    die "Dataset $data unknown\nAvailable datasets:\n - [".join("\n - [", map {$_->{tag}."] ".$_->{name}} @$all_datasets)."\n";
+}
+## ============================================================================
+
+
+## ============================================================================
+## Check the array name (A.K.A. background) against DB
+## ============================================================================
+my $all_arrays = get_all_arrays($dbh);
+if (!defined($all_arrays)) {
+    die "Empty database: no background loaded!\n";
+} elsif (!defined($bkgd)) {
+    $bkgd = $all_arrays->[0]->{tag};
+    print "Using default background: [$bkgd] ".$all_arrays->[0]->{name}."\n";
+    $bkgd_label = $all_arrays->[0]->{name};
+} elsif ($bkgd eq "?") {
+    print "Available arrays:\n - [".join("\n - [", map {$_->{tag}."] ".$_->{name}} @$all_arrays)."\n";
+    exit();
+} elsif (!grep {$_ eq $bkgd} map {$_->{tag}} @$all_arrays) {
+    die "Array $bkgd unknown\nAvailable arrays:\n - [".join("\n - [", map {$_->{tag}."] ".$_->{name}} @$all_arrays)."\n";
+} else {
+    foreach my $this_array (@$all_arrays) {
+        if ($this_array->{tag} eq $bkgd) {
+            $bkgd_label = $this_array->{name};
+            last;
+        }
+    }
+}
+## ============================================================================
+
+
+## ============================================================================
+## Check the proxy_filter (A.K.A. filter) against DB
+## ============================================================================
+# Set proximity filter
+unless (defined $noproxy) {
+    my $all_proxy_filters = get_all_proxy_filters($dbh);
+    if ($all_proxy_filters->{$bkgd}) {
+        $proxy = $all_proxy_filters->{$bkgd};
+    }
+}
+## ============================================================================
+
 
 if (defined $depletion) {
     $label = "$label.depletion";
@@ -245,16 +315,13 @@ if (defined $depletion) {
 #regexp puts underscores where labels before
 (my $lab = $label) =~ s/\s/_/g;
 $lab = "$lab.$bkgd.$data";
+
 #format for reading from file
 unless (defined $format) {
     $format = 'probeid';
 }
 
 
-# Read the config file, eforge.ini
-my $dirname = dirname(__FILE__);
-my $cfg = Config::IniFiles->new( -file => "$dirname/eforge.ini" );
-my $datadir = $cfg->val('Files', 'datadir');
 
 
 
@@ -282,18 +349,6 @@ if (defined $thresh) {
     $t2 = 0.01;
 }
 
-# Set proximity filter
-unless (defined $noproxy) {
-    $proxy="1 kb";
-}
-
-
-unless (-s "$datadir/$dbname") {
-    die "Database $dbname not found or empty";
-}
-my $dsn = "dbi:SQLite:dbname=$datadir/$dbname";
-my $dbh = DBI->connect($dsn, "", "") or die $DBI::errstr;
-
 # mvps need to come either from a file or a list
 my $mvps;
 
@@ -309,7 +364,7 @@ if (defined $file) {
 	    }
     }
     open my $fh, "<", $file or die "cannot open file $file : $!";
-    $mvps = process_file($fh, $format, $dbh, $filter);
+    $mvps = process_file($fh, $format, $dbh, $bkgd, $filter);
 
 } elsif (@mvplist) {
     @$mvps = split(/,/,join(',',@mvplist));
@@ -363,7 +418,7 @@ if (scalar @$mvps < $min_mvps) {
 my ($cells, $tissues) = get_cells($data, $dbh);
 
 # get the bit strings for the test mvps from the database file
-my $rows = get_bits($mvps, $dbh);
+my $rows = get_bits($dbh, $data, $bkgd, $mvps);
 
 # unpack the bitstrings and store the overlaps by cell.
 my $test = process_bits($rows, $cells, $data);
@@ -390,7 +445,7 @@ foreach my $probeid (@origmvps) {
 }
 
 if (scalar @missing > 0) {
-    warn "The following " . scalar @missing . " MVPs have not been analysed because they were not found on the ".$bkgd_label->{$bkgd}."\n";
+    warn "The following " . scalar @missing . " MVPs have not been analysed because they were not found on the ".$bkgd_label."\n";
     warn join("\n", @missing) . "\n";
 }
 if (defined $proxy) {
@@ -426,7 +481,7 @@ my $num = 0;
 foreach my $bkgrd (keys %{$picks}) {
     warn "[".scalar(localtime())."] Repetition $num out of ".$reps."\n" if (++$num%100 == 0);
     #$rows = get_bits(\@{$$picks{$bkgrd}}, $sth);
-    $rows = get_bits(\@{$$picks{$bkgrd}}, $dbh);
+    $rows = get_bits($dbh, $data, $bkgd, \@{$$picks{$bkgrd}});
     $backmvps += scalar @$rows; #$backmvps is the total number of background probes analysed
     unless (scalar @$rows == scalar @foundmvps) {
         warn "Background " . $bkgrd . " only " . scalar @$rows . " probes out of " . scalar @foundmvps . "\n";
@@ -500,7 +555,7 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
     # This gives the list of overlapping MVPs for use in the tooltips. If there are a lot of them this can be a little useless
     my ($shortcell, undef) = split('\|', $cell); # undo the concatenation from earlier to deal with identical cell names.
 
-    push(@results, [$zscore, $pbinom, $shortcell, $$tissues{$cell}{'tissue'}, $$tissues{$cell}{'file'}, $mvp_string, $$tissues{$cell}{'acc'}]);
+    push(@results, [$zscore, $pbinom, $shortcell, $$tissues{$cell}{'tissue'}, $$tissues{$cell}{'datatype'}, $$tissues{$cell}{'file'}, $mvp_string, $$tissues{$cell}{'acc'}]);
 }
 close($bfh);
 
@@ -511,7 +566,7 @@ $qvalues = [map {sprintf("%.2e", $_)} @$qvalues];
 # Write the results to a tab-separated file
 my $filename = "$lab.chart.tsv";
 open my $ofh, ">", "$out_dir/$filename" or die "Cannot open $out_dir/$filename: $!";
-print $ofh join("\t", "Zscore", "Pvalue", "Cell", "Tissue", "File", "Probe", "Accession", "Qvalue"), "\n";
+print $ofh join("\t", "Zscore", "Pvalue", "Cell", "Tissue", "Datatype", "File", "Probe", "Accession", "Qvalue"), "\n";
 for (my $i = 0; $i < @results; $i++) {
     print $ofh join("\t", @{$results[$i]}, $qvalues->[$i]), "\n";
 }

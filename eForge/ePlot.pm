@@ -1,10 +1,5 @@
 package eForge::ePlot;
 
-use 5.010;
-use strict;
-use warnings FATAL => 'all';
-use Sort::Naturally;
-
 =head1 NAME
 
 eForge::ePlot - Plotting utilities for eForge
@@ -33,11 +28,20 @@ if not, write to the Free Software Foundation, Inc.,
 
 =head1 CONTACT
 
-Charles Breeze <c.breeze@ucl.ac.uk>
+Charles Breeze, C<< <c.breeze at ucl.ac.uk> >>
 
-Javier Herrero <javier.herrero@ucl.ac.uk>
+Javier Herrero, C<< <javier.herrero at ucl.ac.uk> >>
+
+=head1 ACKNOWLEDGEMENTS
+
+This software is based on the FORGE tool developed by Ian Dunham at the EMBL-EBI
 
 =cut
+
+use 5.010;
+use strict;
+use warnings FATAL => 'all';
+use Sort::Naturally;
 
 our $VERSION = '0.01';
 
@@ -164,6 +168,14 @@ results\$Class <- cut(results\$Pvalue, breaks =c(0, $t2, $t1, 1)/length(unique(r
 
 # Class splits the data into non-significant, marginally significant and significant according to q-value (B-Y FDR adjusted)
 results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE, include.lowest=TRUE)
+color.axis.palette = c();
+if (length(which(results\$Class2 == 1)) > 0 ) {
+    color.axis.palette = c('red');
+}
+if (length(which(results\$Class2 == 2)) > 0 ) {
+    color.axis.palette = c(color.axis.palette, 'pink');
+}
+color.axis.palette = c(color.axis.palette, 'lightblue', 'lightblue'); # Add it twice to force the color if only non-significant values
 
 results\$log10pvalue <- -log10(results\$Pvalue)
 
@@ -191,7 +203,7 @@ bounds.width=dplot.width - bounds.x - 20
 d1 <- dPlot(
   y = 'log10pvalue',
   x = c('TissueCell'),
-  groups = c('TissueCell', 'Accession', 'Pvalue', 'Qvalue', 'Probe'),
+  groups = c('TissueCell', 'Accession', 'Pvalue', 'Qvalue', 'Datatype', 'Probe'),
   data = results,
   type = 'bubble',
   width = dplot.width,
@@ -210,7 +222,7 @@ d1\$yAxis( type = 'addMeasureAxis' )
 d1\$colorAxis(
    type = 'addColorAxis',
    colorSeries = 'Class2',
-   palette = c('red', 'pink', 'lightblue'))
+   palette = color.axis.palette)
 
 # Builds a JS string to add labels for tissues
 labels.string = paste(paste0(\"
@@ -322,7 +334,7 @@ sub table{
     open my $rcfh, ">", $rfile;
     print $rcfh "setwd('$Rdir')
 results <- read.table('$filename', header = TRUE, sep='\\t')
-results <- subset(results, T, select = c('Cell', 'Tissue', 'Accession', 'Pvalue', 'Qvalue', 'Probe'))
+results <- subset(results, T, select = c('Cell', 'Tissue', 'Datatype', 'Accession', 'Pvalue', 'Qvalue', 'Probe'))
 require(rCharts)
 dt <- dTable(
     results,
