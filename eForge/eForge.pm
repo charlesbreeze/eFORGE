@@ -418,7 +418,7 @@ sub get_bits{
             FROM probe_annotation
             JOIN probe_bitstring USING (array_id, probe_id)
             JOIN dataset USING (dataset_id)
-            JOIN array USING (array_id)
+            JOIN array ON (array.array_id = probe_annotation.array_id)
             WHERE array_tag = ? and dataset_tag = ?
             AND probe_id IN (?". (",?" x ($end - $start)).")";
         my $sth = $dbh->prepare_cached($sql); #get the blocks form the ld table
