@@ -125,30 +125,31 @@ Print this perldoc and exit.
 
 =back
 
-=head1 LICENCE
+=head1 LICENCE AND COPYRIGHT
 
 eforge.pl Functional analysis of EWAS MVPs
 
-Copyright (C) 2015  EMBL - European Bioinformatics Institute and University College London
+Copyright (C) [2014-2015] EMBL - European Bioinformatics Institute and University College London
 
-This program is free software: you can redistribute it and/or modify it under the terms of
-the GNU General Public License as published by the Free Software Foundation, either version 3
-of the License, or (at your option) any later version. This program is distributed in the hope
-that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. Neither
-the institution name nor the name eforge.pl can be used to endorse or promote products derived from
-this software without prior written permission. For written permission, please contact
-c.breeze@ucl.ac.uk. Products derived from this software may not be called eforge.pl nor may eforge.pl
-appear in their names without prior written permission of the developers. You should have received
-a copy of the GNU General Public License along with this program.  If not, see http://www.gnu.org/licenses/.
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; version 2 dated June, 1991 or at your option
+any later version.
 
-=head1 AUTHOR
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-Charles Breeze, UCL and EBI
+A copy of the GNU General Public License is available in the source tree;
+if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 =head1 CONTACT
 
 Charles Breeze <c.breeze@ucl.ac.uk>
+
+Javier Herrero <javier.herrero@ucl.ac.uk>
 
 =cut
 
