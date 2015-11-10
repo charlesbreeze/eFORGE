@@ -81,19 +81,20 @@ server by the server itself.
 
 3.c. Copy the webserver files to the right directories 
 
-    sudo rsync -avPL ~/eFORGE/webserver/cgi-bin/ /var/www/eFORGE/cgi-bin/
-    sudo rsync -avPL ~/eFORGE/webserver/bin/ /var/www/eFORGE/bin/
-    sudo rsync -avPL ~/eFORGE/webserver/html/ /var/www/eFORGE/html/
-    sudo rsync -avPL ~/eFORGE/eforge.db /var/www/eFORGE/bin/
-    sudo rsync -avPL ~/eFORGE/mvp_450k_bins /var/www/eFORGE/bin/
-    sudo rsync -avPL ~/eFORGE/mvp_27k_bins /var/www/eFORGE/bin/
+    sudo rsync -avPL ~/eFORGE/webserver/cgi-bin/ cgi-bin/
+    sudo rsync -avPL ~/eFORGE/webserver/bin/ bin/
+    sudo rsync -avPL ~/eFORGE/webserver/html/ html/
+    sudo rsync -avPL ~/eFORGE/eforge.db bin/
+    sudo rsync -avPL ~/eFORGE/mvp_450k_bins bin/
+    sudo rsync -avPL ~/eFORGE/mvp_27k_bins bin/
 
 3.e. Add links to the database files for the Downloads page:
 
-    cd /var/www/eFORGE/html/files
+    cd html/files
     sudo ln -s ../../bin/eforge.db .
     sudo ln -s ../../bin/mvp_450k_bins .
     sudo ln -s ../../bin/mvp_27k_bins .
+    cd ../..
 
 3.f. Configure the Apache server
 
@@ -149,7 +150,7 @@ Alias "/eFORGE" "/var/www/eFORGE/html"
 
 3.g. Copy the rCharts libraries to the html path: 
 
-    sudo rsync -avP /usr/lib64/R/library/rCharts/libraries /var/www/eFORGE/html/
+    sudo rsync -avP /usr/lib64/R/library/rCharts/libraries html
 
 3.h Re-start Apache 
 
