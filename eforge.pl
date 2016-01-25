@@ -338,15 +338,18 @@ unless (defined $reps) {
 
 
 # Define the thresholds to use.
-my ($t1, $t2);
+my ($t_marginal, $t_strict);
 if (defined $thresh) {
-    ($t1, $t2) = split(",", $thresh);
-    unless (looks_like_number($t1) && looks_like_number($t2)){
-        die "You must specify numerical p value thresholds in a comma separated list";
+    ($t_marginal, $t_strict) = split(",", $thresh);
+    unless (looks_like_number($t_marginal) && looks_like_number($t_strict)){
+        die "You must specify numerical p value thresholds in a comma separated list\n";
+    }
+    unless ((1 >= $t_marginal) && ($t_marginal >= $t_strict) && ($t_strict >= 0)) {
+        die "The p-value thresholds should be 1 >= T.marginal >= T.strict >= 0\n";
     }
 } else {
-    $t1 = 0.05; # set binomial p values, bonferroni is applied later based on number of samples (cells)
-    $t2 = 0.01;
+    $t_marginal = 0.05; # set binomial p values, bonferroni is applied later based on number of samples (cells)
+    $t_strict = 0.01;
 }
 
 # mvps need to come either from a file or a list
@@ -576,8 +579,8 @@ close($ofh);
 warn "[".scalar(localtime())."] Generating plots...\n";
 unless (defined $noplot){
     #Plotting and table routines
-    Chart($filename, $lab, $out_dir, $tissues, $cells, $label, $t1, $t2, $data); # basic pdf plot
-    dChart($filename, $lab, $out_dir, $data, $label, $t1, $t2, $web); # rCharts Dimple chart
+    Chart($filename, $lab, $out_dir, $tissues, $cells, $label, $t_marginal, $t_strict, $data); # basic pdf plot
+    dChart($filename, $lab, $out_dir, $data, $label, $t_marginal, $t_strict, $web); # rCharts Dimple chart
     table($filename, $lab, $out_dir, $web); # Datatables chart
   }
 

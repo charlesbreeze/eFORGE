@@ -71,7 +71,7 @@ This is the original code using standard R plot to generate a static pdf.
 
 sub Chart{
     print "Making static chart.\n";
-    my ($filename, $lab, $resultsdir, $tissues, $cells, $label, $t1, $t2, $data) = @_;
+    my ($filename, $lab, $resultsdir, $tissues, $cells, $label, $t_marginal, $t_strict, $data) = @_;
     my $Rdir = $resultsdir;
     my $chart = "$lab.chart.pdf";
     my $rfile = "$Rdir/$lab.chart.R";
@@ -80,17 +80,17 @@ sub Chart{
 
 
     open my $rfh, ">", $rfile;
-#results\$Class<-cut(results\$Pvalue, breaks =c(min(results\$Pvalue), $t1, $t2, max(results\$Pvalue)), labels=FALSE, include.lowest=TRUE) # 99 and 95% CIs 1, 2, 3
-$t1 = sprintf("%.2f", $t1);
-$t2 = sprintf("%.2f", $t2);
+#results\$Class<-cut(results\$Pvalue, breaks =c(min(results\$Pvalue), $t_marginal, $t_strict, max(results\$Pvalue)), labels=FALSE, include.lowest=TRUE) # 99 and 95% CIs 1, 2, 3
+$t_marginal = sprintf("%.2f", $t_marginal);
+$t_strict = sprintf("%.2f", $t_strict);
     print $rfh "setwd('$Rdir')
 results<-read.table('$filename', header=TRUE,sep='\\t')
 
-# Class splits the data into non-significant, marginally significant and significant according to $t1 and $t2 (in -log10 scale)
-results\$Class <- cut(results\$Pvalue, breaks =c(0, $t2, $t1, 1)/length(unique(results[,'Tissue'])), labels=FALSE, include.lowest=TRUE)
+# Class splits the data into non-significant, marginally significant and significant according to $t_marginal and $t_strict (in -log10 scale)
+results\$Class <- cut(results\$Pvalue, breaks =c(0, $t_strict, $t_marginal, 1)/length(unique(results[,'Tissue'])), labels=FALSE, include.lowest=TRUE)
 
 # Class splits the data into non-significant, marginally significant and significant according to q-value (B-Y FDR adjusted)
-results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE, include.lowest=TRUE)
+results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t_strict, $t_marginal, 1), labels=FALSE, include.lowest=TRUE)
 
 # Re-order the entries according to tissue first and then cell type/line
 tissue.cell.order <- unique(results[, c('Tissue', 'Cell')])
@@ -131,11 +131,11 @@ mtext(2, text='-log10 binomial p-value', line=2, cex=1.4)
 
 # Add legend (internal color first)
 palette(c('white', '$msig', '$sig'))
-legend('topleft', pch=19, legend=c('q < $t2', 'q < $t1', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='white', title='FDR q-value', text.col='white', bg='white')
+legend('topleft', pch=19, legend=c('q < $t_strict', 'q < $t_marginal', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='white', title='FDR q-value', text.col='white', bg='white')
 
 # Add contour to the points in the legend
 palette(c('$ns', '$msig', 'black'))
-legend('topleft', pch=1, legend=c('q < $t2', 'q < $t1', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='darkgrey', title='FDR q-value')
+legend('topleft', pch=1, legend=c('q < $t_strict', 'q < $t_marginal', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='darkgrey', title='FDR q-value')
 
 palette('default')
 dev.off()
@@ -153,7 +153,7 @@ Make dimple interactive chart.
 =cut
 
 sub dChart{
-    my ($filename, $lab, $resultsdir, $data, $label, $t1, $t2, $web) = @_;
+    my ($filename, $lab, $resultsdir, $data, $label, $t_marginal, $t_strict, $web) = @_;
 
     print "Making dChart.\n";
     my $chart = "$lab.dchart.html";
@@ -163,19 +163,22 @@ sub dChart{
     print $rcfh "setwd(\"$Rdir\")
 results<-read.table(\"$filename\", header = TRUE, sep=\"\\t\")
 
-# Class splits the data into non-significant, marginally significant and significant according to $t1 and $t2 (in -log10 scale)
-results\$Class <- cut(results\$Pvalue, breaks =c(0, $t2, $t1, 1)/length(unique(results[,'Tissue'])), labels=FALSE, include.lowest=TRUE)
+# Class splits the data into non-significant, marginally significant and significant according to $t_marginal and $t_strict (in -log10 scale)
+results\$Class <- cut(results\$Pvalue, breaks =c(0, $t_strict, $t_marginal, 1)/length(unique(results[,'Tissue'])), labels=FALSE, include.lowest=TRUE)
 
 # Class splits the data into non-significant, marginally significant and significant according to q-value (B-Y FDR adjusted)
-results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE, include.lowest=TRUE)
+results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t_strict, $t_marginal, 1), labels=FALSE, include.lowest=TRUE)
 color.axis.palette = c();
 if (length(which(results\$Class2 == 1)) > 0 ) {
     color.axis.palette = c('red');
 }
 if (length(which(results\$Class2 == 2)) > 0 ) {
-    color.axis.palette = c(color.axis.palette, 'pink');
+    color.axis.palette = c(color.axis.palette, '#FF82ab');
 }
-color.axis.palette = c(color.axis.palette, 'lightblue', 'lightblue'); # Add it twice to force the color if only non-significant values
+color.axis.palette = c(color.axis.palette, 'lightblue');
+if (length(color.axis.palette) < 2) {
+    color.axis.palette = c(color.axis.palette, 'lightblue'); # Add it twice to force the color if only non-significant values
+}
 
 results\$log10pvalue <- -log10(results\$Pvalue)
 

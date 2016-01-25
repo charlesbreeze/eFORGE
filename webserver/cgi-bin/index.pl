@@ -277,10 +277,10 @@ cg20918393', 10, 60)]),
                 textfield('reps', '1000', 10)]),
             td(["Significance threshold:",
                 ""]),
-            td(["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Min:",
-                textfield('thresh1', '0.01', 10)]),
-            td(["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Max:",
-                textfield('thresh2', '0.05', 10)]),
+            td(["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Strict:",
+                textfield('thresh_strict', '0.01', 10)]),
+            td(["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Marginal:",
+                textfield('thresh_marginal', '0.05', 10)]),
 
             th({-colspan=>2}, ["<hr>"]),
 
@@ -393,27 +393,26 @@ sub validate_form {
     }
     push(@$validated_args, "--reps", $reps);
 
-    my $thresh1 = param("thresh1");
-    if (!$thresh1 or $thresh1 !~ /^\d+(\.\d*)?$/) {
-        push(@error_messages, "Min. significance threshold must be a positive number.");
-    } elsif ($thresh1 >= 1) {
-        push(@error_messages, "Min. significance threshold must be less than 1.");
+    my $thresh_strict = param("thresh_strict");
+    if (!$thresh_strict or $thresh_strict !~ /^\d+(\.\d*)?$/) {
+        push(@error_messages, "Strict significance threshold must be a positive number.");
+    } elsif ($thresh_strict >= 1) {
+        push(@error_messages, "Strict significance threshold must be less than 1.");
     }
 
-    my $thresh2 = param("thresh2");
-    if (!$thresh2 or $thresh2 !~ /^\d+(\.\d*)?$/) {
-        push(@error_messages, "Max. significance threshold must be a positive number.");
-    } elsif ($thresh2 >= 1) {
-        push(@error_messages, "Max. significance threshold must be less than 1.");
+    my $thresh_marginal = param("thresh_marginal");
+    if (!$thresh_marginal or $thresh_marginal !~ /^\d+(\.\d*)?$/) {
+        push(@error_messages, "Marginal significance threshold must be a positive number.");
+    } elsif ($thresh_marginal >= 1) {
+        push(@error_messages, "Marginal significance threshold must be less than 1.");
     }
 
-    if ($thresh1 > $thresh2) {
+    if ($thresh_strict > $thresh_marginal) {
         print $q->header;
-        push(@error_messages, "Min. significance threshold must be less than max. significance".
-            " threshold.");
+        push(@error_messages, "Strict significance threshold must be less than marginal one.");
         return 0;
     }
-    push(@$validated_args, "--thresh", "$thresh1,$thresh2");
+    push(@$validated_args, "--thresh", "$thresh_marginal,$thresh_strict");
 
     if (@error_messages) {
         print $q->header;
@@ -915,7 +914,7 @@ sub print_help_page {
            <br \>",
 
        "<strong>Significance threshold</strong><br \><br \>
-           Alter the default binomial p value thresholds. (0 < Min < Max < 1)
+           Alter the default binomial p value thresholds. (0 < Strict < Marginal < 1)
            <br \>",
     );
 
