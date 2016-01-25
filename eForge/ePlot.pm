@@ -131,11 +131,11 @@ mtext(2, text='-log10 binomial p-value', line=2, cex=1.4)
 
 # Add legend (internal color first)
 palette(c('white', '$msig', '$sig'))
-legend('topleft', pch=19, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='white', title='FDR q-value', text.col='white', bg='white')
+legend('topleft', pch=19, legend=c('q < $t2', 'q < $t1', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='white', title='FDR q-value', text.col='white', bg='white')
 
 # Add contour to the points in the legend
 palette(c('$ns', '$msig', 'black'))
-legend('topleft', pch=1, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='darkgrey', title='FDR q-value')
+legend('topleft', pch=1, legend=c('q < $t2', 'q < $t1', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='darkgrey', title='FDR q-value')
 
 palette('default')
 dev.off()
