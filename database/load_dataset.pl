@@ -238,7 +238,8 @@ sub get_decode_table {
             $decode_record->{$header[$i]} = $data[$i];
         }
         # Check that file and URL match
-        die $this_line if ($decode_record->{"url"} !~ $decode_record->{"file"});
+        die "File: ".$decode_record->{"file"}."\nURL: ".$decode_record->{"url"}."\nOn line: $this_line"
+            if ($decode_record->{"url"} !~ $decode_record->{"file"});
         $decode_record->{"file"} = $decode_record->{"url"};
         $decode_record->{"file"} =~ s/.+\///g;
         push(@$decode_table, $decode_record);

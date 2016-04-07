@@ -7,7 +7,7 @@ use File::Spec qw(splitpath);
 use DBI;
 
 my $db_dir = ".";
-my $db_name = "eforge_1.1.db";
+my $db_name = "eforge_1.2.db";
 my $array_tag = "450k";
 my $array_name = "Illumina Human 450k array";
 my $species = "Homo sapiens";
