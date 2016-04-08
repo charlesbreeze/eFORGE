@@ -25,13 +25,13 @@ my $debug = 0;
 ##
 
 # The location of the HTML pages for this server on the filesystem
-my $DOCUMENT_ROOT = "/var/www/eFORGE.v1.1/html";
+my $DOCUMENT_ROOT = "/var/www/eFORGE.v1.2/html";
 
 # The base URL (without the server name) for this server. For instance:
 # Running on http://server.org/ -> $WEB_ROOT = ""
 # Running on http://server.org/tool/ -> $WEB_ROOT = "/tool"
 # IMPORTANT - DO NOT INCLUDE A TRAILING '/'
-my $WEB_ROOT = "/eFORGE.v1.1";
+my $WEB_ROOT = "/eFORGE.v1.2";
 
 # The location of the files w.r.t. the base URL (DO NOT CHANGE)
 my $WEB_OUTDIR = "/files";
@@ -47,7 +47,7 @@ my $STDOUT_FILE = "output.txt";
 my $colour="bright-blue";
 my $plot_colour="#29A6C9";
 
-my $title = "eFORGE v1.1";
+my $title = "eFORGE v1.2";
 
 my $bkgd_conf = read_conf_file("$BIN_DIR/bkgd.conf");
 
@@ -1036,6 +1036,7 @@ sub print_download_page {
     "Additional files you will require:
     <ul><li><a href=\"$WEB_ROOT$WEB_OUTDIR/eforge.db\">eforge.db</a> (for eFORGE v1.0)</li>
     <li><a href=\"$WEB_ROOT$WEB_OUTDIR/eforge_1.1.db\">eforge_1.1.db</a> (for eFORGE v1.1)</li>
+    <li><a href=\"$WEB_ROOT$WEB_OUTDIR/eforge_1.2.db\">eforge_1.2.db</a> (for eFORGE v1.2)</li>
     <li><a href=\"$WEB_ROOT$WEB_OUTDIR/mvp_450k_bins\">mvp_450k_bins</a></li>
     <li><a href=\"$WEB_ROOT$WEB_OUTDIR/mvp_27k_bins\">mvp_27k_bins</a></li></ul>");
     print Template::content_box("License",

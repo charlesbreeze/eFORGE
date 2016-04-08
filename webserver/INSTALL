@@ -25,6 +25,7 @@ webserver.
 
     wget http://eforge.cs.ucl.ac.uk/files/eforge.db
     wget http://eforge.cs.ucl.ac.uk/files/eforge_1.1.db
+    wget http://eforge.cs.ucl.ac.uk/files/eforge_1.2.db
     wget http://eforge.cs.ucl.ac.uk/files/mvp_450k_bins
     wget http://eforge.cs.ucl.ac.uk/files/mvp_27k_bins
 
@@ -74,27 +75,29 @@ server by the server itself.
 
 3.b. Create some directories for hosting the code, log and result files:
 
-    sudo mkdir /var/www/eFORGE.v1.1/
-    cd /var/www/eFORGE.v1.1/
+    sudo mkdir /var/www/eFORGE.v1.2/
+    cd /var/www/eFORGE.v1.2/
     sudo mkdir -p bin log cgi-bin html html/files
     sudo chown apache log html/files # the user under which you run apache (see the line "User" in
                                      # /etc/httpd/conf/httpd.conf)
 
 3.c. Copy the webserver files to the right directories 
 
-    sudo rsync -avPL ~/eFORGE/webserver/cgi-bin/ /var/www/eFORGE.v1.1/cgi-bin/
-    sudo rsync -avPL ~/eFORGE/webserver/bin/ /var/www/eFORGE.v1.1/bin/
-    sudo rsync -avPL ~/eFORGE/webserver/html/ /var/www/eFORGE.v1.1/html/
-    sudo rsync -avPL ~/eFORGE/eforge.db /var/www/eFORGE.v1.1/bin/
-    sudo rsync -avPL ~/eFORGE/eforge_1.1.db /var/www/eFORGE.v1.1/bin/
-    sudo rsync -avPL ~/eFORGE/mvp_450k_bins /var/www/eFORGE.v1.1/bin/
-    sudo rsync -avPL ~/eFORGE/mvp_27k_bins /var/www/eFORGE.v1.1/bin/
+    sudo rsync -avPL ~/eFORGE/webserver/cgi-bin/ /var/www/eFORGE.v1.2/cgi-bin/
+    sudo rsync -avPL ~/eFORGE/webserver/bin/ /var/www/eFORGE.v1.2/bin/
+    sudo rsync -avPL ~/eFORGE/webserver/html/ /var/www/eFORGE.v1.2/html/
+    sudo rsync -avPL ~/eFORGE/eforge.db /var/www/eFORGE.v1.2/bin/
+    sudo rsync -avPL ~/eFORGE/eforge_1.1.db /var/www/eFORGE.v1.2/bin/
+    sudo rsync -avPL ~/eFORGE/eforge_1.2.db /var/www/eFORGE.v1.2/bin/
+    sudo rsync -avPL ~/eFORGE/mvp_450k_bins /var/www/eFORGE.v1.2/bin/
+    sudo rsync -avPL ~/eFORGE/mvp_27k_bins /var/www/eFORGE.v1.2/bin/
 
 3.e. Add links to the database files for the Downloads page:
 
-    cd /var/www/eFORGE.v1.1/html/files
+    cd /var/www/eFORGE.v1.2/html/files
     sudo ln -s ../../bin/eforge.db .
     sudo ln -s ../../bin/eforge_1.1.db .
+    sudo ln -s ../../bin/eforge_1.2.db .
     sudo ln -s ../../bin/mvp_450k_bins .
     sudo ln -s ../../bin/mvp_27k_bins .
 
@@ -103,7 +106,7 @@ server by the server itself.
 These files contain a list of arrays and dataset included in the database. They are used by the
 web server to know what it can offer without having to query the DB every time.
 
-    cd /var/www/eFORGE.v1.1/bin
+    cd /var/www/eFORGE.v1.2/bin
     perl eforge.pl -data ? > data.conf
     perl eforge.pl -bkgd ? > bkgd.conf
 
@@ -114,22 +117,22 @@ folder (like http://blic.cs.ucl.ac.uk/eFORGE).
 
 OPTION 1 -- Configure an Apache VirtualHost for eFORGE:
 
-    cat > /etc/http/conf.d/eforge.v1.1.conf
+    cat > /etc/http/conf.d/eforge.v1.2.conf
 <VirtualHost *:80>
     ServerName eforge.cs.ucl.ac.uk
-    DocumentRoot /var/www/eFORGE/html
-    ScriptAlias /cgi-bin/  /var/www/eFORGE.v1.1/cgi-bin/
+    DocumentRoot /var/www/eFORGE.v1.2./html
+    ScriptAlias /cgi-bin/  /var/www/eFORGE.v1.2/cgi-bin/
 
     <IfModule dir_module>
         DirectoryIndex index.html /cgi-bin/index.pl
     </IfModule>
 
-    <Directory "/var/www/eFORGE.v1.1/html">
+    <Directory "/var/www/eFORGE.v1.2/html">
         Order allow,deny
         Allow from all
     </Directory>
 
-    <Directory "/var/www/eFORGE.v1.1/cgi-bin">
+    <Directory "/var/www/eFORGE.v1.2/cgi-bin">
         AllowOverride None
         Options None
         Order allow,deny
@@ -140,18 +143,18 @@ OPTION 1 -- Configure an Apache VirtualHost for eFORGE:
 
 OPTION 2 -- Configure an Apache VirtualHost for eFORGE:
 
-    cat > /etc/http/conf.d/eforge.v1.1.conf
-ScriptAlias /eFORGE.v1.1/cgi-bin/  /var/www/eFORGE.v1.1/cgi-bin/
-Alias "/eFORGE.v1.1" "/var/www/eFORGE.v1.1/html"
+    cat > /etc/http/conf.d/eforge.v1.2.conf
+ScriptAlias /eFORGE.v1.2/cgi-bin/  /var/www/eFORGE.v1.2/cgi-bin/
+Alias "/eFORGE.v1.2" "/var/www/eFORGE.v1.2/html"
 
-<Directory "/var/www/eFORGE.v1.1/html/">
+<Directory "/var/www/eFORGE.v1.2/html/">
     Order allow,deny
     Allow from all
 
     DirectoryIndex index.html cgi-bin/index.pl
 </Directory>
 
-<Directory "/var/www/eFORGE.v1.1/cgi-bin/">
+<Directory "/var/www/eFORGE.v1.2/cgi-bin/">
     AllowOverride None
     Options None
     Order allow,deny
