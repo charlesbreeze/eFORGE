@@ -183,7 +183,7 @@ use Statistics::Multtest qw(BY);
 
 my $cwd = getcwd;
 
-my $dbname = "eforge_1.1.db";
+my $dbname = "eforge_1.2.db";
 
 my $bkgd; # Default value
 my $bkgd_label;
