@@ -309,7 +309,7 @@ cg20918393', 10, 60)]),
 
 sub validate_form {
     my $data;
-    my $validated_args = ["--web", ($WEB_ROOT or "/")];
+    my $validated_args = ["--web", $q->url(-base=>1).($WEB_ROOT or "/")];
     my @error_messages;
     
     my $input_data;
