@@ -117,7 +117,7 @@ folder (like http://blic.cs.ucl.ac.uk/eFORGE).
 
 OPTION 1 -- Configure an Apache VirtualHost for eFORGE:
 
-    cat > /etc/http/conf.d/eforge.v1.2.conf
+    cat > /etc/httpd/conf.d/eforge.v1.2.conf
 <VirtualHost *:80>
     ServerName eforge.cs.ucl.ac.uk
     DocumentRoot /var/www/eFORGE.v1.2./html
@@ -143,7 +143,7 @@ OPTION 1 -- Configure an Apache VirtualHost for eFORGE:
 
 OPTION 2 -- Configure an Apache VirtualHost for eFORGE:
 
-    cat > /etc/http/conf.d/eforge.v1.2.conf
+    cat > /etc/httpd/conf.d/eforge.v1.2.conf
 ScriptAlias /eFORGE.v1.2/cgi-bin/  /var/www/eFORGE.v1.2/cgi-bin/
 Alias "/eFORGE.v1.2" "/var/www/eFORGE.v1.2/html"
 
@@ -164,7 +164,7 @@ Alias "/eFORGE.v1.2" "/var/www/eFORGE.v1.2/html"
 
 3.h. Copy the rCharts libraries to the html path:
 
-    sudo rsync -avP /usr/lib64/R/library/rCharts/libraries /var/www/eFORGE.v1.1/html/
+    sudo rsync -avP /usr/lib64/R/library/rCharts/libraries /var/www/eFORGE.v1.2/html/
 
 3.i Re-start Apache
 
