@@ -40,7 +40,7 @@ my $LOG_FILE = "../log/server_log.db";
 # The location of the bin dir w.r.t. the cgi-bin dir (DO NOT CHANGE)
 my $BIN_DIR = "../bin";
 # The name of the input data file
-my $INPUT_DATAFILE = "input.txt";
+my $INPUT_DATAFILE = "input.txt.gz";
 # The name of the output data file
 my $STDOUT_FILE = "output.txt";
 
@@ -432,7 +432,7 @@ sub validate_form {
     ## It seems like all the options are valid, so we can now store the input data in the output
     ## directory
     my $absolute_outdir = get_absolute_outdir();
-    open(INPUT, ">$absolute_outdir/$INPUT_DATAFILE") or
+    open(INPUT, "| gzip -9 > $absolute_outdir/$INPUT_DATAFILE") or
         die "Cannot open $absolute_outdir/$INPUT_DATAFILE";
     foreach my $this_line (@lines) {
         print INPUT $this_line, "\n";
@@ -562,19 +562,19 @@ sub print_result {
     my $web_outdir = get_web_outdir();
 
     opendir(DIR, $absolute_outdir);
-    my @files = grep {/(.pdf|.html|.tsv|.R)$/} readdir(DIR);
+    my @files = grep {/(.pdf|.html|.tsv|.R|.gz|.bz2)$/} readdir(DIR);
     closedir(DIR);
-    my $table_file = (grep {/.table.html$/} @files)[0];
-    my $table_R = (grep {/.table.R$/i} @files)[0];
-    my $dchart_file = (grep {/.dchart.html$/} @files)[0];
-    my $dchart_R = (grep {/.dchart.R$/i} @files)[0];
-    my $tsv_file = (grep {/.chart.tsv$/} @files)[0];
-    my $pdf_file = (grep {/.chart.pdf$/} @files)[0];
+    my $table_file = (grep {/\.table\.html$/} @files)[0];
+    my $table_R = (grep {/\.table\.R$/i} @files)[0];
+    my $dchart_file = (grep {/\.dchart\.html$/} @files)[0];
+    my $dchart_R = (grep {/\.dchart\.R$/i} @files)[0];
+    my $tsv_file = (grep {/\.chart\.tsv(\.gz|\.bz2)?$/} @files)[0];
+    my $pdf_file = (grep {/\.chart\.pdf$/} @files)[0];
     my $pdf_R = (grep {/.chart.R$/i} @files)[0];
 
     print $fh Template::content_box_1("Results",
-        "<a href=\"$web_outdir/$INPUT_DATAFILE\">Input data (txt)</a>",
-        "<a href=\"$web_outdir/$tsv_file\">Raw data (tsv)</a>",
+        "<a href=\"$web_outdir/$INPUT_DATAFILE\">Input data (txt.gz)</a>",
+        "<a href=\"$web_outdir/$tsv_file\">Raw data (tsv.gz)</a>",
         "<a href=\"$web_outdir/$pdf_file\">Static chart (PDF)</a>",
         "<a href=\"$web_outdir/$dchart_file\">Interactive chart (HTML)</a>",
         "<a href=\"$web_outdir/$table_file\">Interactive table (HTML)</a>",

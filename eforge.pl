@@ -366,7 +366,14 @@ if (defined $file) {
             warn "You have specified p value filtering, but this isn't implemented for files of format $format. No filtering will happen."
 	    }
     }
-    open my $fh, "<", $file or die "cannot open file $file : $!";
+    my $fh;
+    if ($file =~ /\.gz$/) {
+        open($fh, "gunzip -c $file |") or die "cannot open file $file : $!";
+    } elsif ($file =~ /\.bz2$/) {
+        open($fh, "bunzip2 -c $file |") or die "cannot open file $file : $!";
+    } else {
+        open($fh, "<$file") or die "cannot open file $file : $!";
+    }
     $mvps = process_file($fh, $format, $dbh, $bkgd, $filter);
 
 } elsif (@mvplist) {
@@ -508,7 +515,9 @@ warn "[".scalar(localtime())."] Calculating p-values...\n";
 
 mkdir $out_dir;
 
-open my $bfh, ">", "$out_dir/background.tsv" or die "Cannot open background.tsv";
+if (!$web) {
+    open(BACKGROUND, "| gzip -9 > $out_dir/background.tsv.gz") or die "Cannot open background.tsv";
+}
 
 
 
@@ -519,7 +528,9 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
     # above line sorts by the tissues alphabetically (from $tissues hash values)
 
     # ultimately want a data frame of names(results)<-c("Zscore", "Cell", "Tissue", "File", "MVPs")
-    say $bfh join("\t", @{$bkgrd{$cell}});
+    if (!$web) {
+        print BACKGROUND join("\t", @{$bkgrd{$cell}}), "\n";
+    }
     my $teststat = ($$test{'CELLS'}{$cell}{'COUNT'} or 0); #number of overlaps for the test MVPs
 
     # binomial pvalue, probability of success is derived from the background overlaps over the tests for this cell
@@ -560,20 +571,22 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
 
     push(@results, [$zscore, $pbinom, $shortcell, $$tissues{$cell}{'tissue'}, $$tissues{$cell}{'datatype'}, $$tissues{$cell}{'file'}, $mvp_string, $$tissues{$cell}{'acc'}]);
 }
-close($bfh);
+if (!$web) {
+    close(BACKGROUND);
+}
 
 # Correct the p-values for multiple testing using the Benjamini-Yekutieli FDR control method
 my $qvalues = BY(\@pvalues);
 $qvalues = [map {sprintf("%.2e", $_)} @$qvalues];
 
 # Write the results to a tab-separated file
-my $filename = "$lab.chart.tsv";
-open my $ofh, ">", "$out_dir/$filename" or die "Cannot open $out_dir/$filename: $!";
-print $ofh join("\t", "Zscore", "Pvalue", "Cell", "Tissue", "Datatype", "File", "Probe", "Accession", "Qvalue"), "\n";
+my $filename = "$lab.chart.tsv.gz";
+open(TSV, "| gzip -9 > $out_dir/$filename") or die "Cannot open $out_dir/$filename: $!";
+print TSV join("\t", "Zscore", "Pvalue", "Cell", "Tissue", "Datatype", "File", "Probe", "Accession", "Qvalue"), "\n";
 for (my $i = 0; $i < @results; $i++) {
-    print $ofh join("\t", @{$results[$i]}, $qvalues->[$i]), "\n";
+    print TSV join("\t", @{$results[$i]}, $qvalues->[$i]), "\n";
 }
-close($ofh);
+close(TSV);
 
 
 warn "[".scalar(localtime())."] Generating plots...\n";
