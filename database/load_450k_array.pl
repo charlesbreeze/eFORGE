@@ -116,6 +116,7 @@ sub parse_450k_file {
 
         $array->{$probe_id} = [$probe_chr36, $probe_loc36, $probe_chr37, $probe_loc37, $this_gene_annotation, $this_cpg_annotation];
     }
+    close(CSV);
 #     foreach my $this_a (keys %$annotation) { #@gene_annotations) {
 #         print $annotation->{$this_a}, "\t", $this_a, "\n";
 #     }
