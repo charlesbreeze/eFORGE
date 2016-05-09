@@ -18,6 +18,7 @@ perl init_db.pl --db_name eforge_1.2.db
 Please refer to the help of load_450k_array.pl for information about the different options
 
 perl load_450k_array.pl --work_dir input --db_name eforge_1.2.db
+perl load_27k_array.pl --work_dir input --db_name eforge_1.2.db
 
 3. LOAD THE DATASETS
 
