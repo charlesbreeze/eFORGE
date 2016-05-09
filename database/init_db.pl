@@ -6,7 +6,7 @@ use DBI;
 use Getopt::Long;
 
 my $db_dir = ".";
-my $db_name = "eforge_1.1.db";
+my $db_name = "eforge_1.2.db";
 
 
 my $help;
