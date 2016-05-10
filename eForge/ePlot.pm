@@ -1,10 +1,5 @@
 package eForge::ePlot;
 
-use 5.010;
-use strict;
-use warnings FATAL => 'all';
-use Sort::Naturally;
-
 =head1 NAME
 
 eForge::ePlot - Plotting utilities for eForge
@@ -13,7 +8,40 @@ eForge::ePlot - Plotting utilities for eForge
 
 Version 0.01
 
+=head1 LICENCE AND COPYRIGHT
+
+Copyright (C) [2014-2015] EMBL - European Bioinformatics Institute and University College London
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; version 2 dated June, 1991 or at your option
+any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+A copy of the GNU General Public License is available in the source tree;
+if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+
+=head1 CONTACT
+
+Charles Breeze, C<< <c.breeze at ucl.ac.uk> >>
+
+Javier Herrero, C<< <javier.herrero at ucl.ac.uk> >>
+
+=head1 ACKNOWLEDGEMENTS
+
+This software is based on the FORGE tool developed by Ian Dunham at the EMBL-EBI
+
 =cut
+
+use 5.010;
+use strict;
+use warnings FATAL => 'all';
+use Sort::Naturally;
 
 our $VERSION = '0.01';
 
@@ -43,7 +71,7 @@ This is the original code using standard R plot to generate a static pdf.
 
 sub Chart{
     print "Making static chart.\n";
-    my ($filename, $lab, $resultsdir, $tissues, $cells, $label, $t1, $t2, $data) = @_;
+    my ($filename, $lab, $resultsdir, $tissues, $cells, $label, $t_marginal, $t_strict, $data) = @_;
     my $Rdir = $resultsdir;
     my $chart = "$lab.chart.pdf";
     my $rfile = "$Rdir/$lab.chart.R";
@@ -52,17 +80,17 @@ sub Chart{
 
 
     open my $rfh, ">", $rfile;
-#results\$Class<-cut(results\$Pvalue, breaks =c(min(results\$Pvalue), $t1, $t2, max(results\$Pvalue)), labels=FALSE, include.lowest=TRUE) # 99 and 95% CIs 1, 2, 3
-$t1 = sprintf("%.2f", $t1);
-$t2 = sprintf("%.2f", $t2);
+#results\$Class<-cut(results\$Pvalue, breaks =c(min(results\$Pvalue), $t_marginal, $t_strict, max(results\$Pvalue)), labels=FALSE, include.lowest=TRUE) # 99 and 95% CIs 1, 2, 3
+$t_marginal = sprintf("%.2f", $t_marginal);
+$t_strict = sprintf("%.2f", $t_strict);
     print $rfh "setwd('$Rdir')
 results<-read.table('$filename', header=TRUE,sep='\\t')
 
-# Class splits the data into non-significant, marginally significant and significant according to $t1 and $t2 (in -log10 scale)
-results\$Class <- cut(results\$Pvalue, breaks =c(0, $t2, $t1, 1)/length(unique(results[,'Tissue'])), labels=FALSE, include.lowest=TRUE)
+# Class splits the data into non-significant, marginally significant and significant according to $t_marginal and $t_strict (in -log10 scale)
+results\$Class <- cut(results\$Pvalue, breaks =c(0, $t_strict, $t_marginal, 1)/length(unique(results[,'Tissue'])), labels=FALSE, include.lowest=TRUE)
 
 # Class splits the data into non-significant, marginally significant and significant according to q-value (B-Y FDR adjusted)
-results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE, include.lowest=TRUE)
+results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t_strict, $t_marginal, 1), labels=FALSE, include.lowest=TRUE)
 
 # Re-order the entries according to tissue first and then cell type/line
 tissue.cell.order <- unique(results[, c('Tissue', 'Cell')])
@@ -103,11 +131,11 @@ mtext(2, text='-log10 binomial p-value', line=2, cex=1.4)
 
 # Add legend (internal color first)
 palette(c('white', '$msig', '$sig'))
-legend('topleft', pch=19, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='white', title='FDR q-value', text.col='white', bg='white')
+legend('topleft', pch=19, legend=c('q < $t_strict', 'q < $t_marginal', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='white', title='FDR q-value', text.col='white', bg='white')
 
 # Add contour to the points in the legend
 palette(c('$ns', '$msig', 'black'))
-legend('topleft', pch=1, legend=c('q < 0.01', 'q < 0.05', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='darkgrey', title='FDR q-value')
+legend('topleft', pch=1, legend=c('q < $t_strict', 'q < $t_marginal', 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='darkgrey', title='FDR q-value')
 
 palette('default')
 dev.off()
@@ -125,7 +153,7 @@ Make dimple interactive chart.
 =cut
 
 sub dChart{
-    my ($filename, $lab, $resultsdir, $data, $label, $t1, $t2, $web) = @_;
+    my ($filename, $lab, $resultsdir, $data, $label, $t_marginal, $t_strict, $web) = @_;
 
     print "Making dChart.\n";
     my $chart = "$lab.dchart.html";
@@ -135,11 +163,22 @@ sub dChart{
     print $rcfh "setwd(\"$Rdir\")
 results<-read.table(\"$filename\", header = TRUE, sep=\"\\t\")
 
-# Class splits the data into non-significant, marginally significant and significant according to $t1 and $t2 (in -log10 scale)
-results\$Class <- cut(results\$Pvalue, breaks =c(0, $t2, $t1, 1)/length(unique(results[,'Tissue'])), labels=FALSE, include.lowest=TRUE)
+# Class splits the data into non-significant, marginally significant and significant according to $t_marginal and $t_strict (in -log10 scale)
+results\$Class <- cut(results\$Pvalue, breaks =c(0, $t_strict, $t_marginal, 1)/length(unique(results[,'Tissue'])), labels=FALSE, include.lowest=TRUE)
 
 # Class splits the data into non-significant, marginally significant and significant according to q-value (B-Y FDR adjusted)
-results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t2, $t1, 1), labels=FALSE, include.lowest=TRUE)
+results\$Class2 <- cut(results\$Qvalue, breaks =c(0, $t_strict, $t_marginal, 1), labels=FALSE, include.lowest=TRUE)
+color.axis.palette = c();
+if (length(which(results\$Class2 == 1)) > 0 ) {
+    color.axis.palette = c('red');
+}
+if (length(which(results\$Class2 == 2)) > 0 ) {
+    color.axis.palette = c(color.axis.palette, '#FF82ab');
+}
+color.axis.palette = c(color.axis.palette, 'lightblue');
+if (length(color.axis.palette) < 2) {
+    color.axis.palette = c(color.axis.palette, 'lightblue'); # Add it twice to force the color if only non-significant values
+}
 
 results\$log10pvalue <- -log10(results\$Pvalue)
 
@@ -167,7 +206,7 @@ bounds.width=dplot.width - bounds.x - 20
 d1 <- dPlot(
   y = 'log10pvalue',
   x = c('TissueCell'),
-  groups = c('TissueCell', 'Accession', 'Pvalue', 'Qvalue', 'Probe'),
+  groups = c('TissueCell', 'Accession', 'Pvalue', 'Qvalue', 'Datatype', 'Probe'),
   data = results,
   type = 'bubble',
   width = dplot.width,
@@ -186,7 +225,7 @@ d1\$yAxis( type = 'addMeasureAxis' )
 d1\$colorAxis(
    type = 'addColorAxis',
    colorSeries = 'Class2',
-   palette = c('red', 'pink', 'lightblue'))
+   palette = color.axis.palette)
 
 # Builds a JS string to add labels for tissues
 labels.string = paste(paste0(\"
@@ -298,7 +337,7 @@ sub table{
     open my $rcfh, ">", $rfile;
     print $rcfh "setwd('$Rdir')
 results <- read.table('$filename', header = TRUE, sep='\\t')
-results <- subset(results, T, select = c('Cell', 'Tissue', 'Accession', 'Pvalue', 'Qvalue', 'Probe'))
+results <- subset(results, T, select = c('Cell', 'Tissue', 'Datatype', 'Accession', 'Pvalue', 'Qvalue', 'Probe'))
 require(rCharts)
 dt <- dTable(
     results,
@@ -326,49 +365,4 @@ dt\$save('$chart', cdn = F)\n";
     }
 }
 
-
-=head1 AUTHOR
-
-Charles Breeze, C<< <c.breeze at ucl.ac.uk> >>
-
-=head1 BUGS
-
-Please report any bugs or feature requests to C<bug-eforge at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=eForge>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-
-
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc eForge::ePlot
-
-
-=head1 ACKNOWLEDGEMENTS
-
-
-=head1 LICENSE AND COPYRIGHT
-
-Copyright 2015 Charles Breeze.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; version 2 dated June, 1991 or at your option
-any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-A copy of the GNU General Public License is available in the source tree;
-if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
-
-
-=cut
-
-1; # End of ePlot
+1;

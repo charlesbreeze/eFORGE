@@ -1,18 +1,47 @@
 package eForge::eStats;
 
-use 5.010;
-use strict;
-use warnings FATAL => 'all';
-
 =head1 NAME
 
-eStats - Stats for use in eForge
+eForge::eStats - Stats for use in eForge
 
 =head1 VERSION
 
 Version 0.01
 
+=head1 LICENCE AND COPYRIGHT
+
+Copyright (C) [2014-2015] EMBL - European Bioinformatics Institute and University College London
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; version 2 dated June, 1991 or at your option
+any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+A copy of the GNU General Public License is available in the source tree;
+if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+
+=head1 CONTACT
+
+Charles Breeze, C<< <c.breeze at ucl.ac.uk> >>
+
+Javier Herrero, C<< <javier.herrero at ucl.ac.uk> >>
+
+=head1 ACKNOWLEDGEMENTS
+
+This software is based on the FORGE tool developed by Ian Dunham at the EMBL-EBI
+
 =cut
+
+
+use 5.010;
+use strict;
+use warnings FATAL => 'all';
 
 our $VERSION = '0.01';
 
@@ -174,51 +203,4 @@ sub fdr{
       }
   }
 
-
-
-
-
-=head1 AUTHOR
-
-Charles Breeze, C<< <c.breeze at ucl.ac.uk> >>
-
-=head1 BUGS
-#not yet implemented below, it refers to eForge but it is not yet implemented (for cpan) even for Forge
-Please report any bugs or feature requests to C<bug-eforge at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=eForge>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-
-
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc Forge::eStats
-
-
-
-=head1 ACKNOWLEDGEMENTS
-
-
-=head1 LICENSE AND COPYRIGHT
-
-eForge::eStats.pm
-
-Copyright (C) 2015  EMBL - European Bioinformatics Institute and University College London
-
-This program is free software: you can redistribute it and/or modify it under the terms of
-the GNU General Public License as published by the Free Software Foundation, either version 3
-of the License, or (at your option) any later version. This program is distributed in the hope
-that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. Neither
-the institution name nor the name eforge.pl can be used to endorse or promote products derived from
-this software without prior written permission. For written permission, please contact
-c.breeze@ucl.ac.uk . Products derived from this software may not be called eforge.pl nor may eforge.pl
-appear in their names without prior written permission of the developers. You should have received
-a copy of the GNU General Public License along with this program.  If not, see http://www.gnu.org/licenses/.
-
-=cut
-
-1; # End of eStats
+1;

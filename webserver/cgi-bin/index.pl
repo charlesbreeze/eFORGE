@@ -25,13 +25,13 @@ my $debug = 0;
 ##
 
 # The location of the HTML pages for this server on the filesystem
-my $DOCUMENT_ROOT = "/var/www/eFORGE/html";
+my $DOCUMENT_ROOT = "/var/www/eFORGE.v1.2/html";
 
 # The base URL (without the server name) for this server. For instance:
 # Running on http://server.org/ -> $WEB_ROOT = ""
 # Running on http://server.org/tool/ -> $WEB_ROOT = "/tool"
 # IMPORTANT - DO NOT INCLUDE A TRAILING '/'
-my $WEB_ROOT = "";
+my $WEB_ROOT = "/eFORGE.v1.2";
 
 # The location of the files w.r.t. the base URL (DO NOT CHANGE)
 my $WEB_OUTDIR = "/files";
@@ -40,14 +40,18 @@ my $LOG_FILE = "../log/server_log.db";
 # The location of the bin dir w.r.t. the cgi-bin dir (DO NOT CHANGE)
 my $BIN_DIR = "../bin";
 # The name of the input data file
-my $INPUT_DATAFILE = "input.txt";
+my $INPUT_DATAFILE = "input.txt.gz";
 # The name of the output data file
 my $STDOUT_FILE = "output.txt";
 
 my $colour="bright-blue";
 my $plot_colour="#29A6C9";
 
-my $title = "eFORGE v1.1";
+my $title = "eFORGE v1.2";
+
+my $bkgd_conf = read_conf_file("$BIN_DIR/bkgd.conf");
+
+my $ref_data_conf = read_conf_file("$BIN_DIR/data.conf");
 
 my $breadcrumbs = [
     {"UCL Cancer Institute" => "http://www.ucl.ac.uk/cancer"},
@@ -63,6 +67,9 @@ my $left_menu = [
     {"Documentation" => "$WEB_ROOT/?documentation"},
     {"Download" => "$WEB_ROOT/?download"},
     {"About" => "$WEB_ROOT/?about"},
+    {"__title__" => "Previous versions"},
+    {"eFORGE v1.1" => "http://eforge.cs.ucl.ac.uk/eFORGE.v1.1"},
+    {"eFORGE v1.0" => "http://eforge.cs.ucl.ac.uk/eFORGE.v1.0"},
     {"__title__" => "UCL Cancer Institute"},
     {"Home" => "http://www.ucl.ac.uk/cancer/"},
     {"Medical Genomics" => "http://www.ucl.ac.uk/cancer/medical-genomics/medgenhome"},
@@ -103,6 +110,29 @@ if (param("keywords") and param("keywords") eq "help") {
 
 exit(0);
 
+sub read_conf_file {
+    my ($file) = @_;
+    open(CONF, $file) or die;
+    my $default;
+    my $values;
+    my $labels;
+    while (<CONF>) {
+        chomp;
+        if (/ \- \[([^\]]+)\]\s+(.+)/) {
+            my $key = $1;
+            my $label = $2;
+            push(@$values, $key);
+            $labels->{$key} = $label;
+        }
+    }
+    close(CONF);
+    my $conf_hash = {
+        'default' =>  $values->[0],
+        'values' => $values,
+        'labels' => $labels,
+    };
+    return $conf_hash;
+}
 
 =head2 get_outdir
 
@@ -229,8 +259,7 @@ cg20918393', 10, 60)]),
             td(["Name (optional):",
                 textfield('label', '', 58)]),
             td(["Platform:",
-                popup_menu('bkgd', ['450k', '27k'], '450k', {'450k'=>'Illumina 450K methylation array',
-                    '27k'=>'Illumina 27k methylation array'})]),
+                popup_menu('bkgd', $bkgd_conf->{'values'}, $bkgd_conf->{'default'}, $bkgd_conf->{'labels'})]),
 
             th({-colspan=>2}, ["<hr>"]),
 
@@ -239,13 +268,7 @@ cg20918393', 10, 60)]),
             ## ================================================================
             th(["Analysis Options", ""]),
             td(["Analyse data from:",
-                radio_group('ref_data', ['erc2'], 'erc2', 'true', {'erc2'=>' Consolidated Roadmap Epigenomics'} )]),
-            td(["",
-                radio_group('ref_data', ['erc'], 'erc2', 'true', {'erc'=>' Roadmap Epigenomics (2012 data)'} )]),
-            td(["",
-                radio_group('ref_data', ['encode'], 'erc2', 'true', {'encode'=>' ENCODE'} )]),
-            td(["",
-                radio_group('ref_data', ['blueprint'], 'erc2', 'true', {'blueprint'=>' Blueprint'} )]),
+                popup_menu('ref_data', $ref_data_conf->{'values'}, $ref_data_conf->{'default'}, $ref_data_conf->{'labels'})]),
             td(["Proximity:",
                 popup_menu('proxy', ['none', '1kb'], '1kb', {'1kb'=>'1 kb window',
                     'none'=>'No proxy'})]),
@@ -255,10 +278,10 @@ cg20918393', 10, 60)]),
                 textfield('reps', '1000', 10)]),
             td(["Significance threshold:",
                 ""]),
-            td(["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Min:",
-                textfield('thresh1', '0.01', 10)]),
-            td(["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Max:",
-                textfield('thresh2', '0.05', 10)]),
+            td(["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Strict:",
+                textfield('thresh_strict', '0.01', 10)]),
+            td(["&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Marginal:",
+                textfield('thresh_marginal', '0.05', 10)]),
 
             th({-colspan=>2}, ["<hr>"]),
 
@@ -286,7 +309,7 @@ cg20918393', 10, 60)]),
 
 sub validate_form {
     my $data;
-    my $validated_args = ["--web", ($WEB_ROOT or "/")];
+    my $validated_args = ["--web", $q->url(-base=>1).($WEB_ROOT or "/")];
     my @error_messages;
     
     my $input_data;
@@ -316,8 +339,9 @@ sub validate_form {
         $data_format =~ s/\W/_/g;
         push(@error_messages, "Data format &quot;$data_format&quot; is not valid. Please".
             " specify a valid one.");
+    } else {
+        push(@$validated_args, "--format", $data_format);
     }
-    push(@$validated_args, "--format", param("data_format"));
 
     my $label = param("label");
     if ($label and $label =~ /\W/) {
@@ -326,20 +350,22 @@ sub validate_form {
     push(@$validated_args, "--label", $label) if ($label);
 
     my $bkgd = param("bkgd");
-    if (!$bkgd or ($bkgd ne "450k" and $bkgd ne "27k")) {
+    if (!grep {$bkgd eq $_} @{$bkgd_conf->{'values'}}) {
         $bkgd =~ s/\W/_/g;
         push(@error_messages, "Unknown platform &quot;$bkgd&quot;. Please".
             " specify a valid one.");
+    } else {
+        push(@$validated_args, "--bkgd", $bkgd);
     }
-    push(@$validated_args, "--bkgd", param("bkgd"));
 
     my $ref_data = param("ref_data");
-    if (!$ref_data or ($ref_data ne "erc2" and $ref_data ne "erc" and $ref_data ne "encode" and $ref_data ne "blueprint")) {
+    if (!grep {$ref_data eq $_} @{$ref_data_conf->{'values'}}) {
         $ref_data =~ s/\W/_/g;
         push(@error_messages, "Unknown set of analysis data &quot;$ref_data&quot;. Please".
             " specify a valid one.");
+    } else {
+        push(@$validated_args, "--data", $ref_data);
     }
-    push(@$validated_args, "--data", param("ref_data"));
 
     my $depletion = param("depletion");
     if ($depletion and $depletion eq 'on') {
@@ -368,27 +394,26 @@ sub validate_form {
     }
     push(@$validated_args, "--reps", $reps);
 
-    my $thresh1 = param("thresh1");
-    if (!$thresh1 or $thresh1 !~ /^\d+(\.\d*)?$/) {
-        push(@error_messages, "Min. significance threshold must be a positive number.");
-    } elsif ($thresh1 >= 1) {
-        push(@error_messages, "Min. significance threshold must be less than 1.");
+    my $thresh_strict = param("thresh_strict");
+    if (!$thresh_strict or $thresh_strict !~ /^\d+(\.\d*)?$/) {
+        push(@error_messages, "Strict significance threshold must be a positive number.");
+    } elsif ($thresh_strict >= 1) {
+        push(@error_messages, "Strict significance threshold must be less than 1.");
     }
 
-    my $thresh2 = param("thresh2");
-    if (!$thresh2 or $thresh2 !~ /^\d+(\.\d*)?$/) {
-        push(@error_messages, "Max. significance threshold must be a positive number.");
-    } elsif ($thresh2 >= 1) {
-        push(@error_messages, "Max. significance threshold must be less than 1.");
+    my $thresh_marginal = param("thresh_marginal");
+    if (!$thresh_marginal or $thresh_marginal !~ /^\d+(\.\d*)?$/) {
+        push(@error_messages, "Marginal significance threshold must be a positive number.");
+    } elsif ($thresh_marginal >= 1) {
+        push(@error_messages, "Marginal significance threshold must be less than 1.");
     }
 
-    if ($thresh1 > $thresh2) {
+    if ($thresh_strict > $thresh_marginal) {
         print $q->header;
-        push(@error_messages, "Min. significance threshold must be less than max. significance".
-            " threshold.");
+        push(@error_messages, "Strict significance threshold must be less than marginal one.");
         return 0;
     }
-    push(@$validated_args, "--thresh", "$thresh1,$thresh2");
+    push(@$validated_args, "--thresh", "$thresh_marginal,$thresh_strict");
 
     if (@error_messages) {
         print $q->header;
@@ -407,7 +432,7 @@ sub validate_form {
     ## It seems like all the options are valid, so we can now store the input data in the output
     ## directory
     my $absolute_outdir = get_absolute_outdir();
-    open(INPUT, ">$absolute_outdir/$INPUT_DATAFILE") or
+    open(INPUT, "| gzip -9 > $absolute_outdir/$INPUT_DATAFILE") or
         die "Cannot open $absolute_outdir/$INPUT_DATAFILE";
     foreach my $this_line (@lines) {
         print INPUT $this_line, "\n";
@@ -537,19 +562,19 @@ sub print_result {
     my $web_outdir = get_web_outdir();
 
     opendir(DIR, $absolute_outdir);
-    my @files = grep {/(.pdf|.html|.tsv|.R)$/} readdir(DIR);
+    my @files = grep {/(.pdf|.html|.tsv|.R|.gz|.bz2)$/} readdir(DIR);
     closedir(DIR);
-    my $table_file = (grep {/.table.html$/} @files)[0];
-    my $table_R = (grep {/.table.R$/i} @files)[0];
-    my $dchart_file = (grep {/.dchart.html$/} @files)[0];
-    my $dchart_R = (grep {/.dchart.R$/i} @files)[0];
-    my $tsv_file = (grep {/.chart.tsv$/} @files)[0];
-    my $pdf_file = (grep {/.chart.pdf$/} @files)[0];
+    my $table_file = (grep {/\.table\.html$/} @files)[0];
+    my $table_R = (grep {/\.table\.R$/i} @files)[0];
+    my $dchart_file = (grep {/\.dchart\.html$/} @files)[0];
+    my $dchart_R = (grep {/\.dchart\.R$/i} @files)[0];
+    my $tsv_file = (grep {/\.chart\.tsv(\.gz|\.bz2)?$/} @files)[0];
+    my $pdf_file = (grep {/\.chart\.pdf$/} @files)[0];
     my $pdf_R = (grep {/.chart.R$/i} @files)[0];
 
     print $fh Template::content_box_1("Results",
-        "<a href=\"$web_outdir/$INPUT_DATAFILE\">Input data (txt)</a>",
-        "<a href=\"$web_outdir/$tsv_file\">Raw data (tsv)</a>",
+        "<a href=\"$web_outdir/$INPUT_DATAFILE\">Input data (txt.gz)</a>",
+        "<a href=\"$web_outdir/$tsv_file\">Raw data (tsv.gz)</a>",
         "<a href=\"$web_outdir/$pdf_file\">Static chart (PDF)</a>",
         "<a href=\"$web_outdir/$dchart_file\">Interactive chart (HTML)</a>",
         "<a href=\"$web_outdir/$table_file\">Interactive table (HTML)</a>",
@@ -890,7 +915,7 @@ sub print_help_page {
            <br \>",
 
        "<strong>Significance threshold</strong><br \><br \>
-           Alter the default binomial p value thresholds. (0 < Min < Max < 1)
+           Alter the default binomial p value thresholds. (0 < Strict < Marginal < 1)
            <br \>",
     );
 
@@ -975,6 +1000,17 @@ To estimate false positive rates, 1000 randomly chosen DMP sets for each of a se
         "<strong>False Positive Rate by DMP set Count</strong><br /><img src=\"$WEB_ROOT/img/analysis-fdr.png\" width=100%><br />This plot suggests that for a DMP set of >= 20, a threshold of -log10 (binomial p value) >= 3.38 (equivalent to 0.001 in corrected p value) maintains the false positive rate below around 0.0025 (0.25%)."
     );
 
+    print Template::content_box("Versions",
+        "<strong>v1.2</strong><br \><br \>
+This version includes DHS data from the BLUEPRINT Consortium.<br />",
+
+        "<strong>v1.1</strong><br /><br />
+Version 1.1 adds both DHS and Histone marks from the Consolidated Roadmap data to eFORGE analysis. One of the options allows to run eFORGE against all five H3 marks at once. This version also includes new changes under the hood like a redeisgn of the underlying database.<br />",
+
+        "<strong>v1.0</strong><br /><br />
+First version of eFORGE. The tools allows to analyses DMPs versus Epigenome Roadmap and ENCODE DHS.<br />"
+    );
+
     print Template::end;
     exit(0);
 }
@@ -1000,6 +1036,7 @@ sub print_download_page {
     "Additional files you will require:
     <ul><li><a href=\"$WEB_ROOT$WEB_OUTDIR/eforge.db\">eforge.db</a> (for eFORGE v1.0)</li>
     <li><a href=\"$WEB_ROOT$WEB_OUTDIR/eforge_1.1.db\">eforge_1.1.db</a> (for eFORGE v1.1)</li>
+    <li><a href=\"$WEB_ROOT$WEB_OUTDIR/eforge_1.2.db\">eforge_1.2.db</a> (for eFORGE v1.2)</li>
     <li><a href=\"$WEB_ROOT$WEB_OUTDIR/mvp_450k_bins\">mvp_450k_bins</a></li>
     <li><a href=\"$WEB_ROOT$WEB_OUTDIR/mvp_27k_bins\">mvp_27k_bins</a></li></ul>");
     print Template::content_box("License",
