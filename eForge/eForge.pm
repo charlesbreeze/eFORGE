@@ -103,7 +103,7 @@ sub bkgrdstat{
  Arg[1]         : FILEHANDLE $input_fh
  Arg[2]         : string $format
  Arg[3]         : DB-connection-handle $dbh
- Arg[4]         : string $bkgd
+ Arg[4]         : string $array
  Arg[5]         : numeric $filter
  Returns        : arrayref of $probe_ids (string)
  Example        : my $probe_ids = process_file($fh, "probeid", $dbh, '450k', undef);
@@ -114,7 +114,7 @@ sub bkgrdstat{
 =cut
 
 sub process_file {
-    my ($fh, $format, $dbh, $bkgd, $filter) = @_;
+    my ($fh, $format, $dbh, $array, $filter) = @_;
     my $probe_ids = [];
 
     if ($format =~ /^probe/i) {
@@ -133,6 +133,9 @@ sub process_file {
         }
 
     } elsif ($format =~ /^bed/i) {
+        if (defined $filter) {
+            warn "You have specified p-value filtering, but this isn't implemented for files of format $format. No filtering will happen."
+        }
         my $locations = [];
         while (<$fh>) {
             next if /^track/;
@@ -144,16 +147,19 @@ sub process_file {
             }
             push(@$locations, [$chr, $from]);
         }
-        $probe_ids = fetch_all_probe_ids($dbh, $bkgd, $locations);
+        $probe_ids = fetch_all_probe_ids($dbh, $array, $locations);
 
     } elsif ($format =~ /^tabix/i) {
+        if (defined $filter) {
+            warn "You have specified p-value filtering, but this isn't implemented for files of format $format. No filtering will happen."
+        }
         my $locations = [];
         while (<$fh>) {
             chomp;
             my ($chr, $from, $to) = $_ =~ /(.+)\:(\d+)\-(\d+)/;
             push(@$locations, [$chr, $from]);
         }
-        $probe_ids = fetch_all_probe_ids($dbh, $bkgd, $locations);
+        $probe_ids = fetch_all_probe_ids($dbh, $array, $locations);
     }
     return $probe_ids;
 }
@@ -168,8 +174,8 @@ Identifies the bins that each of the probes in a probe hash lies in, and then pi
 #(we don't use "assign" as we do not use percentile bins so no point in changing "assign")
 sub match{
     #we take out the percentile bins ($per):
-    #my ($mvps, $bkgd, $datadir, $per, $reps) = @_;
-    my ($mvps, $bkgd, $datadir, $reps) = @_;
+    #my ($mvps, $array, $datadir, $per, $reps) = @_;
+    my ($mvps, $array, $datadir, $reps) = @_;
     #my ($bins, $params, %bins, %params);
     my ($bins, %bins);
     # load up the stored hashes that contain the bins of mvps by feature and cpg island relationship.
@@ -179,7 +185,7 @@ sub match{
     #$bins = $datadir . "snp_bins.$per";
     #$params = $datadir . "snp_params.$per";
 
-    if ($bkgd =~ "27k"){
+    if ($array =~ "27k"){
         $bins = $datadir . "/mvp_27k_bins";
         }
     else{
@@ -365,13 +371,13 @@ sub get_all_arrays {
 =head2 get_all_proxy_filters
 
  Arg[1]         : DB-handle $dbh
- Arg[2]         : (optional) string $bkgd
+ Arg[2]         : (optional) string $array
  Returns        : hashref of proxy-filters (string)
  Example        : my $proxy_filters = get_all_proxy_filters($dbh, '450k');
  Description    : Returns the list of proxy filters available in the DB. It returns a hashref whose
                   keys are the bkgd names (i.e. array tags) and values are the name of the proxy
                   filter. At the moment the schema supports just one proxy filter per array.
-                  If you provide a $bkgd, the result will be limited to that array. Note that you
+                  If you provide a $array, the result will be limited to that array. Note that you
                   will still get a hashref with exactly the same structure. Only the content will
                   be limited.
  Exceptions     :
@@ -437,7 +443,7 @@ sub get_bits{
 =head2 fetch_all_probe_ids
 
  Arg[1]         : DB-handle $dbh
- Arg[2]         : string $bkgd
+ Arg[2]         : string $array
  Arg[3]         : arrayref of locations [$chr, $pos]
  Returns        : arrayref of probe IDs (string)
  Description    : Given a list of chromosome names and location pairs, the method fetches the name
@@ -449,7 +455,7 @@ sub get_bits{
 
 sub fetch_all_probe_ids {
     #gets the rsid for a SNP where a location is given
-    my ($dbh, $bkgd, $locations) = @_;
+    my ($dbh, $array, $locations) = @_;
 
     my $sth = $dbh->prepare("SELECT probe_id
                              FROM probe_mapping

@@ -33,97 +33,102 @@ eForge functions, plotting options and stats are provided by eForge::eForge, eFo
 
 =over
 
-=item B<data>
+=item B<--dataset TAG>
 
-Dataset to analyse. Either ENCODE data ('encode'), unconsolidated Roadmap Epigenome data ('erc'), consolidated Roadmap Epigenome data ('erc2'), or Blueprint data ('blueprint'). erc by default.
+Set of functional data to look for enrichment. Either ENCODE data ('encode'), unconsolidated Roadmap
+Epigenome data ('erc'), consolidated Roadmap Epigenome data ('erc2'), or Blueprint data ('blueprint').
+erc by default.
 
-Use -data ? to get a list of available datasets on your local install.
+Use --dataset ? to get a list of available datasets on your local install.
 
-=item B<peaks>
+=item B<--array TAG>
 
-Use peaks instead of hotspots. Peaks are more stringent DNase1 peaks calls representing DNase hypersensitive sites, 
-rather than hotspots which are regions of generalised DNase1 sensitivity or open chromatin. Default is to use hotspots.
+Array (FKA background) is set at default to 450k array ('450k'), the Illumina Infinium HumanMethylation450 BeadChip.
 
-=item B<bkgd>
+For the time being, it is suficient for MVPs to be on the 450k array. Probes within 1kb of each other
+will undergo filtering.
 
-Background is set at default to 450k array ('450k'), the Illumina Infinium HumanMethylation450 BeadChip.
+Use --array ? to get a list of available backgrounds on your local install.
 
-For the time being, it is suficient for MVPs to be on the 450k array. Probes within 1kb of each other will undergo filtering.
-
-Use -bkgd ? to get a list of available backgrounds on your local install.
-
-=item B<label>
+=item B<--label STRING>
 
 Supply a label that you want to use for the plotting titles, and filenames.
 
-=item B<f>
+=item B<--f FILENAME>
 
 Supply the name of a file containing a list of MVPs. 
 Format must be given by the -format flag. 
-If not supplied the analysis is performed either on mvps provided as probeids (cg or ch probes) in a comma separated list through the mvps option 
-or on a set of data from a default ewas* study (provide link for study here*). Note that 5* MVPs are required at a minimum.
+If not supplied the analysis is performed either on mvps provided as probeids (cg or ch probes) in a
+comma separated list through the mvps option or on a set of data from a default ewas study, namely a
+set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014.
 
-=item B<mvps>
+Note that at least 5 MVPs are required at a minimum by default.
+
+=item B<--mvps probe_id,probe_id...>
 
 Can provide the mvps as probeids in a comma separated list.
 
-=item B<min_mvps>
+=item B<--min_mvps INT>
 
 Specify the minimum number of MVPs to be allowed. Default is 5 now we are using binomial test.
 
-=item B<thresh>
+=item B<--thresh FLOAT,FLOAT>
 
 Alter the default binomial p value thresholds. Give a comma separate list of three e.g. 0.05,0.01 for the defaults
 
-=item B<format>
+=item B<--format STRING>
 
 If f is specified, specify the file format as follow:
 
-probeid = list of mvps as probeids each on a separate line. Optionally can add other fields after the probeid which are ignored, 
+probeid = list of mvps as probeids each on a separate line. Optionally can add other fields after the probeid which are ignored,
 unless the pvalue filter is specified, in which case eForge assumes that the second field is the minus log10 pvalue
 
-bed  = File given is a bed file of locations (chr\tbeg\tend).  bed format should be 0 based and the chromosome should be given as chrN. 
+bed  = File given is a bed file of locations (chr\tbeg\tend).  bed format should be 0 based and the chromosome should be given as chrN.
 However we will also accept chomosomes as just N (ensembl) and 1-based format where beg and end are the same*.
 
 tabix = File contains MVPs in tabix format.
 
-ian = 1-based chr\tbeg\tend\tprobeid\tpval\tminuslog10pval
+=item B<--filter FLOAT>
 
-=item B<filter>
+Set a filter on the MVPs based on the -log10 pvalue.  This works for files in the probeid' format.
+Give a value as the lower threshold and only MVPs with -log10 pvalues >= to the threshold will be
+analysed. Default is no filtering.
 
-Set a filter on the MVPs based on the -log10 pvalue.  This works for files in the 'ian' or 'probeid' format. 
-Give a value as the lower threshold and only MVPs with -log10 pvalues >= to the threshold will be analysed. Default is no filtering.
-
-=item B<bkgrd>
+=item B<--bkgrd>
 
 Output background stats for investigation.
 
-=item B<reps>
+=item B<--reps INT>
 
-The number of background matching sets to pick and analyse. Default 1000*.
+The number of background matching sets to pick and analyse. Default 1000.
 
-=item B<proxy>
+=item B<--proxy TAG>
 
-Apply filter for MVPs in proximity (within 1 kb of another test MVP). With proximity filter specified, eForge will report MVPs removed due to proximity with another MVP in the list and will randomly pick one of the probes among the set of probes that are in proximity (within 1 kb of each other).
+Apply filter for MVPs in proximity (within 1 kb of another test MVP). With proximity filter specified,
+eForge will report MVPs removed due to proximity with another MVP in the list and will randomly pick
+one of the probes among the set of probes that are in proximity (within 1 kb of each other).
+
 To turn off proximity filtering specify -noproxy
 
-=item B<noproxy>
+=item B<--noproxy>
 
 Turn off proximity filtering.
 
-=item B<depletion>
+=item B<--depletion>
 
-Analyse for DHS depletion pattern instead of the default DHS enrichment analysis. Use when dealing with datasets suspected not to overlap with DHS. Specifying depletion will be indicated on the label (the text "Depletion Analysis" will be added to the file label).
+Analyse for depletion pattern instead of the default enrichment analysis. Use when dealing with
+datasets suspected not to overlap with DHS (or the relevant functional assay). Specifying depletion
+will be indicated on the label (the text "Depletion Analysis" will be added to the file label).
 
-=item B<noplot>
+=item B<--noplot>
 
 Just make the data file, don't plot.
 
-=item B<help|h|?>
+=item B<--help|-h|-?>
 
 Print a brief help message and exits.
 
-=item B<man|m>
+=item B<--man|-m>
 
 Print this perldoc and exit.
 
@@ -185,21 +190,30 @@ my $cwd = getcwd;
 
 my $dbname = "eforge_1.2.db";
 
-my $bkgd; # Default value
-my $bkgd_label;
-my ($data, $peaks, $label, $file, $format, $min_mvps, $bkgrdstat, $noplot, $reps,
-    $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, $out_dir, @mvplist,
+my $array; # Default value
+my $array_label;
+my $format = 'probeid'; # Input format
+my $label = 'Unnamed'; # Label for plots
+my $reps = 1000;
+# set binomial p values, multiple test correction is used
+my $thresh; # string for command line option
+my $t_marginal = 0.05; # default marginal p-value threshold
+my $t_strict = 0.01; # default strict p-value threshold
+
+my $min_mvps = 5; # the minimum number of mvps allowed for test. Set to 5 as we have binomial p
+
+my ($dataset, $filename, $bkgrdstat, $noplot,
+    $help, $man, $proxy, $noproxy, $depletion, $filter, $out_dir, $mvp_list,
     $web, $autoopen);
 
 GetOptions (
-    'data=s'     => \$data,
-    'peaks'      => \$peaks,
+    'dataset=s'  => \$dataset,
     'bkgrd'      => \$bkgrdstat,
-    'bkgd=s'     => \$bkgd,
+    'array|bkgd=s' => \$array,
     'label=s'    => \$label,
-    'f=s'        => \$file,
+    'f=s'        => \$filename,
     'format=s'   => \$format,
-    'mvps=s'     => \@mvplist,
+    'mvps=s@'    => \$mvp_list,
     'min_mvps=i' => \$min_mvps,
     'noplot'     => \$noplot,
     'reps=i'     => \$reps,
@@ -209,7 +223,7 @@ GetOptions (
     'depletion'  => \$depletion,
     'filter=f'   => \$filter,
     'out_dir=s'  => \$out_dir,
-    'web=s'        => \$web,
+    'web=s'      => \$web,
     'autoopen'   => \$autoopen,
     'help|h|?'   => \$help,
     'man|m'      => \$man,
@@ -225,16 +239,12 @@ if (!$out_dir) {
     $out_dir = $ug->to_hexstring($ug->create());
 }
 
-# the minimum number of mvps allowed for test. Set to 5 as we have binomial p
-unless (defined $min_mvps) {
-    $min_mvps = 5;
+# Define the thresholds to use.
+if ($thresh) {
+    ($t_marginal, $t_strict) = parse_pvalue_thresholds($thresh);
 }
 
-# Label for plots
-unless (defined $label) {
-    $label = "No label given";
-}
-  
+
 ## ============================================================================
 ## Connect to the DB
 ## ============================================================================
@@ -257,14 +267,14 @@ my $dbh = DBI->connect($dsn, "", "") or die $DBI::errstr;
 my $all_datasets = get_all_datasets($dbh);
 if (!defined($all_datasets)) {
     die "Empty database: no dataset loaded!\n";
-} elsif (!defined($data)) {
-    $data = $all_datasets->[0]->{tag};
-    print "Using default dataset: [$data] ".$all_datasets->[0]->{name}."\n";
-} elsif ($data eq "?") {
+} elsif (!defined($dataset)) {
+    $dataset = $all_datasets->[0]->{tag};
+    print "Using default dataset: [$dataset] ".$all_datasets->[0]->{name}."\n";
+} elsif ($dataset eq "?") {
     print "Available datasets:\n - [".join("\n - [", map {$_->{tag}."] ".$_->{name}} @$all_datasets)."\n";
     exit();
-} elsif (!grep {$_ eq $data} map {$_->{tag}} @$all_datasets) {
-    die "Dataset $data unknown\nAvailable datasets:\n - [".join("\n - [", map {$_->{tag}."] ".$_->{name}} @$all_datasets)."\n";
+} elsif (!grep {$_ eq $dataset} map {$_->{tag}} @$all_datasets) {
+    die "Dataset $dataset unknown\nAvailable datasets:\n - [".join("\n - [", map {$_->{tag}."] ".$_->{name}} @$all_datasets)."\n";
 }
 ## ============================================================================
 
@@ -275,19 +285,19 @@ if (!defined($all_datasets)) {
 my $all_arrays = get_all_arrays($dbh);
 if (!defined($all_arrays)) {
     die "Empty database: no background loaded!\n";
-} elsif (!defined($bkgd)) {
-    $bkgd = $all_arrays->[0]->{tag};
-    print "Using default background: [$bkgd] ".$all_arrays->[0]->{name}."\n";
-    $bkgd_label = $all_arrays->[0]->{name};
-} elsif ($bkgd eq "?") {
+} elsif (!defined($array)) {
+    $array = $all_arrays->[0]->{tag};
+    print "Using default background: [$array] ".$all_arrays->[0]->{name}."\n";
+    $array_label = $all_arrays->[0]->{name};
+} elsif ($array eq "?") {
     print "Available arrays:\n - [".join("\n - [", map {$_->{tag}."] ".$_->{name}} @$all_arrays)."\n";
     exit();
-} elsif (!grep {$_ eq $bkgd} map {$_->{tag}} @$all_arrays) {
-    die "Array $bkgd unknown\nAvailable arrays:\n - [".join("\n - [", map {$_->{tag}."] ".$_->{name}} @$all_arrays)."\n";
+} elsif (!grep {$_ eq $array} map {$_->{tag}} @$all_arrays) {
+    die "Array $array unknown\nAvailable arrays:\n - [".join("\n - [", map {$_->{tag}."] ".$_->{name}} @$all_arrays)."\n";
 } else {
     foreach my $this_array (@$all_arrays) {
-        if ($this_array->{tag} eq $bkgd) {
-            $bkgd_label = $this_array->{name};
+        if ($this_array->{tag} eq $array) {
+            $array_label = $this_array->{name};
             last;
         }
     }
@@ -301,8 +311,8 @@ if (!defined($all_arrays)) {
 # Set proximity filter
 unless (defined $noproxy) {
     my $all_proxy_filters = get_all_proxy_filters($dbh);
-    if ($all_proxy_filters->{$bkgd}) {
-        $proxy = $all_proxy_filters->{$bkgd};
+    if ($all_proxy_filters->{$array}) {
+        $proxy = $all_proxy_filters->{$array};
     }
 }
 ## ============================================================================
@@ -314,99 +324,18 @@ if (defined $depletion) {
 
 #regexp puts underscores where labels before
 (my $lab = $label) =~ s/\s/_/g;
-$lab = "$lab.$bkgd.$data";
-
-#format for reading from file
-unless (defined $format) {
-    $format = 'probeid';
-}
+$lab = "$lab.$array.$dataset";
 
 
-
-
-
-# percentile bins for the bkgrd calculations. 
-#This is hard coded so there are enough probes to choose from, but could later be altered.
-#eForge, unlike Forge, does not use percentile bins
-my $per = 10;
-
-
-# number of sets to analyse for bkgrd.
-unless (defined $reps) {
-    $reps = 1000;
-}
-
-
-# Define the thresholds to use.
-my ($t_marginal, $t_strict);
-if (defined $thresh) {
-    ($t_marginal, $t_strict) = split(",", $thresh);
-    unless (looks_like_number($t_marginal) && looks_like_number($t_strict)){
-        die "You must specify numerical p value thresholds in a comma separated list\n";
-    }
-    unless ((1 >= $t_marginal) && ($t_marginal >= $t_strict) && ($t_strict >= 0)) {
-        die "The p-value thresholds should be 1 >= T.marginal >= T.strict >= 0\n";
-    }
-} else {
-    $t_marginal = 0.05; # set binomial p values, bonferroni is applied later based on number of samples (cells)
-    $t_strict = 0.01;
-}
-
-# mvps need to come either from a file or a list
-my $mvps;
-
-
-# A series of data file formats to accept.
-
+## ============================================================================
+## Read and process the input MVPs
+## ============================================================================
 warn "[".scalar(localtime())."] Processing input...\n";
+my $mvps = get_input_mvps($filename, $mvp_list);
 
-if (defined $file) {
-    if (defined $filter) {
-        unless ($format eq "ian" or $format eq "probeid") {
-            warn "You have specified p value filtering, but this isn't implemented for files of format $format. No filtering will happen."
-	    }
-    }
-    my $fh;
-    if ($file =~ /\.gz$/) {
-        open($fh, "gunzip -c $file |") or die "cannot open file $file : $!";
-    } elsif ($file =~ /\.bz2$/) {
-        open($fh, "bunzip2 -c $file |") or die "cannot open file $file : $!";
-    } else {
-        open($fh, "<$file") or die "cannot open file $file : $!";
-    }
-    $mvps = process_file($fh, $format, $dbh, $bkgd, $filter);
-
-} elsif (@mvplist) {
-    @$mvps = split(/,/,join(',',@mvplist));
-
-} else{
-    # Test MVPs from Liu Y et al. Nat Biotechnol 2013  Pulmonary_function.snps.bed (*put EWAS bedfile here)
-    # If no options are given it will run on the default set of MVPs
-    warn "No probe input given, so running on default set of probes, a set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014.";
-    @$mvps = qw(cg13430807 cg10480329 cg06297318 cg19301114 cg23244761 cg26872907 cg18066690 cg04468741 cg16636767 cg10624395 cg20918393);
-}
-
-
-# Remove redundancy in the input
-
-my %nonredundant;
-foreach my $mvp (@$mvps) {
-    $nonredundant{$mvp}++;
-}
-
-
-foreach my $mvp (keys %nonredundant) {
-    if ($nonredundant{$mvp} > 1) {
-        say "$mvp is present " . $nonredundant{$mvp} . " times in the input. Analysing only once."
-    }
-}
-
-@$mvps = keys %nonredundant;
 my @origmvps = @$mvps;
 
-
 #######!!!!!### proximity filtering starts below:
-
 my ($prox_excluded, $output, $input);
 unless(defined $noproxy) {
     $input = scalar @$mvps;
@@ -422,16 +351,17 @@ unless(defined $noproxy) {
 if (scalar @$mvps < $min_mvps) {
     die "Fewer than $min_mvps MVPs. Analysis not run\n";
 }
+## ============================================================================
 
 
 # get the cell list array and the hash that connects the cells and tissues
-my ($cells, $tissues) = get_cells($data, $dbh);
+my ($cells, $tissues) = get_cells($dataset, $dbh);
 
 # get the bit strings for the test mvps from the database file
-my $rows = get_bits($dbh, $data, $bkgd, $mvps);
+my $rows = get_bits($dbh, $dataset, $array, $mvps);
 
 # unpack the bitstrings and store the overlaps by cell.
-my $test = process_bits($rows, $cells, $data);
+my $test = process_bits($rows, $cells, $dataset);
 
 # generate stats on the background selection
 if (defined $bkgrdstat) {
@@ -455,7 +385,7 @@ foreach my $probeid (@origmvps) {
 }
 
 if (scalar @missing > 0) {
-    warn "The following " . scalar @missing . " MVPs have not been analysed because they were not found on the ".$bkgd_label."\n";
+    warn "The following " . scalar @missing . " MVPs have not been analysed because they were not found on the ".$array_label."\n";
     warn join("\n", @missing) . "\n";
 }
 if (defined $proxy) {
@@ -473,9 +403,9 @@ my $mvpcount = scalar @foundmvps;
 
 
 # identify the feature and cpg island relationship, and then make bkgrd picks (old version just below)
-#my $picks = match(\%$test, $bkgd, $datadir, $per, $reps);
-warn "[".scalar(localtime())."] Loading the $bkgd background...\n";
-my $picks = match(\%$test, $bkgd, $datadir, $reps);
+#my $picks = match(\%$test, $array, $datadir, $per, $reps);
+warn "[".scalar(localtime())."] Loading the $array background...\n";
+my $picks = match(\%$test, $array, $datadir, $reps);
 
 ########check below lines:
  
@@ -491,12 +421,12 @@ my $num = 0;
 foreach my $bkgrd (keys %{$picks}) {
     warn "[".scalar(localtime())."] Repetition $num out of ".$reps."\n" if (++$num%100 == 0);
     #$rows = get_bits(\@{$$picks{$bkgrd}}, $sth);
-    $rows = get_bits($dbh, $data, $bkgd, \@{$$picks{$bkgrd}});
+    $rows = get_bits($dbh, $dataset, $array, \@{$$picks{$bkgrd}});
     $backmvps += scalar @$rows; #$backmvps is the total number of background probes analysed
     unless (scalar @$rows == scalar @foundmvps) {
         warn "Background " . $bkgrd . " only " . scalar @$rows . " probes out of " . scalar @foundmvps . "\n";
     }
-    my $result = process_bits($rows, $cells, $data);
+    my $result = process_bits($rows, $cells, $dataset);
     foreach my $cell (keys %{$$result{'CELLS'}}) {
         push @{$bkgrd{$cell}}, $$result{'CELLS'}{$cell}{'COUNT'}; # accumulate the overlap counts by cell
     }
@@ -592,8 +522,8 @@ close(TSV);
 warn "[".scalar(localtime())."] Generating plots...\n";
 unless (defined $noplot){
     #Plotting and table routines
-    Chart($filename, $lab, $out_dir, $tissues, $cells, $label, $t_marginal, $t_strict, $data); # basic pdf plot
-    dChart($filename, $lab, $out_dir, $data, $label, $t_marginal, $t_strict, $web); # rCharts Dimple chart
+    Chart($filename, $lab, $out_dir, $tissues, $cells, $label, $t_marginal, $t_strict, $dataset); # basic pdf plot
+    dChart($filename, $lab, $out_dir, $dataset, $label, $t_marginal, $t_strict, $web); # rCharts Dimple chart
     table($filename, $lab, $out_dir, $web); # Datatables chart
   }
 
@@ -603,4 +533,104 @@ if ($autoopen) {
     system("open $out_dir/$lab.table.html");
     system("open $out_dir/$lab.dchart.html");
     system("open $out_dir/$lab.chart.pdf");
+}
+
+####################################################################################################
+####################################################################################################
+##
+##  Sub-functions
+##
+####################################################################################################
+####################################################################################################
+
+
+=head2 parse_pvalue_thresholds
+
+ Arg[1]         : string $thresholds
+ Returns        : arrayref of marginal and strict thresholds (floats)
+ Example        : ($t_marginal, $t_strict) = parse_pvalue_thesholds("0.05,0.01");
+ Description    : This function returns the both marginal and strict p-value thresholds as read from
+                  the command line option. The input string should contain both numbers separated by
+                  a comma.
+ Exceptions     : Dies if $thresholds is empty, does not contain numbers or are not defined between
+                  0 and 1 and/or the marginal threshold is not larger or equal to the strict one.
+
+=cut
+
+sub parse_pvalue_thresholds {
+    my ($thresh) = @_;
+    my ($t_marginal, $t_strict);
+
+    if (!$thresh) {
+        die "Cannot read p-value thresholds from an empty string\n";
+    }
+
+    ($t_marginal, $t_strict) = split(",", $thresh);
+    unless (looks_like_number($t_marginal) && looks_like_number($t_strict)){
+        die "You must specify numerical p-value thresholds in a comma separated list\n";
+    }
+    unless ((1 >= $t_marginal) && ($t_marginal >= $t_strict) && ($t_strict >= 0)) {
+        die "The p-value thresholds should be 1 >= T.marginal >= T.strict >= 0\n";
+    }
+    return ($t_marginal, $t_strict);
+}
+
+
+=head2 get_input_mvps
+
+ Arg[1]         : string $filename
+ Arg[2]         : arrayref $mvp_list
+ Returns        : arrayref of probe IDs (string)
+ Example        : $mvps = get_input_mvps("input.txt", undef);
+ Example        : $mvps = get_input_mvps(undef, ["cg13430807", "cg10480329,cg06297318,cg19301114"]);
+ Example        : $mvps = get_input_mvps(undef, undef);
+ Description    : This function returns the list of input probe IDs. This can come from either
+                  $filename if defined or from $mvp_list otherwise. Each element in $mvp_list is a
+                  string which contains one or more probe IDs separated by commas (see Examples).
+                  Falls back to the default data set from Jaffe and Irizarry.
+                  The set of probe IDs is checked to remove redundant entries.
+ Exceptions     : Dies if the file is not found or cannot be opened for whatever reason.
+
+=cut
+
+sub get_input_mvps {
+    my ($filename, $mvp_list) = @_;
+    my $mvps;
+
+    if (defined $filename) {
+        my $fh;
+        if ($filename =~ /\.gz$/) {
+            open($fh, "gunzip -c $filename |") or die "cannot open file $filename : $!";
+        } elsif ($filename =~ /\.bz2$/) {
+            open($fh, "bunzip2 -c $filename |") or die "cannot open file $filename : $!";
+        } else {
+            open($fh, "$filename") or die "cannot open file $filename : $!";
+        }
+        $mvps = process_file($fh, $format, $dbh, $array, $filter);
+
+    } elsif ($mvp_list and @$mvp_list) {
+        @$mvps = split(/,/, join(',', @$mvp_list));
+
+    } else{
+        # Test MVPs from Liu Y et al. Nat Biotechnol 2013  Pulmonary_function.snps.bed (*put EWAS bedfile here)
+        # If no options are given it will run on the default set of MVPs
+        warn "No probe input given, so running on default set of probes, a set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014.";
+        @$mvps = qw(cg13430807 cg10480329 cg06297318 cg19301114 cg23244761 cg26872907 cg18066690 cg04468741 cg16636767 cg10624395 cg20918393);
+    }
+
+    # Remove redundancy in the input
+    my %nonredundant;
+    foreach my $mvp (@$mvps) {
+        $nonredundant{$mvp}++;
+    }
+
+    foreach my $mvp (keys %nonredundant) {
+        if ($nonredundant{$mvp} > 1) {
+            say "$mvp is present " . $nonredundant{$mvp} . " times in the input. Analysing only once."
+        }
+    }
+
+    @$mvps = keys %nonredundant;
+
+    return($mvps);
 }
