@@ -360,7 +360,7 @@ my $existing_probes = {map {$_->[0] => 1} @$annotated_probes};
 $mvps = [keys %$existing_probes];
 
 ## Detect and remove the missing probes.
-my $num_missing_probes = find_missing_probes($original_mvps, $existing_probes);
+my $num_missing_probes = find_missing_probes($original_mvps, $existing_probes, $proximity_excluded);
 
 # Print summary of filtering and checks:
 my $msg = "For $label, $num_of_input_mvps MVPs provided, ". scalar @$mvps.
@@ -658,21 +658,22 @@ sub get_input_probes {
 
  Arg[1]         : arrayref of strings $original_probe_ids
  Arg[2]         : hashref $existing_probe_ids (keys are probe_ids, values are ignored)
- Returns        : int $num__missing_probes
+ Arg[3]         : hashref $excluded_probe_ids (keys are probe_ids, values are ignored)
+ Returns        : int $num_missing_probes
  Example        : my $num_missing_probes = find_missing_probes(['cg001', 'cg002', 'cg003', 'cg004'],
-                    {'cg001' => 1, 'cg003 => 1});
+                    {'cg001' => 1, 'cg003 => 1}, {'cg002' => 'cg001');
  Description    : Detects and prints the list of missing probes if any.
  Exceptions     :
 
 =cut
 
 sub find_missing_probes {
-    my ($original_probes, $existing_probes_hash) = @_;
+    my ($original_probes, $existing_probes_hash, $excluded_probes_hash) = @_;
     my $num_missing_probes = 0;
 
     my $missing_probes = [];
     foreach my $probe_id (@$original_probes) {
-        unless ($existing_probes_hash->{$probe_id}) {
+        unless ($existing_probes_hash->{$probe_id} or $excluded_probes_hash->{$probe_id}) {
             push @$missing_probes, $probe_id;
         }
     }
