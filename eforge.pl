@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -200,10 +200,10 @@ my $thresh; # string for command line option
 my $t_marginal = 0.05; # default marginal p-value threshold
 my $t_strict = 0.01; # default strict p-value threshold
 
-my $min_mvps = 5; # the minimum number of mvps allowed for test. Set to 5 as we have binomial p
+my $min_num_probes = 5; # the minimum number of probes allowed for test. Set to 5 as we have binomial p
 
 my ($dataset, $filename, $bkgrdstat, $noplot,
-    $help, $man, $proxy, $noproxy, $depletion, $filter, $out_dir, $mvp_list,
+    $help, $man, $proxy, $noproxy, $depletion, $filter, $out_dir, $probe_list,
     $web, $autoopen);
 
 GetOptions (
@@ -213,8 +213,8 @@ GetOptions (
     'label=s'    => \$label,
     'f=s'        => \$filename,
     'format=s'   => \$format,
-    'mvps=s@'    => \$mvp_list,
-    'min_mvps=i' => \$min_mvps,
+    'probes|mvps=s@' => \$probe_list,
+    'min_num_probes|min_mvps=i' => \$min_num_probes,
     'noplot'     => \$noplot,
     'reps=i'     => \$reps,
     'thresh=s'   => \$thresh,
@@ -309,8 +309,10 @@ if (!defined($all_arrays)) {
 ## Check the proxy_filter (A.K.A. filter) against DB
 ## ============================================================================
 # Set proximity filter
-unless (defined $noproxy) {
-    my $all_proxy_filters = get_all_proxy_filters($dbh);
+if (defined $noproxy) {
+    $proxy = undef;
+} else {
+    my $all_proxy_filters = get_all_proximity_filters($dbh);
     if ($all_proxy_filters->{$array}) {
         $proxy = $all_proxy_filters->{$array};
     }
@@ -318,50 +320,74 @@ unless (defined $noproxy) {
 ## ============================================================================
 
 
+## ============================================================================
+## Append main options (depletion on/off; array; dataset) to $label
+## ============================================================================
 if (defined $depletion) {
     $label = "$label.depletion";
 }
-
-#regexp puts underscores where labels before
-(my $lab = $label) =~ s/\s/_/g;
+(my $lab = $label) =~ s/\s/_/g; # Avoid whitespaces on the label
 $lab = "$lab.$array.$dataset";
+## ============================================================================
 
 
 ## ============================================================================
 ## Read and process the input MVPs
 ## ============================================================================
 warn "[".scalar(localtime())."] Processing input...\n";
-my $mvps = get_input_mvps($filename, $mvp_list);
+# This will read the probes from the file if provided, from the probe list otherwise or use the
+# example data set as a last resort.
+my $mvps = get_input_probes($filename, $probe_list);
+my $original_mvps = [@$mvps];
+my $num_of_input_mvps = scalar(@$mvps);
 
-my @origmvps = @$mvps;
-
-#######!!!!!### proximity filtering starts below:
-my ($prox_excluded, $output, $input);
-unless(defined $noproxy) {
-    $input = scalar @$mvps;
-    ($prox_excluded, @$mvps) = prox_filter($mvps, $dbh);
-    while (my ($excluded_mvp, $mvp) = each %$prox_excluded) {
-        warn "$excluded_mvp excluded for proximity (1 kb) with $mvp\n";
+# Apply the proximity filter if requested
+my ($proximity_excluded);
+if(defined $proxy) {
+    ($proximity_excluded, $mvps) = proximity_filter($dbh, $array, $mvps);
+    while (my ($excluded_mvp, $mvp) = each %$proximity_excluded) {
+        warn "$excluded_mvp excluded for $proxy proximity filter with $mvp\n";
     }
-
-    $output = scalar @$mvps;
 }
 
-# Check we have enough MVPs
-if (scalar @$mvps < $min_mvps) {
-    die "Fewer than $min_mvps MVPs. Analysis not run\n";
+# $annotated_probes is an arrayref with probe_id, sum, bit, gene_group, cgi_group for each input probe
+my $annotated_probes = get_probe_annotations_and_overlap_for_dataset($dbh, $dataset, $array, $mvps);
+my $existing_probes = {map {$_->[0] => 1} @$annotated_probes};
+$mvps = [keys %$existing_probes];
+
+## Detect and remove the missing probes.
+my $num_missing_probes = find_missing_probes($original_mvps, $existing_probes);
+
+# Print summary of filtering and checks:
+my $msg = "For $label, $num_of_input_mvps MVPs provided, ". scalar @$mvps.
+        " retained: $num_missing_probes were not found";
+if (defined $proxy) {
+    $msg .= " and " . scalar(keys %$proximity_excluded) . " excluded using $proxy proximity filter";
+}
+warn $msg, ".\n";
+
+# Check we have enough MVPs left
+my $num_of_valid_probes = scalar @$mvps;
+if ($num_of_valid_probes < $min_num_probes) {
+    die "Fewer than $min_num_probes MVPs. Analysis not run\n";
 }
 ## ============================================================================
 
 
 # get the cell list array and the hash that connects the cells and tissues
-my ($cells, $tissues) = get_cells($dataset, $dbh);
-
-# get the bit strings for the test mvps from the database file
-my $rows = get_bits($dbh, $dataset, $array, $mvps);
+# $samples is a hash whose keys are the $cells (short name for the cell type/lines) and value is
+# another hash with 'tissue', 'datatype', 'file' and 'acc' keys.
+# IMPORTANT: $cells contains the list of cells in the order defined in the DB. This is critical
+# to correctly assign each bit to the right sample.
+my ($cells, $samples) = get_samples_from_dataset($dbh, $dataset);
 
 # unpack the bitstrings and store the overlaps by cell.
-my $test = process_bits($rows, $cells, $dataset);
+# $test is a complex hash like:
+# $test{'MVPS'}{$probe_id}{'SUM'} (total number of overlaps of this probe with DHS/etc in this dataset)
+# $test{'MVPS'}{$probe_id}{'PARAMS'} (gene and CGI annotations for this probe)
+# $test{'CELLS'}{$cell}{'COUNT'} (number of input MVPs that overlap with the signal on this sample)
+# $test{'CELLS'}{$cell}{'MVPS'} (list of input MVPs that overlap with the signal on this sample)
+my $test = process_overlaps($annotated_probes, $cells, $dataset);
 
 # generate stats on the background selection
 if (defined $bkgrdstat) {
@@ -370,36 +396,9 @@ if (defined $bkgrdstat) {
 
 
 
-# Identify probeids that weren't found and warn about them.
-#the reference to hash key 'MVPS' is because of use of perl module eforge.pm from the eForge tool
-#(in subroutines process_bits etc)
-
-my @missing;
-foreach my $probeid (@origmvps) {
-    if (defined $proxy) {
-        next if exists $$prox_excluded{$probeid};
-    }
-    unless (exists $$test{'MVPS'}{$probeid}) {
-        push @missing, $probeid;
-    }
-}
-
-if (scalar @missing > 0) {
-    warn "The following " . scalar @missing . " MVPs have not been analysed because they were not found on the ".$array_label."\n";
-    warn join("\n", @missing) . "\n";
-}
-if (defined $proxy) {
-    if ($output < $input) {
-        warn "For $label, $input MVPs provided, " . scalar @$mvps . " retained, " . scalar @missing . " not analysed, "  . scalar(keys %$prox_excluded) . " proximity filtered at 1 kb\n";
-    }
-}
-
 # only pick background mvps matching mvps that had bitstrings originally.
 #reference to hash key 'MVPS' is due to use of eforge.pm module from eForge tool
-#(in subroutines process_bits, etc)
-
-my @foundmvps = keys %{$$test{'MVPS'}};
-my $mvpcount = scalar @foundmvps;
+#(in subroutines process_overlaps, etc)
 
 
 # identify the feature and cpg island relationship, and then make bkgrd picks (old version just below)
@@ -416,17 +415,17 @@ my %bkgrd; #this hash is going to store the bkgrd overlaps
 # Get the bits for the background sets and process
 my $backmvps;
 
-warn "[".scalar(localtime())."] Running the analysis with $mvpcount MVPs...\n";
+warn "[".scalar(localtime())."] Running the analysis with $num_of_valid_probes MVPs...\n";
 my $num = 0;
 foreach my $bkgrd (keys %{$picks}) {
     warn "[".scalar(localtime())."] Repetition $num out of ".$reps."\n" if (++$num%100 == 0);
-    #$rows = get_bits(\@{$$picks{$bkgrd}}, $sth);
-    $rows = get_bits($dbh, $dataset, $array, \@{$$picks{$bkgrd}});
-    $backmvps += scalar @$rows; #$backmvps is the total number of background probes analysed
-    unless (scalar @$rows == scalar @foundmvps) {
-        warn "Background " . $bkgrd . " only " . scalar @$rows . " probes out of " . scalar @foundmvps . "\n";
+    #$annotated_probes = get_probe_annotations_and_overlap_for_dataset(\@{$$picks{$bkgrd}}, $sth);
+    $annotated_probes = get_probe_annotations_and_overlap_for_dataset($dbh, $dataset, $array, \@{$$picks{$bkgrd}});
+    $backmvps += scalar @$annotated_probes; #$backmvps is the total number of background probes analysed
+    unless (scalar @$annotated_probes == $num_of_valid_probes) {
+        warn "Background " . $bkgrd . " only " . scalar @$annotated_probes . " probes out of $num_of_valid_probes\n";
     }
-    my $result = process_bits($rows, $cells, $dataset);
+    my $result = process_overlaps($annotated_probes, $cells, $dataset);
     foreach my $cell (keys %{$$result{'CELLS'}}) {
         push @{$bkgrd{$cell}}, $$result{'CELLS'}{$cell}{'COUNT'}; # accumulate the overlap counts by cell
     }
@@ -454,14 +453,14 @@ if (!$web) {
 my @results;
 my @pvalues;
 ###ncmp is a function from Sort::Naturally
-foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) || ncmp($a,$b)} @$cells){
-    # above line sorts by the tissues alphabetically (from $tissues hash values)
+foreach my $cell (sort {ncmp($$samples{$a}{'tissue'},$$samples{$b}{'tissue'}) || ncmp($a,$b)} @$cells){
+    # above line sorts by the tissues alphabetically (from $samples hash values)
 
     # ultimately want a data frame of names(results)<-c("Zscore", "Cell", "Tissue", "File", "MVPs")
     if (!$web) {
         print BACKGROUND join("\t", @{$bkgrd{$cell}}), "\n";
     }
-    my $teststat = ($$test{'CELLS'}{$cell}{'COUNT'} or 0); #number of overlaps for the test MVPs
+    my $teststat = ($test->{'CELLS'}->{$cell}->{'COUNT'} or 0); #number of overlaps for the test MVPs
 
     # binomial pvalue, probability of success is derived from the background overlaps over the tests for this cell
     # $backmvps is the total number of background mvps analysed
@@ -477,11 +476,11 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
     my $pbinom;
     if (defined $depletion) {
         foreach my $k (0 .. $teststat) {
-            $pbinom += binomial($k, $mvpcount, $p);
+            $pbinom += binomial($k, $num_of_valid_probes, $p);
         }
     } else {
-        foreach my $k ($teststat .. $mvpcount) {
-            $pbinom += binomial($k, $mvpcount, $p);
+        foreach my $k ($teststat .. $num_of_valid_probes) {
+            $pbinom += binomial($k, $num_of_valid_probes, $p);
         }
     }
     if ($pbinom >1) {
@@ -499,33 +498,44 @@ foreach my $cell (sort {ncmp($$tissues{$a}{'tissue'},$$tissues{$b}{'tissue'}) ||
     # This gives the list of overlapping MVPs for use in the tooltips. If there are a lot of them this can be a little useless
     my ($shortcell, undef) = split('\|', $cell); # undo the concatenation from earlier to deal with identical cell names.
 
-    push(@results, [$zscore, $pbinom, $shortcell, $$tissues{$cell}{'tissue'}, $$tissues{$cell}{'datatype'}, $$tissues{$cell}{'file'}, $mvp_string, $$tissues{$cell}{'acc'}]);
+    push(@results, [$zscore, $pbinom, $shortcell, $$samples{$cell}{'tissue'}, $$samples{$cell}{'datatype'}, $$samples{$cell}{'file'}, $mvp_string, $$samples{$cell}{'acc'}]);
 }
 if (!$web) {
     close(BACKGROUND);
 }
 
-# Correct the p-values for multiple testing using the Benjamini-Yekutieli FDR control method
+## ============================================================================
+## Correct the p-values for multiple testing using the Benjamini-Yekutieli FDR control method
+## ============================================================================
 my $qvalues = BY(\@pvalues);
 $qvalues = [map {sprintf("%.2e", $_)} @$qvalues];
+## ============================================================================
 
-# Write the results to a tab-separated file
-my $filename = "$lab.chart.tsv.gz";
-open(TSV, "| gzip -9 > $out_dir/$filename") or die "Cannot open $out_dir/$filename: $!";
+
+## ============================================================================
+## Write the results to a tab-separated file
+## ============================================================================
+my $results_filename = "$lab.chart.tsv.gz";
+open(TSV, "| gzip -9 > $out_dir/$results_filename") or die "Cannot open $out_dir/$results_filename: $!";
 print TSV join("\t", "Zscore", "Pvalue", "Cell", "Tissue", "Datatype", "File", "Probe", "Accession", "Qvalue"), "\n";
 for (my $i = 0; $i < @results; $i++) {
     print TSV join("\t", @{$results[$i]}, $qvalues->[$i]), "\n";
 }
 close(TSV);
+## ============================================================================
 
 
+## ============================================================================
+## Generate plots
+## ============================================================================
 warn "[".scalar(localtime())."] Generating plots...\n";
 unless (defined $noplot){
     #Plotting and table routines
-    Chart($filename, $lab, $out_dir, $tissues, $cells, $label, $t_marginal, $t_strict, $dataset); # basic pdf plot
-    dChart($filename, $lab, $out_dir, $dataset, $label, $t_marginal, $t_strict, $web); # rCharts Dimple chart
-    table($filename, $lab, $out_dir, $web); # Datatables chart
+    Chart($results_filename, $lab, $out_dir, $samples, $cells, $label, $t_marginal, $t_strict, $dataset); # basic pdf plot
+    dChart($results_filename, $lab, $out_dir, $dataset, $label, $t_marginal, $t_strict, $web); # rCharts Dimple chart
+    table($results_filename, $lab, $out_dir, $web); # Datatables chart
   }
+## ============================================================================
 
 warn "[".scalar(localtime())."] Done.\n";
 
@@ -534,6 +544,7 @@ if ($autoopen) {
     system("open $out_dir/$lab.dchart.html");
     system("open $out_dir/$lab.chart.pdf");
 }
+
 
 ####################################################################################################
 ####################################################################################################
@@ -576,16 +587,16 @@ sub parse_pvalue_thresholds {
 }
 
 
-=head2 get_input_mvps
+=head2 get_input_probes
 
  Arg[1]         : string $filename
- Arg[2]         : arrayref $mvp_list
+ Arg[2]         : arrayref $probe_list
  Returns        : arrayref of probe IDs (string)
- Example        : $mvps = get_input_mvps("input.txt", undef);
- Example        : $mvps = get_input_mvps(undef, ["cg13430807", "cg10480329,cg06297318,cg19301114"]);
- Example        : $mvps = get_input_mvps(undef, undef);
+ Example        : $mvps = get_input_probes("input.txt", undef);
+ Example        : $mvps = get_input_probes(undef, ["cg13430807", "cg10480329,cg06297318,cg19301114"]);
+ Example        : $mvps = get_input_probes(undef, undef);
  Description    : This function returns the list of input probe IDs. This can come from either
-                  $filename if defined or from $mvp_list otherwise. Each element in $mvp_list is a
+                  $filename if defined or from $probe_list otherwise. Each element in $probe_list is a
                   string which contains one or more probe IDs separated by commas (see Examples).
                   Falls back to the default data set from Jaffe and Irizarry.
                   The set of probe IDs is checked to remove redundant entries.
@@ -593,9 +604,9 @@ sub parse_pvalue_thresholds {
 
 =cut
 
-sub get_input_mvps {
-    my ($filename, $mvp_list) = @_;
-    my $mvps;
+sub get_input_probes {
+    my ($filename, $probe_list) = @_;
+    my $probes;
 
     if (defined $filename) {
         my $fh;
@@ -606,31 +617,64 @@ sub get_input_mvps {
         } else {
             open($fh, "$filename") or die "cannot open file $filename : $!";
         }
-        $mvps = process_file($fh, $format, $dbh, $array, $filter);
+        $probes = process_file($fh, $format, $dbh, $array, $filter);
 
-    } elsif ($mvp_list and @$mvp_list) {
-        @$mvps = split(/,/, join(',', @$mvp_list));
+    } elsif ($probe_list and @$probe_list) {
+        @$probes = split(/,/, join(',', @$probe_list));
 
     } else{
         # Test MVPs from Liu Y et al. Nat Biotechnol 2013  Pulmonary_function.snps.bed (*put EWAS bedfile here)
         # If no options are given it will run on the default set of MVPs
         warn "No probe input given, so running on default set of probes, a set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014.";
-        @$mvps = qw(cg13430807 cg10480329 cg06297318 cg19301114 cg23244761 cg26872907 cg18066690 cg04468741 cg16636767 cg10624395 cg20918393);
+        @$probes = qw(cg13430807 cg10480329 cg06297318 cg19301114 cg23244761 cg26872907 cg18066690 cg04468741 cg16636767 cg10624395 cg20918393);
     }
 
     # Remove redundancy in the input
-    my %nonredundant;
-    foreach my $mvp (@$mvps) {
-        $nonredundant{$mvp}++;
+    my %probes_hash;
+    foreach my $probe (@$probes) {
+        $probes_hash{$probe}++;
     }
 
-    foreach my $mvp (keys %nonredundant) {
-        if ($nonredundant{$mvp} > 1) {
-            say "$mvp is present " . $nonredundant{$mvp} . " times in the input. Analysing only once."
+    while (my ($probe, $num) = each %probes_hash) {
+        if ($num > 1) {
+            say "$probe is present $num times in the input. Analysing only once."
         }
     }
 
-    @$mvps = keys %nonredundant;
+    @$probes = keys %probes_hash;
 
-    return($mvps);
+    return($probes);
+}
+
+
+=head2 find_missing_probes
+
+ Arg[1]         : arrayref of strings $original_probe_ids
+ Arg[2]         : hashref $existing_probe_ids (keys are probe_ids, values are ignored)
+ Returns        : int $num__missing_probes
+ Example        : my $num_missing_probes = find_missing_probes(['cg001', 'cg002', 'cg003', 'cg004'],
+                    {'cg001' => 1, 'cg003 => 1});
+ Description    : Detects and prints the list of missing probes if any.
+ Exceptions     :
+
+=cut
+
+sub find_missing_probes {
+    my ($original_probes, $existing_probes_hash) = @_;
+    my $num_missing_probes = 0;
+
+    my $missing_probes = [];
+    foreach my $probe_id (@$original_probes) {
+        unless ($existing_probes_hash->{$probe_id}) {
+            push @$missing_probes, $probe_id;
+        }
+    }
+    $num_missing_probes = scalar @$missing_probes;
+
+    if ($num_missing_probes > 0) {
+        warn "The following $num_missing_probes MVPs have not been analysed because they were not found on the selected array\n";
+        warn join("\n", @$missing_probes) . "\n";
+    }
+
+    return $num_missing_probes;
 }

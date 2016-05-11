@@ -49,7 +49,7 @@ our $VERSION = '0.01';
 our (@ISA, @EXPORT);
 use Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(get_all_datasets get_all_arrays get_all_proxy_filters process_file match process_bits get_bits get_cells assign bkgrdstat prox_filter);
+@EXPORT = qw(get_all_datasets get_all_arrays get_all_proximity_filters process_file match process_overlaps get_probe_annotations_and_overlap_for_dataset get_samples_from_dataset assign bkgrdstat proximity_filter);
 
 =head1 SYNOPSIS
 
@@ -59,15 +59,15 @@ Provide functional modules for eForge
 
 get_all_datasets
 get_all_arrays
-get_all_proxy_filters
+get_all_proximity_filters
 process_file
 match
-process_bits
-get_bits
-get_cells
+process_overlaps
+get_probe_annotations_and_overlap_for_dataset
+get_samples_from_dataset
 assign
 bkgrdstat
-prox_filter
+proximity_filter
 
 =head1 SUBROUTINES/METHODS
 
@@ -170,7 +170,7 @@ Identifies the bins that each of the probes in a probe hash lies in, and then pi
 
 =cut
 
-#it is not enough to change match, we also have to change bkgrdstat and process_bits and get_bits
+#it is not enough to change match, we also have to change bkgrdstat and process_overlaps and get_bits
 #(we don't use "assign" as we do not use percentile bins so no point in changing "assign")
 sub match{
     #we take out the percentile bins ($per):
@@ -255,13 +255,13 @@ sub match{
 
 
 
-=head2 process_bits
+=head2 process_overlaps
 
- Arg[1]         : arrayref of arrays $rows ($probe_id, $sum, $bit_string, $feature, $CGI_context)
+ Arg[1]         : arrayref of arrays $annotated_probes ($probe_id, $sum, $bit_string, $feature, $CGI_context)
  Arg[2]         : arrayref of strings $cells (shortname for the cells in the dataset)
  Arg[3]         : string $dataset
  Returns        : hashref $stats
- Example        : my $result = process_bits($rows, $cells, 'erc');
+ Example        : my $result = process_overlaps($rows, $cells, 'erc');
  Description    : Returns a reference to a complex hash with stats from the rows. These are split
                   into 'MVPS' and 'CELLS'. The former contains 'SUM' and 'PARAMS' for each probe ID
                   while the latter contains 'COUNT' and 'MVPS' for each cell.
@@ -269,7 +269,7 @@ sub match{
 
 =cut
 
-sub process_bits {
+sub process_overlaps {
     my ($rows, $cells, $data) = @_;
     my %test;
     my @test_cells;
@@ -315,7 +315,7 @@ sub get_all_datasets {
     my ($dbh, $species_name) = @_;
     my $datasets;
 
-    my $sql = "SELECT dataset_tag, dataset_name FROM dataset ORDER BY dataset_id";
+    my $sql = "SELECT dataset_tag, dataset_name FROM dataset ORDER BY dataset_id DESC";
     my @bind_params = ();
     if ($species_name) {
         $sql .= " WHERE species_name = ?";
@@ -350,7 +350,7 @@ sub get_all_arrays {
     my ($dbh, $species_name) = @_;
     my $arrays;
 
-    my $sql = "SELECT array_tag, array_name FROM array order by array_id";
+    my $sql = "SELECT array_tag, array_name FROM array order by array_id DESC";
     my @bind_params = ();
     if ($species_name) {
         $sql .= " WHERE species_name = ?";
@@ -368,12 +368,12 @@ sub get_all_arrays {
 }
 
 
-=head2 get_all_proxy_filters
+=head2 get_all_proximity_filters
 
  Arg[1]         : DB-handle $dbh
  Arg[2]         : (optional) string $array
  Returns        : hashref of proxy-filters (string)
- Example        : my $proxy_filters = get_all_proxy_filters($dbh, '450k');
+ Example        : my $proximity_filters = get_all_proximity_filters($dbh, '450k');
  Description    : Returns the list of proxy filters available in the DB. It returns a hashref whose
                   keys are the bkgd names (i.e. array tags) and values are the name of the proxy
                   filter. At the moment the schema supports just one proxy filter per array.
@@ -384,9 +384,9 @@ sub get_all_arrays {
 
 =cut
 
-sub get_all_proxy_filters {
+sub get_all_proximity_filters {
     my ($dbh, $array_tag) = @_;
-    my $proxy_filters;
+    my $proximity_filters;
 
     my $sql = "SELECT array_tag, description FROM proxy_filter_info JOIN array USING (array_id)";
     my @bind_params = ();
@@ -399,26 +399,37 @@ sub get_all_proxy_filters {
     $sth->execute();
     $sth->bind_columns(\$this_array_tag, \$description);
     while ($sth->fetch) {
-        $proxy_filters->{$this_array_tag} = $description;
+        $proximity_filters->{$this_array_tag} = $description;
     }
 
-    return($proxy_filters);
+    return($proximity_filters);
 }
 
-=head2 get_bits
 
-Get the bitstrings for an array of mvps from the sqlite db
+=head2 get_probe_annotations_and_overlap_for_dataset
+
+ Arg[1]         : DB-handle $dbh
+ Arg[2]         : string $dataset_tag
+ Arg[3]         : string $array
+ Arg[4]         : arrayref of strings $probe_ids
+ Returns        : arrayref of arrays containing the probe_id, sum, bitstring, gene-group and
+                  cgi-group
+ Example        : my $annotated_probes = get_probe_annotations_and_overlap_for_dataset($dbh,
+                        'erc', '450k', $probe_list);
+ Description    : Fetches the gene and CGI related annotation for the set of probes as well as the
+                  overlaps with the features defined in the selected dataset
+ Exceptions     :
 
 =cut
 
-sub get_bits{
-    my ($dbh, $dataset_tag, $array_tag, $mvps) = @_;
-    my @results;
-    
-    for (my $loop = 0; $loop * $MAX_SQL_VARIABLES < @$mvps; $loop++) {
+sub get_probe_annotations_and_overlap_for_dataset {
+    my ($dbh, $dataset_tag, $array_tag, $probe_ids) = @_;
+    my $results = [];
+
+    for (my $loop = 0; $loop * $MAX_SQL_VARIABLES < @$probe_ids; $loop++) {
         my $start = $loop * $MAX_SQL_VARIABLES;
         my $end = ($loop + 1) * $MAX_SQL_VARIABLES - 1;
-        $end = @$mvps -1 if ($end >= @$mvps);
+        $end = @$probe_ids - 1 if ($end >= @$probe_ids);
 
         my $sql = "SELECT probe_id, sum, bit, gene_group, cgi_group
             FROM probe_annotation
@@ -427,16 +438,17 @@ sub get_bits{
             JOIN array ON (array.array_id = probe_annotation.array_id)
             WHERE array_tag = ? and dataset_tag = ?
             AND probe_id IN (?". (",?" x ($end - $start)).")";
-        my $sth = $dbh->prepare_cached($sql); #get the blocks form the ld table
-        $sth->execute($array_tag, $dataset_tag, @$mvps[$start..$end]);
+
+        my $sth = $dbh->prepare_cached($sql);
+        $sth->execute($array_tag, $dataset_tag, @$probe_ids[$start..$end]);
         
         while (my $row = $sth->fetchrow_arrayref()) {
-            push @results, [@$row];
+            push @$results, [@$row];
         }
         $sth->finish();
     }
 
-    return \@results;# return the bitstring line from the database
+    return $results;
 }
 
 
@@ -454,7 +466,6 @@ sub get_bits{
 =cut
 
 sub fetch_all_probe_ids {
-    #gets the rsid for a SNP where a location is given
     my ($dbh, $array, $locations) = @_;
 
     my $sth = $dbh->prepare("SELECT probe_id
@@ -475,74 +486,83 @@ sub fetch_all_probe_ids {
     return $probe_ids;
 }
 
-=head2 prox_filter
+=head2 proximity_filter
 
 Filter MVPs from the MVP list if they are within 1 kb of each other. The rationale is that the first MVP to be identified in a block is chosen, and others are removed.
 
 =cut
 
-sub prox_filter{
-    my ($mvps, $dbh) = @_;
-    my %prox_excluded; # a hash to store MVPs found in proximity (1 kb) with an MVP in the list
-    my @mvps_filtered; # The list of MVPs filtered
-    my %mvps;
-    foreach my $mvp (@$mvps){
-        $mvps{$mvp} = 1;
-      }
-    for (my $loop = 0; $loop * $MAX_SQL_VARIABLES < @$mvps; $loop++) {
+sub proximity_filter {
+    my ($dbh, $array_tag, $probe_ids, $filter) = @_;
+    my %prox_excluded_probes; # a hash to store MVPs found in proximity (1 kb) with an MVP in the list
+    my %filtered_probes; # The list of MVPs filtered (i.e. after filtering, the ones to keep)
+    my %missing_probes;
+
+    # Get the full list of probes as a hash (also removes redundancy)
+    my %probe_id_hash;
+    foreach my $probe_id (@$probe_ids){
+        $probe_id_hash{$probe_id} = 1;
+    }
+    $probe_ids = [keys %probe_id_hash];
+
+    for (my $loop = 0; $loop * $MAX_SQL_VARIABLES < @$probe_ids; $loop++) {
         my $start = $loop * $MAX_SQL_VARIABLES;
         my $end = ($loop + 1) * $MAX_SQL_VARIABLES - 1;
-        $end = @$mvps -1 if ($end >= @$mvps);
+        $end = @$probe_ids - 1 if ($end >= @$probe_ids);
 
-        my $sql = "SELECT probe_id,proxy_probes FROM proxy_filter WHERE probe_id IN (?". (",?" x ($end - $start)).")";
+        my $sql = "SELECT probe_id, proxy_probes FROM proxy_filter JOIN array USING (array_id) WHERE".
+                " array_tag = ? AND probe_id IN (?". (",?" x ($end - $start)).")";
         my $sth = $dbh->prepare($sql); #get the blocks form the ld table
-        $sth->execute(@$mvps[$start..$end]);
+        $sth->execute($array_tag, @$probe_ids[$start..$end]);
         my $result = $sth->fetchall_arrayref();
         $sth->finish();
+
         foreach my $row (@{$result}){
-            my ($mvp, $block) = @$row;
-            next if exists $prox_excluded{$mvp}; # if the mvp is in the proximity filtered set already ignore it
-            push @mvps_filtered, $mvp; # if this is the first time it is seen, add it to the filtered mvps, and remove anything in proximity with it
-            next if $block =~ /NONE/; # nothing is in proximity
-            my (@block) = split (/\|/, $block);
-            foreach my $proxmvp (@block){
-                if (exists $mvps{$proxmvp}) {
-                    $prox_excluded{$proxmvp} = $mvp; #Add to the excluded mvps, if it is in proximity with the current mvp, and it its one of the test mvps.
-                  }
-              }
-          }
-      }
+            my ($probe_id, $probe_id_list) = @$row;
+            # if the probe is in the proximity filtered set already ignore it
+            next if exists $prox_excluded_probes{$probe_id}; 
+            # if this is the first time it is seen, add it to the filtered mvps, and remove anything in proximity with it
+            $filtered_probes{$probe_id} = 1;
+            next if $probe_id_list =~ /NONE/; # nothing is in proximity
+            my (@other_probe_ids) = split (/\|/, $probe_id_list);
+            foreach my $other_probe_id (@other_probe_ids) {
+                if (exists $probe_id_hash{$other_probe_id}) {
+                    $prox_excluded_probes{$other_probe_id} = $probe_id; #Add to the excluded mvps, if it is in proximity with the current mvp, and it its one of the test mvps.
+                }
+            }
+        }
+    }
+
     #note that if an MVP doesn't exist in the proximity file it will be rejected regardless, may need to add these back
-    return (\%prox_excluded, @mvps_filtered);
+    return (\%prox_excluded_probes, [keys %filtered_probes]);
 }
 
-=head2 get_cells
+=head2 get_samples_from_dataset
 
 Read the correct cell list based on data (erc, erc2, blueprint or encode). Also gets the tissue names for the cells.
 
 =cut
 
-sub get_cells {
-    my ($dataset_tag, $dbh) = @_;
-    my $samples;
+sub get_samples_from_dataset {
+    my ($dbh, $dataset_tag) = @_;
+    my ($cells, $samples);
 
     my $sth = $dbh->prepare("SELECT shortcell, tissue, datatype, file, acc FROM dataset JOIN sample USING (dataset_id) WHERE dataset_tag = ? ORDER BY sample_order");
     $sth->execute($dataset_tag);
     my ($shortcell, $tissue, $datatype, $file, $acc);
     $sth->bind_columns(\$shortcell, \$tissue, \$datatype, \$file, \$acc);
-    my ($cells, $tissues);
     while ($sth->fetch) {
         $shortcell = "$shortcell|$file"; # Sometimes the same cell is used twice, with a differnt file so need to record separately (e.g. WI-38).
         push @$cells, $shortcell;
-        $$tissues{$shortcell}{'tissue'} = $tissue; # this is the hash that is used to connect cells and tissues and ultimately provide the sorting order
-        $$tissues{$shortcell}{'datatype'} = $datatype;
-        $$tissues{$shortcell}{'file'} = $file;
-        $$tissues{$shortcell}{'acc'} = $acc;
+        $$samples{$shortcell}{'tissue'} = $tissue; # this is the hash that is used to connect cells and tissues and ultimately provide the sorting order
+        $$samples{$shortcell}{'datatype'} = $datatype;
+        $$samples{$shortcell}{'file'} = $file;
+        $$samples{$shortcell}{'acc'} = $acc;
     }
 #     use Data::Dumper;
 #     print Dumper %$tissues;
 
-    return ($cells, $tissues); # return
+    return ($cells, $samples); # return
 }
 
 1;
