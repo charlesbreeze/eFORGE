@@ -49,7 +49,7 @@ our $VERSION = '0.01';
 our (@ISA, @EXPORT);
 use Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(get_all_datasets get_all_arrays get_all_proximity_filters process_file get_random_matching_picks process_overlaps get_probe_annotations_and_overlap_for_dataset get_samples_from_dataset assign bkgrdstat proximity_filter);
+@EXPORT = qw(get_all_datasets get_all_arrays get_all_proximity_filters process_file get_random_matching_picks process_overlaps get_probe_annotations_and_overlap_for_dataset get_samples_from_dataset assign save_probe_annotation_stats proximity_filter);
 
 =head1 SYNOPSIS
 
@@ -66,36 +66,47 @@ process_overlaps
 get_probe_annotations_and_overlap_for_dataset
 get_samples_from_dataset
 assign
-bkgrdstat
+save_probe_annotation_stats
 proximity_filter
 
 =head1 SUBROUTINES/METHODS
 
-=head2 bkgrdstat
- 
-Gives the background statistics.
 
-=cut 
+=head2 save_probe_annotation_stats
 
-sub bkgrdstat{
-    my ($test, $lab, $flag) = @_;
-    my $bfh;
-    my $file = "$lab.bkgrd.stats";
-    if ($flag eq "test") {
-        open $bfh, ">", $file or die "cannot open $file";
-      }
-    else{
-        open $bfh, ">>", $file or die "cannot open $file";
-      }
-    my (@feature, @cpg_island_relationship);
-    foreach my $probeid (keys %{$$test{'MVPS'}}){
-        my ($feature, $cpg_island_relationship) = split "\t", $$test{'MVPS'}{$probeid}{'PARAMS'};
-        push @feature, $feature;
-        push @cpg_island_relationship, $cpg_island_relationship;
-      }
-    say $bfh join("\t", $flag, "feature", @feature);
-    say $bfh join("\t", $flag, "cpg_island_relationship", @cpg_island_relationship);
-  }
+ Arg[1]         : hashref $overlaps (see get_overlaps)
+ Arg[2]         : string $outdir
+ Arg[3]         : string $label
+ Arg[4]         : string $set_id
+ Returns        : 
+ Example        : save_probe_annotation_stats($overlaps, ".", "Unnamed", "test");
+ Example        : save_probe_annotation_stats($overlaps, ".", "Unnamed", 23);
+ Description    : Save stats about the probe annotations on a text file. The $set_id is either
+                  "test" (which relates to the input probe_ids, the ones to be tested for
+                  enrichment) or the random pick number.
+                  The file will contain for each set the whole list of gene features and CpG islands
+                  relationships for the probes in that set.
+ Exceptions     : Dies if file cannot be opened
+
+=cut
+
+sub save_probe_annotation_stats {
+    my ($overlaps, $out_dir, $lab, $flag) = @_;
+
+    my $fh;
+    my $file = "$out_dir/$lab.overlaps.stats.txt";
+    open(STATS, ">>$file") or die "cannot open $file";
+    my (@gene_features, @cpg_island_relationships);
+    foreach my $probeid (keys %{$overlaps->{'MVPS'}}){
+        my ($this_gene_feature, $this_cpg_island_relationship) =
+            split("\t", $overlaps->{'MVPS'}->{$probeid}->{'PARAMS'});
+        push @gene_features, $this_gene_feature;
+        push @cpg_island_relationships, $this_cpg_island_relationship;
+    }
+    say STATS join("\t", $flag, "gene_features", @gene_features);
+    say STATS join("\t", $flag, "cpg_island_relationships", @cpg_island_relationships);
+    close(STATS);
+}
 
 
 =head2 process_file

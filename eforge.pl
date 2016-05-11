@@ -94,9 +94,9 @@ Set a filter on the MVPs based on the -log10 pvalue.  This works for files in th
 Give a value as the lower threshold and only MVPs with -log10 pvalues >= to the threshold will be
 analysed. Default is no filtering.
 
-=item B<--bkgrd>
+=item B<--save_stats>
 
-Output background stats for investigation.
+Output annotation stats for the original and the random picks.
 
 =item B<--reps INT>
 
@@ -108,7 +108,9 @@ Apply filter for MVPs in proximity (within 1 kb of another test MVP). With proxi
 eForge will report MVPs removed due to proximity with another MVP in the list and will randomly pick
 one of the probes among the set of probes that are in proximity (within 1 kb of each other).
 
-To turn off proximity filtering specify -noproxy
+At the moment, this is a dummy flag as only one proximity filter is available for each array. It
+will become useful if the database and code support more than one. At the moment to turn off
+proximity filtering, simply specify -noproxy
 
 =item B<--noproxy>
 
@@ -202,13 +204,13 @@ my $t_strict = 0.01; # default strict p-value threshold
 
 my $min_num_probes = 5; # the minimum number of probes allowed for test. Set to 5 as we have binomial p
 
-my ($dataset, $filename, $bkgrdstat, $noplot,
+my ($dataset, $filename, $save_probe_annotation_stats, $noplot,
     $help, $man, $proxy, $noproxy, $depletion, $filter, $out_dir, $probe_list,
     $web, $autoopen);
 
 GetOptions (
     'dataset=s'  => \$dataset,
-    'bkgrd'      => \$bkgrdstat,
+    'save_stats|bkgrd' => \$save_probe_annotation_stats,
     'array|bkgd=s' => \$array,
     'label=s'    => \$label,
     'f=s'        => \$filename,
@@ -238,6 +240,8 @@ if (!$out_dir) {
     my $ug = new Data::UUID;
     $out_dir = $ug->to_hexstring($ug->create());
 }
+mkdir $out_dir;
+
 
 # Define the thresholds to use.
 if ($thresh) {
@@ -390,8 +394,8 @@ my ($cells, $samples) = get_samples_from_dataset($dbh, $dataset);
 my $overlaps = process_overlaps($annotated_probes, $cells, $dataset);
 
 # generate stats on the background selection
-if (defined $bkgrdstat) {
-    bkgrdstat($overlaps, $lab, "test");
+if (defined $save_probe_annotation_stats) {
+    save_probe_annotation_stats($overlaps, $out_dir, $lab, "test");
 }
 
 
@@ -409,21 +413,21 @@ my $random_picks = get_random_matching_picks($overlaps, $array, $datadir, $reps)
  
 # for bkgrd set need to get distribution of counts instead
 # make a hash of data -> cell -> bkgrd-Set -> overlap counts
-my %overlaps_per_cell; #this hash is going to store the bkgrd overlaps
+my %overlaps_per_cell; #this hash is going to store the overlaps for the random picks, per cell
 
 # Get the bits for the background sets and process
 my $total_num_probes_in_random_picks;
 
 warn "[".scalar(localtime())."] Running the analysis with $num_of_valid_probes MVPs...\n";
-my $num = 0;
+my $count = 0;
 foreach my $this_random_pick (@$random_picks) {
-    warn "[".scalar(localtime())."] Repetition $num out of ".$reps."\n" if (++$num%100 == 0);
+    warn "[".scalar(localtime())."] Repetition $count out of ".$reps."\n" if (++$count%100 == 0);
     $annotated_probes = get_probe_annotations_and_overlap_for_dataset($dbh, $dataset, $array, $this_random_pick);
 
     $total_num_probes_in_random_picks += scalar @$annotated_probes;
 
     unless (scalar @$annotated_probes == $num_of_valid_probes) {
-        warn "Random pick #$num only has " . scalar @$annotated_probes . " probes compared to $num_of_valid_probes in the input set.\n";
+        warn "Random pick #$count only has " . scalar @$annotated_probes . " probes compared to $num_of_valid_probes in the input set.\n";
     }
 
     my $this_pick_overlaps = process_overlaps($annotated_probes, $cells, $dataset);
@@ -433,8 +437,8 @@ foreach my $this_random_pick (@$random_picks) {
         push @{$overlaps_per_cell{$cell}}, $this_pick_overlaps->{'CELLS'}->{$cell}->{'COUNT'}; 
     }
 
-    if (defined $bkgrdstat) {
-        bkgrdstat($this_pick_overlaps, $lab, $this_random_pick);
+    if (defined $save_probe_annotation_stats) {
+        save_probe_annotation_stats($this_pick_overlaps, $out_dir, $lab, $count);
     }
 }
 
@@ -445,8 +449,6 @@ warn "[".scalar(localtime())."] Calculating p-values...\n";
 #Having got the test overlaps and the bkgd overlaps now calculate p values and output 
 #the table to be read into R for plotting.
 
-
-mkdir $out_dir;
 
 if (!$web) {
     open(BACKGROUND, "| gzip -9 > $out_dir/background.tsv.gz") or die "Cannot open background.tsv";
