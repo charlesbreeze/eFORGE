@@ -229,17 +229,26 @@ sub print_form {
             th(["<h6>Data</h6>", ""]),
             td(["Paste data:",
                 textarea('data_text', '# Example with a filtered set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014, 15:R31.
-cg13430807
-cg10480329
-cg06297318
-cg19301114
-cg23244761
-cg26872907
-cg18066690
-cg04468741
-cg16636767
-cg10624395
-cg20918393', 10, 60)]),
+cg00839584
+cg02497428
+cg02780988
+cg03055440
+cg05445326
+cg10045881
+cg11051139
+cg11058932
+cg12091331
+cg12962778
+cg16303562
+cg16501235
+cg18589858
+cg18712919
+cg18854666
+cg21792432
+cg22081096
+cg25059899
+cg26989103
+cg27443224', 10, 60)]),
             td(["",
                 "<a href=\"javascript: void(0);\" onClick=\"document.getElementById('eforge').".
                     "data_text.value ='';\">Clear box</a>"]),
