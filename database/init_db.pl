@@ -66,10 +66,10 @@ $dbh->do("CREATE TABLE IF NOT EXISTS proxy_filter_info (
     description,
     UNIQUE(array_id))");
 $dbh->do("CREATE TABLE IF NOT EXISTS proxy_filter (
-    proxy_filter_id INTEGER NOT NULL REFERENCES proxy_filter_info(proxy_filter_id),
+    array_id INTEGER NOT NULL REFERENCES array(array_id),
     probe_id,
     proxy_probes,
-    UNIQUE (proxy_filter_id, probe_id))");
+    UNIQUE (array_id, probe_id))");
 
 
 $dbh->do("CREATE TABLE IF NOT EXISTS probe_annotation_info (
