@@ -210,7 +210,7 @@ sub load_proxy_filter {
     system($runstr) == 0 or die "Error while running bedtools: $?";
     
     my $sth = $dbh->prepare("INSERT OR IGNORE INTO proxy_filter_info (array_id, description) VALUES (?, ?)");
-    $sth->execute($array_id, "Distance-based: 1kb");
+    $sth->execute($array_id, "1kb");
 
     open(BED, $this_output_bed_file) or die;
     my $all_probes;
