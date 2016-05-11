@@ -382,16 +382,16 @@ if ($num_of_valid_probes < $min_num_probes) {
 my ($cells, $samples) = get_samples_from_dataset($dbh, $dataset);
 
 # unpack the bitstrings and store the overlaps by cell.
-# $test is a complex hash like:
-# $test{'MVPS'}{$probe_id}{'SUM'} (total number of overlaps of this probe with DHS/etc in this dataset)
-# $test{'MVPS'}{$probe_id}{'PARAMS'} (gene and CGI annotations for this probe)
-# $test{'CELLS'}{$cell}{'COUNT'} (number of input MVPs that overlap with the signal on this sample)
-# $test{'CELLS'}{$cell}{'MVPS'} (list of input MVPs that overlap with the signal on this sample)
-my $test = process_overlaps($annotated_probes, $cells, $dataset);
+# $overlaps is a complex hash like:
+# $overlaps->{'MVPS'}->{$probe_id}->{'SUM'} (total number of overlaps of this probe with features in this dataset)
+# $overlaps->{'MVPS'}->{$probe_id}->{'PARAMS'} (gene and CGI annotations for this probe)
+# $overlaps->{'CELLS'}->{$cell}->{'COUNT'} (number of input MVPs that overlap with the signal on this sample)
+# $overlaps->{'CELLS'}->{$cell}->{'MVPS'} (list of input MVPs that overlap with the signal on this sample)
+my $overlaps = process_overlaps($annotated_probes, $cells, $dataset);
 
 # generate stats on the background selection
 if (defined $bkgrdstat) {
-    bkgrdstat($test, $lab, "test");
+    bkgrdstat($overlaps, $lab, "test");
 }
 
 
@@ -401,36 +401,40 @@ if (defined $bkgrdstat) {
 #(in subroutines process_overlaps, etc)
 
 
-# identify the feature and cpg island relationship, and then make bkgrd picks (old version just below)
-#my $picks = match(\%$test, $array, $datadir, $per, $reps);
+# Identify the feature and cpg island relationship, and then make random picks
 warn "[".scalar(localtime())."] Loading the $array background...\n";
-my $picks = match(\%$test, $array, $datadir, $reps);
+my $random_picks = get_random_matching_picks($overlaps, $array, $datadir, $reps);
 
 ########check below lines:
  
 # for bkgrd set need to get distribution of counts instead
 # make a hash of data -> cell -> bkgrd-Set -> overlap counts
-my %bkgrd; #this hash is going to store the bkgrd overlaps
+my %overlaps_per_cell; #this hash is going to store the bkgrd overlaps
 
 # Get the bits for the background sets and process
-my $backmvps;
+my $total_num_probes_in_random_picks;
 
 warn "[".scalar(localtime())."] Running the analysis with $num_of_valid_probes MVPs...\n";
 my $num = 0;
-foreach my $bkgrd (keys %{$picks}) {
+foreach my $this_random_pick (@$random_picks) {
     warn "[".scalar(localtime())."] Repetition $num out of ".$reps."\n" if (++$num%100 == 0);
-    #$annotated_probes = get_probe_annotations_and_overlap_for_dataset(\@{$$picks{$bkgrd}}, $sth);
-    $annotated_probes = get_probe_annotations_and_overlap_for_dataset($dbh, $dataset, $array, \@{$$picks{$bkgrd}});
-    $backmvps += scalar @$annotated_probes; #$backmvps is the total number of background probes analysed
+    $annotated_probes = get_probe_annotations_and_overlap_for_dataset($dbh, $dataset, $array, $this_random_pick);
+
+    $total_num_probes_in_random_picks += scalar @$annotated_probes;
+
     unless (scalar @$annotated_probes == $num_of_valid_probes) {
-        warn "Background " . $bkgrd . " only " . scalar @$annotated_probes . " probes out of $num_of_valid_probes\n";
+        warn "Random pick #$num only has " . scalar @$annotated_probes . " probes compared to $num_of_valid_probes in the input set.\n";
     }
-    my $result = process_overlaps($annotated_probes, $cells, $dataset);
-    foreach my $cell (keys %{$$result{'CELLS'}}) {
-        push @{$bkgrd{$cell}}, $$result{'CELLS'}{$cell}{'COUNT'}; # accumulate the overlap counts by cell
+
+    my $this_pick_overlaps = process_overlaps($annotated_probes, $cells, $dataset);
+
+    # accumulate the overlap counts by cell
+    foreach my $cell (keys %{$this_pick_overlaps->{'CELLS'}}) {
+        push @{$overlaps_per_cell{$cell}}, $this_pick_overlaps->{'CELLS'}->{$cell}->{'COUNT'}; 
     }
+
     if (defined $bkgrdstat) {
-        bkgrdstat($result, $lab, $bkgrd);
+        bkgrdstat($this_pick_overlaps, $lab, $this_random_pick);
     }
 }
 
@@ -458,18 +462,18 @@ foreach my $cell (sort {ncmp($$samples{$a}{'tissue'},$$samples{$b}{'tissue'}) ||
 
     # ultimately want a data frame of names(results)<-c("Zscore", "Cell", "Tissue", "File", "MVPs")
     if (!$web) {
-        print BACKGROUND join("\t", @{$bkgrd{$cell}}), "\n";
+        print BACKGROUND join("\t", @{$overlaps_per_cell{$cell}}), "\n";
     }
-    my $teststat = ($test->{'CELLS'}->{$cell}->{'COUNT'} or 0); #number of overlaps for the test MVPs
+    my $teststat = ($overlaps->{'CELLS'}->{$cell}->{'COUNT'} or 0); #number of overlaps for the test MVPs
 
     # binomial pvalue, probability of success is derived from the background overlaps over the tests for this cell
     # $backmvps is the total number of background mvps analysed
     # $tests is the number of overlaps found over all the background tests
-    my $tests;
-    foreach (@{$bkgrd{$cell}}) {
-        $tests += $_;
+    my $total_num_overlaps_in_random_picks;
+    foreach (@{$overlaps_per_cell{$cell}}) {
+        $total_num_overlaps_in_random_picks += $_;
     }
-    my $p = sprintf("%.6f", $tests/$backmvps);
+    my $p = sprintf("%.6f", $total_num_overlaps_in_random_picks / $total_num_probes_in_random_picks);
 
     # binomial probability for $teststat or more hits out of $mvpcount mvps
     # sum the binomial for each k out of n above $teststat
@@ -491,10 +495,11 @@ foreach my $cell (sort {ncmp($$samples{$a}{'tissue'},$$samples{$b}{'tissue'}) ||
     $pbinom = sprintf("%.2e", $pbinom);
 
     # Z score calculation (note: this is here only for legacy reasons. Z-scores assume normal distribution)
-    my $zscore = zscore($teststat, $bkgrd{$cell});
+    my $zscore = zscore($teststat, $overlaps_per_cell{$cell});
 
     my $mvp_string = "";
-    $mvp_string = join(",", @{$$test{'CELLS'}{$cell}{'MVPS'}}) if defined $$test{'CELLS'}{$cell}{'MVPS'};
+    $mvp_string = join(",", @{$overlaps->{'CELLS'}->{$cell}->{'MVPS'}})
+            if defined $overlaps->{'CELLS'}->{$cell}->{'MVPS'};
     # This gives the list of overlapping MVPs for use in the tooltips. If there are a lot of them this can be a little useless
     my ($shortcell, undef) = split('\|', $cell); # undo the concatenation from earlier to deal with identical cell names.
 

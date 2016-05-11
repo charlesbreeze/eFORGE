@@ -49,7 +49,7 @@ our $VERSION = '0.01';
 our (@ISA, @EXPORT);
 use Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(get_all_datasets get_all_arrays get_all_proximity_filters process_file match process_overlaps get_probe_annotations_and_overlap_for_dataset get_samples_from_dataset assign bkgrdstat proximity_filter);
+@EXPORT = qw(get_all_datasets get_all_arrays get_all_proximity_filters process_file get_random_matching_picks process_overlaps get_probe_annotations_and_overlap_for_dataset get_samples_from_dataset assign bkgrdstat proximity_filter);
 
 =head1 SYNOPSIS
 
@@ -61,7 +61,7 @@ get_all_datasets
 get_all_arrays
 get_all_proximity_filters
 process_file
-match
+get_random_matching_picks
 process_overlaps
 get_probe_annotations_and_overlap_for_dataset
 get_samples_from_dataset
@@ -164,95 +164,54 @@ sub process_file {
     return $probe_ids;
 }
 
-=head2 match
 
-Identifies the bins that each of the probes in a probe hash lies in, and then picks matching probes for the number of reps specified.
+=head2 get_random_matching_picks
+
+ Arg[1]         : hashref $overlaps
+ Arg[2]         : string $array_tag
+ Arg[3]         : string $data_dir
+ Arg[4]         : int $num_random_picks
+ Returns        : arrayref of arrays of $probe_ids (string)
+ Example        : my $random_picks = get_random_matching_picks($overlaps, "450k", ".", 1000);
+ Description    : Get several random picks of probes matching the criteria defined in the $overlaps
+                  hash. The random picks are selected from a pre-built hash stored in the $data_dir
+                  called mvp_450k_bins (or so).
+ Exceptions     : Cannot find the bins file for the selected array.
 
 =cut
 
-#it is not enough to change match, we also have to change bkgrdstat and process_overlaps and get_bits
-#(we don't use "assign" as we do not use percentile bins so no point in changing "assign")
-sub match{
-    #we take out the percentile bins ($per):
-    #my ($mvps, $array, $datadir, $per, $reps) = @_;
-    my ($mvps, $array, $datadir, $reps) = @_;
-    #my ($bins, $params, %bins, %params);
-    my ($bins, %bins);
+sub get_random_matching_picks {
+    my ($overlaps, $array, $datadir, $num_random_picks) = @_;
+    my $picks = [];
+
     # load up the stored hashes that contain the bins of mvps by feature and cpg island relationship.
-    # These are precalculated according to the parameters that are hard coded above.
-    # the hash to load is defined by the bkgd option - defaults to '450k'
-    #$bins = $datadir . "/mvp_bins";
-    #$bins = $datadir . "snp_bins.$per";
-    #$params = $datadir . "snp_params.$per";
-
-    if ($array =~ "27k"){
-        $bins = $datadir . "/mvp_27k_bins";
-        }
-    else{
-        $bins = $datadir . "/mvp_450k_bins";
-
-        }
-
-    #took params out, do not need params
-    #if (-e $bins && -e $params){
-    if (-e $bins){
-        %bins = %{ retrieve($bins) };
-        #took params out, do not need params
-        #%params = %{ retrieve($params)};
-      }
-    else{
-        die "Cannot retrieve the file $bins\n";
+    my %bins;
+    my $bins_file = $datadir . "/mvp_${array}_bins";
+    if (-e $bins_file) {
+        %bins = %{ retrieve($bins_file) };
+    } else {
+        die "Cannot retrieve the file $bins_file\n";
     }
     
-    my (%picks);
-
-    
-
-    foreach my $cg (keys %{$$mvps{'MVPS'}}){
-        srand;
-        my ($feature, $cpg_island_relationship) = split("\t", join("\t", $$mvps{'MVPS'}{$cg}{'PARAMS'}));
-        #$cg is the test mvp, $cgid is the matched mvp.
+    foreach my $probe_id (keys %{$overlaps->{'MVPS'}}) {
+        my ($feature, $cpg_island_relationship) = split("\t", join("\t", $overlaps->{'MVPS'}->{$probe_id}->{'PARAMS'}));
 
         #range has to be the number of probes to choose from in that hash subclass
-        my $range=scalar @{$bins{$feature}{$cpg_island_relationship}};
+        my $range = scalar @{$bins{$feature}{$cpg_island_relationship}};
 
-        for (my $n = 1; $n <= $reps; $n++) {
-            my ($mvp_string, $cgid);
-            while (1){
+        for (my $n = 0; $n < $num_random_picks; $n++) {
+            my $picked_probe_id;
+            while (1) {
                 my $pick = int(rand($range));
-                $mvp_string = ${$bins{$feature}{$cpg_island_relationship}}[$pick]; #pick the $pick'th element in the array as the chosen mvp
-                #(undef, undef, undef, $cgid) = split /\t/,  $mvp_string; #did not set the splitting on, check whether this can be done
-                $cgid=$mvp_string;
-                last unless $cgid eq $cg; # must not pick the test mvp itself.
-              }
-            push @{$picks{$n}}, $cgid; # each $n array is a set of probes matching the test set/ it is allowed to pick the same probe more than once in this background selection
-          }
-      }
-    return \%picks;
-  }
+                $picked_probe_id = ${$bins{$feature}{$cpg_island_relationship}}[$pick]; #pick the $pick'th element in the array as the chosen mvp
+                last unless $picked_probe_id eq $probe_id; # must not pick the test mvp itself.
+            }
+            push(@{$picks->[$n]}, $picked_probe_id);
+        }
+    }
 
-#commented previous foreach with three parameters(maf, tss, gc content) can be found below:
-#foreach my $cg (keys %{$$mvps{'SNPS'}}){
-#        srand;
-#        my ($maf, $tss, $gc) = split("\t", join("\t", $$mvps{'SNPS'}{$cg}{'PARAMS'}));
-#        #$cg is the test mvp, $cgid is the matched mvp.
-#        my ($i, $j, $k) = assign ($gc, $tss, $maf, \%params);
-#
-#        my $range = scalar @{$bins{$i}{$j}{$k}};
-#        for (my $n = 1; $n <= $reps; $n++) {
-#            my ($mvp_string, $cgid);
-#            while (1){
-#                my $pick = int(rand($range));
-#                $mvp_string = ${$bins{$i}{$j}{$k}}[$pick]; #pick the $pick'th element in the array as the chosen mvp "
-#                (undef, undef, undef, $cgid) = split /\t/,  $mvp_string;
-#                last unless $cgid eq $cg; # must not pick the test mvp itself.
-#            }
-#            push @{$picks{$n}}, $cgid; # each $n array is a set of probes matching the test set/ it is allowed to pick the same probe more than once in this background selection
-#        }
-#    }
-#    return \%picks;
-
-
+    return $picks;
+}
 
 
 =head2 process_overlaps
@@ -271,30 +230,31 @@ sub match{
 
 sub process_overlaps {
     my ($rows, $cells, $data) = @_;
-    my %test;
-    my @test_cells;
+    my $overlaps;
+    my @overlapping_probes_per_cell;
     my @indexes = 0..(@$cells-1);
     foreach my $row (@{$rows}){
         my ($probeid, $sum, $bit_string, $feature, $cpg_island_relationship) = @$row;
-        $test{'MVPS'}{$probeid}{'SUM'} = $sum;
-        $test{'MVPS'}{$probeid}{'PARAMS'} = join("\t", $feature, $cpg_island_relationship);
+        $overlaps->{'MVPS'}->{$probeid}->{'SUM'} = $sum;
+        $overlaps->{'MVPS'}->{$probeid}->{'PARAMS'} = join("\t", $feature, $cpg_island_relationship);
         die "For $data, found ".scalar(@$cells)." cells for ".length($bit_string)." bits\n" if (scalar(@$cells) ne length($bit_string));
         foreach my $index (@indexes) {
             ## $bit_string is a string made of 0s and 1s. If it is a 1 for this position, count and push
             if (substr($bit_string, $index, 1)) {
-                $test_cells[$index][0]++;
-                push @{$test_cells[$index][1]}, $probeid;
+                push @{$overlapping_probes_per_cell[$index]}, $probeid;
             }
         }
     }
     my $index = 0;
     foreach my $cell (@$cells){
-        $test{'CELLS'}{$cell}{'COUNT'} = $test_cells[$index][0] if ($test_cells[$index][0]);
-        $test{'CELLS'}{$cell}{'MVPS'} = $test_cells[$index][1] if ($test_cells[$index][1]);
+        if ($overlapping_probes_per_cell[$index] and @{$overlapping_probes_per_cell[$index]}) {
+            $overlaps->{'CELLS'}->{$cell}->{'COUNT'} = scalar(@{$overlapping_probes_per_cell[$index]});
+            $overlaps->{'CELLS'}->{$cell}->{'MVPS'} = $overlapping_probes_per_cell[$index];
+        }
         $index++;
     }
 
-    return \%test;
+    return $overlaps;
 }
 
 
