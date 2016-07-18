@@ -245,7 +245,7 @@ Processes bitstrings to get a count of overlaps for each cell type.
 =cut
 
 sub process_bits{
-    my ($rows, $cells, $data) = @_;
+    my ($rows, $cells, $data, $weights, $step) = @_;
     my %test;
     my @test_cells;
     my @indexes = 0..(@$cells-1);
@@ -263,10 +263,16 @@ sub process_bits{
         foreach my $index (@indexes) {
             ## $bit_string is a string made of 0s and 1s. If it is a 1 for this position, count and push
             if (substr($bit_string, $index, 1)) {
+                my $value = 0;
                 $test_cells[$index][0]++;
+                $value = $test_cells[$index][0] if ($test_cells[$index][0]);
+                $value = $value*$weights;
+                $test_cells[$index][0]=$value;
                 push @{$test_cells[$index][1]}, $probeid;
             }
           }
+          $weights=$weights-$step;
+        #we change weights now as we are going for another probe
       }
     my $index = 0;
     foreach my $cell (@$cells){
