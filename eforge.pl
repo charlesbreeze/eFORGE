@@ -63,6 +63,14 @@ or on a set of data from a default ewas* study (provide link for study here*). N
 
 Can provide the mvps as probeids in a comma separated list.
 
+=item B<weights FLOAT>
+
+Weights with which the mvps will be analysed, given as an initial value that decreases by $step (e.g. if $weights= 1.15 and $step=0.01 actual probe weights will be 1.15 for the first probe, 1.14 for the second probe, 1.13 for the third probe, etc.). 
+
+=item B<step FLOAT>
+
+Step for decrease in weights with which the mvps will be analysed as (e.g. if $weights= 1.15 and $step=0.01 actual probe weights will be 1.15 for the first probe, 1.14 for the second probe, 1.13 for the third probe, etc.).
+
 =item B<min_mvps>
 
 Specify the minimum number of MVPs to be allowed. Default is 5 now we are using binomial test.
@@ -179,7 +187,7 @@ my $bkgd_label = {
 
 my $bkgd = '450k'; # Default value
 my ($data, $peaks, $label, $file, $format, $min_mvps, $bkgrdstat, $noplot, $reps,
-    $help, $man, $thresh, $proxy, $noproxy, $depletion, $filter, $out_dir, @mvplist,
+    $help, $man, $thresh, $proxy, $noproxy, $weights, $step, $depletion, $filter, $out_dir, @mvplist,
     $web, $autoopen);
 
 GetOptions (
@@ -197,6 +205,8 @@ GetOptions (
     'thresh=s'   => \$thresh,
     'proxy=s'    => \$proxy,
     'noproxy'    => \$noproxy,
+    'weights=s'    => \$weights,
+    'step=s'       => \$step,
     'depletion'  => \$depletion,
     'filter=f'   => \$filter,
     'out_dir=s'  => \$out_dir,
@@ -237,6 +247,16 @@ if (!grep {$bkgd =~ /^$_/i and $bkgd = $_} keys %$bkgd_label) {
 
 if (defined $depletion) {
     $label = "$label.depletion";
+}
+
+#sets weights to 1 and step to 0 if undefined
+
+unless (defined $weights) {
+    $weights = 1;
+}
+
+unless (defined $step) {
+    $step = 0;
 }
 
 #regexp puts underscores where labels before
@@ -360,7 +380,7 @@ my ($cells, $tissues) = get_cells($data, $dbh);
 my $rows = get_bits(\@mvps, $dbh);
 
 # unpack the bitstrings and store the overlaps by cell.
-my $test = process_bits($rows, $cells, $data);
+my $test = process_bits($rows, $cells, $data, $weights, $step);
 
 # generate stats on the background selection
 if (defined $bkgrdstat) {
@@ -425,7 +445,7 @@ foreach my $bkgrd (keys %{$picks}) {
     unless (scalar @$rows == scalar @foundmvps) {
         warn "Background " . $bkgrd . " only " . scalar @$rows . " probes out of " . scalar @foundmvps . "\n";
     }
-    my $result = process_bits($rows, $cells, $data);
+    my $result = process_bits($rows, $cells, $data, $weights, $step);
     foreach my $cell (keys %{$$result{'CELLS'}}) {
         push @{$bkgrd{$cell}}, $$result{'CELLS'}{$cell}{'COUNT'}; # accumulate the overlap counts by cell
     }
