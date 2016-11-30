@@ -811,10 +811,10 @@ sub print_intro_box {
 
 sub print_credits_box {
     print Template::content_box("Credits",
-        "Breeze, C.E.*, Paul, D.S., van Dongen, J., Butcher, L.M., Ambrose, J.C., Barrett, J.E., Lowe, R., Rakyan, V.K., 
+        "Breeze, C.E., Paul, D.S., van Dongen, J., Butcher, L.M., Ambrose, J.C., Barrett, J.E., Lowe, R., Rakyan, V.K., 
         Iotchkova, V., Frontini, M., Downes, K., Ouwehand, W.H., Laperle, J., Jacques, P.-É., Bourque, G., Bergmann, A.K., 
         Siebert, R., Vellenga, E., Saeed, S., Matarese, F., Martens, J.H.A., Stunnenberg, H.G., Teschendorff, A.E., Herrero, J., 
-        Birney, E., Dunham, I., Beck, S.*, 2016. eFORGE: A Tool for Identifying Cell Type-Specific Signal in Epigenomic Data. 
+        Birney, E., Dunham, I., Beck, S., 2016. eFORGE: A Tool for Identifying Cell Type-Specific Signal in Epigenomic Data. 
         <i>Cell Reports</i> 17, 2137–2150. doi:10.1016/j.celrep.2016.10.059 <br \>",
     );
 }
