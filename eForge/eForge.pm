@@ -481,10 +481,9 @@ sub proximity_filter {
         my $end = ($loop + 1) * $MAX_SQL_VARIABLES - 1;
         $end = @$probe_ids - 1 if ($end >= @$probe_ids);
 
-        my $sql = "SELECT probe_id, proxy_probes FROM proxy_filter JOIN array USING (array_id) WHERE".
-                " array_tag = ? AND probe_id IN (?". (",?" x ($end - $start)).")";
+        my $sql = "SELECT probe_id, proxy_probes FROM proxy_filter WHERE probe_id IN (?". (",?" x ($end - $start)).")";
         my $sth = $dbh->prepare($sql); #get the blocks form the ld table
-        $sth->execute($array_tag, @$probe_ids[$start..$end]);
+        $sth->execute(@$probe_ids[$start..$end]);
         my $result = $sth->fetchall_arrayref();
         $sth->finish();
 
