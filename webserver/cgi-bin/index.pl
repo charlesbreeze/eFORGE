@@ -811,11 +811,7 @@ sub print_intro_box {
 
 sub print_credits_box {
     print Template::content_box("Credits",
-        "Breeze, C.E., Paul, D.S., van Dongen, J., Butcher, L.M., Ambrose, J.C., Barrett, J.E., Lowe, R., Rakyan, V.K., 
-        Iotchkova, V., Frontini, M., Downes, K., Ouwehand, W.H., Laperle, J., Jacques, P.-É., Bourque, G., Bergmann, A.K., 
-        Siebert, R., Vellenga, E., Saeed, S., Matarese, F., Martens, J.H.A., Stunnenberg, H.G., Teschendorff, A.E., Herrero, J., 
-        Birney, E., Dunham, I., Beck, S., 2016. eFORGE: A Tool for Identifying Cell Type-Specific Signal in Epigenomic Data. 
-        <i>Cell Reports</i> 17, 2137-2150. <a href=\"http://dx.doi.org/10.1016/j.celrep.2016.10.059\">http://dx.doi.org/10.1016/j.celrep.2016.10.059</a> <br \>",
+    "Breeze CE, Paul DS, van Dongen J, Butcher LM, Ambrose JC, Barrett JE, Lowe R, Rakyan VK, Iotchkova V, Frontini M, Downes K, Ouwehand WH, Laperle J, Jacques P&Eacute;, Bourque G, Bergmann AK, Siebert R, Vellenga E, Saeed S, Matarese F, Martens JH, Stunnenberg HG, Teschendorff AE, Herrero J, Birney E, Dunham I, Beck S (2016). eFORGE: A Tool for Identifying Cell Type-Specific Signal in Epigenomic Data. <i>Cell Reports</i> 17(8):2137-2150. <a href=\"http://dx.doi.org/10.1016/j.celrep.2016.10.059\">doi: 10.1016/j.celrep.2016.10.059</a><br \>",
     );
 }
 
@@ -1132,13 +1128,13 @@ sub print_about_page {
     
     print Template::content_box("Some of the papers that cite eFORGE",
     "eFORGE application and methodology is described at length in the following article:",
-    "Breeze, C.E., Paul, D.S., van Dongen, J., Butcher, L.M., Ambrose, J.C., Barrett, J.E., Lowe, R., Rakyan, V.K., Iotchkova, V., Frontini, M., Downes, K., Ouwehand, W.H., Laperle, J., Jacques, P.-É., Bourque, G., Bergmann, A.K., Siebert, R., Vellenga, E., Saeed, S., Matarese, F., Martens, J.H.A., Stunnenberg, H.G., Teschendorff, A.E., Herrero, J., Birney, E., Dunham, I., Beck, S., 2016. eFORGE: A Tool for Identifying Cell Type-Specific Signal in Epigenomic Data. <i>Cell Reports</i> 17, 2137–2150. <a href=\"http://www.cell.com/cell-reports/abstract/S2211-1247(16)31479-6\"> doi:10.1016/j.celrep.2016.10.059 </a>",
+    "Breeze CE, Paul DS, van Dongen J, Butcher LM, Ambrose JC, Barrett JE, Lowe R, Rakyan VK, Iotchkova V, Frontini M, Downes K, Ouwehand WH, Laperle J, Jacques P&Eacute;, Bourque G, Bergmann AK, Siebert R, Vellenga E, Saeed S, Matarese F, Martens JH, Stunnenberg HG, Teschendorff AE, Herrero J, Birney E, Dunham I, Beck S (2016). eFORGE: A Tool for Identifying Cell Type-Specific Signal in Epigenomic Data. <i>Cell Reports</i> 17(8):2137-2150. <a href=\"http://dx.doi.org/10.1016/j.celrep.2016.10.059\">doi: 10.1016/j.celrep.2016.10.059</a>",
     "In addition, as of 30th of November 2016, eFORGE has either been referenced or applied by the following publications (for an updated list of references, see <a href=\"https://scholar.google.com/scholar?cites=18094386522507730423&as_sdt=2005&sciodt=0,5&hl=en\"> Google Scholar </a>):",
-    "Stunnenberg, H.G., Abrignani, S., Adams, D., Almeida, M. de, Altucci, L., Amin, V., Amit, I., Antonarakis, S.E., Aparicio, S., Arima, T., Arrigoni, L., Arts, R., Asnafi, V., Badosa, M.E., Bae, J.-B., Bassler, K., Beck, S., Berkman, B., Bernstein, B.E., Bilenky, M., Bird, A., Bock, C., Boehm, B., Bourque, G., Breeze, C.E., et al. (2016). The International Human Epigenome Consortium: A Blueprint for Scientific Collaboration and Discovery. <i>Cell</i> 167, 1145–1149",
-    "Spurrell, C.H., Dickel, D.E., Visel, A., 2016. The Ties That Bind: Mapping the Dynamic Enhancer-Promoter Interactome. <i>Cell</i>167, 1163-1166. doi:10.1016/j.cell.2016.10.054",
-    "Lewis, J., Breeze, C.E., Charlesworth, J., Maclaren, O.J., and Cooper, J. (2016). Where next for the reproducibility agenda in computational biology? <i> BMC Syst. Biol.</i> 10, 52",
-    "Bartlett, T.E., Chindera, K., McDermott, J., Breeze, C.E., Cooke, W.R., Jones, A., Reisel, D., Karegodar, S.T., Arora, R., Beck, S., et al. (2016). Epigenetic reprogramming of fallopian tube fimbriae in BRCA mutation carriers defines early ovarian cancer evolution. <i> Nat. Commun.</i> 7, 11620.",
-    "van Dongen, J., Nivard, M.G., Willemsen, G., Hottenga, J.-J., Helmer, Q., Dolan, C.V., Ehli, E.A., Davies, G.E., van Iterson, M., Breeze, C.E., Beck, S., et al. (2016). Genetic and environmental influences interact with age and sex in shaping the human methylome. <i> Nat. Commun. </i> 7, 11115.",);
+    "Stunnenberg HG; International Human Epigenome Consortium., Hirst M. (2016). The International Human Epigenome Consortium: A Blueprint for Scientific Collaboration and Discovery. <i>Cell</i>. 17;167(5):1145-1149. <a href=\"http://dx.doi.org/10.1016/j.cell.2016.11.007\">doi: 10.1016/j.cell.2016.11.007</a>",
+    "Spurrell CH, Dickel DE, Visel A. (2016). The Ties That Bind: Mapping the Dynamic Enhancer-Promoter Interactome. <i>Cell</i> 167(5):1163-1166. <a href=\"http://dx.doi.org/10.1016/j.cell.2016.10.054\">doi: 10.1016/j.cell.2016.10.054</a>. <i>Review</i>",
+    "Lewis J, Breeze CE, Charlesworth J, Maclaren OJ, Cooper J. (2016). Where next for the reproducibility agenda in computational biology? <i>BMC Syst. Biol.</i> 10(1):52 <a href=\"http://dx.doi.org/10.1186/s12918-016-0288-x\">doi: 10.1186/s12918-016-0288-x</a>",
+    "Bartlett TE, Chindera K, McDermott J, Breeze CE, Cooke WR, Jones A, Reisel D, Karegodar ST, Arora R, Beck S, Menon U, Dubeau L, Widschwendter M. (2016). Epigenetic reprogramming of fallopian tube fimbriae in BRCA mutation carriers defines early ovarian cancer evolution. <i>Nat. Commun.</i> 7:11620. <a href=\"http://dx.doi.org/10.1038/ncomms11620\">doi: 10.1038/ncomms11620</a>",
+    "van Dongen J, Nivard MG, Willemsen G, Hottenga JJ, Helmer Q, Dolan CV, Ehli EA, Davies GE, van Iterson M, Breeze CE, Beck S; BIOS Consortium., Suchiman HE, Jansen R, van Meurs JB, Heijmans BT, Slagboom PE, Boomsma DI. (2016). Genetic and environmental influences interact with age and sex in shaping the human methylome. <i>Nat. Commun.</i> 7:11115. <a href=\"http://dx.doi.org/10.1038/ncomms11620\">doi: 10.1038/ncomms11115</a>");
     
     print_credits_box();
     print Template::end;
