@@ -70,7 +70,6 @@ my $left_menu = [
     {"__title__" => "Other versions"},
     {"eFORGE v2.0" => "https://eforge.altiusinstitute.org/"},
     {"eFORGE v1.1" => "http://eforge.cs.ucl.ac.uk/eFORGE.v1.1"},
-    {"eFORGE v1.1" => "http://eforge.cs.ucl.ac.uk/eFORGE.v1.1"},
     {"eFORGE v1.0" => "http://eforge.cs.ucl.ac.uk/eFORGE.v1.0"},
     {"__title__" => "UCL Cancer Institute"},
     {"Home" => "http://www.ucl.ac.uk/cancer/"},
