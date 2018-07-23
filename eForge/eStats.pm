@@ -1,5 +1,7 @@
 package eForge::eStats;
 
+use Data::Dumper;
+
 =head1 NAME
 
 eForge::eStats - Stats for use in eForge
@@ -80,6 +82,10 @@ reused from Ben Brown
 
 
 sub mean {
+    if (($#_+1) == 0) {
+      print Dumper "divide by zero!";
+      print Dumper \$_;
+    }
     my $sum = 0;
     foreach (@_){
         $sum+= $_;
@@ -133,7 +139,11 @@ Calculates the z-score for a given result and an array of values
 sub zscore {
     my ($teststat, $values) = @_;
     my $zscore;
-
+    
+    if (! @$values) {
+      print Dumper "undefined values!";
+    }
+    
     my $mean = mean(@$values);
     my $sd = std(@$values);
     if ($sd == 0) {

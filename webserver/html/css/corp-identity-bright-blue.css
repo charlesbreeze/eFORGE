@@ -1,0 +1,90 @@
+@charset "UTF-8";
+/* CSS Document */
+
+/* PRIMARY COLOUR */
+
+#tabs h3.heading a,
+.sideBar h2,
+h6.vlist,
+h4.heading,
+h6.toc,
+.entry a,
+.invFoot a,
+.cast-container a h4,
+.publicationdate,
+.eventdates, p.location,
+.newsiteminfopublicationdate,
+.default-profile-table .profile-label,
+.searchresults .searchresult-breadcrumb a,
+.articlelink a, 
+.articlelink a:hover, 
+.articlelink a:active, 
+.articlelink a:link, 
+.articlelink a:focus,
+.articlelink a:visited, #blog-items a,  
+.podcast-link a, 
+.related-info p a
+{color:#3e93dd !important;}
+
+.newsbox 
+{border-top:4px solid #29A6C9;}
+
+/*
+.newsSmall, #left-silva-content .newsSmall, #left-silva-content .content-box, #col3_content .content-box, #rightcontent .content-box, #col3_content .altius-search-widget, #rightcontent .altius-search-widget, #left-silva-content .altius-search-widget, #system7_main
+{border-top:4px solid #29A6C9;}
+*/
+
+.sf-menu li,
+.sf-navbar,
+.sf-navbar li li,  
+.sf-navbar li.sfHover,
+.sf-navbar li li.current,
+.sf-navbar a:focus,  
+.sf-navbar a:active,
+.sf-navbar li.current, .sf-navbar li:hover
+{background:#29A6C9 !important;}
+
+#main ul#altiusnavbar{
+background-color:transparent !important;
+}
+
+#corp-identity-bright-blue
+{background-color:#29A6C9;
+}
+
+/* SECONDARY COLOUR */
+
+.c33r .subcr h4,
+.newsdate,
+.article-date
+{color:#ed174f;}
+
+.hiliteButton {background:#ed174f url(../../images/buttonLeftHilite.gif) no-repeat -10px 50%;}
+
+/* IMAGES */ 
+
+ul.disc li, 
+ul.toc li,
+#podcasts ul li 
+{background:transparent url(../../images/bullet_br_blue.gif) no-repeat scroll 5px 8px}
+
+.articlelink, 
+#blog-items a, 
+.podcast-link a, 
+.related-info p a 
+{background:transparent url(../../images/bullet_br_blue.gif) no-repeat scroll 0 6px;}
+
+.newslead a.articlelink,
+#blog-items a,
+.podcast-link a,
+.related-info p a 
+{background:transparent url(../../images/bullet_br_blue.gif) no-repeat scroll 0 3px;}
+
+.vlist li, .leftcontainer .toc li
+/* {background: transparent url(../../images/bullet_circle_br_blue.gif) no-repeat scroll 0 2px;} */
+{
+  background: transparent url(../../images/right.svg) no-repeat scroll 0 0px;
+}
+
+.newsmorelink
+{list-style: none inside url(../../images/bullet_br_blue.gif);}

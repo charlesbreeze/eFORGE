@@ -1,0 +1,38 @@
+/*structure*/
+body, div.page, #main{width:800px;}/*ensure tables and other elements aren't cropped*/
+
+#header, 
+#nav, 
+#main #col1, 
+#main #col2, 
+#footer, 
+#border-bottom, 
+#social, 
+#mainTextFooterBG,
+#access
+{display:none;}
+
+#col3, #col3_content {background-color:#fff;}
+
+#main table tr {background-color:#fff;}
+
+/*end structure*/
+
+/*typography*/
+body, td, th
+{
+font-family:arial, verdana, sans-serif !important;
+font-size:15pt !important;
+}
+h2.heading{font-size:160%;}
+h3.heading{font-size:145%;}
+h4.heading{font-size:125%;}
+h5.heading, h6.heading, h6.minor{font-size:110%;}
+#main p, #main ul li, #main ol li, #main pre.pre, #main table td{font-size:92%;color:#000;}
+#main ul li p, #main ul li ul li, #main ul li ul li ul li, #main td pre.pre{font-size:92%;}
+ul.disc li, ul.disc li:first-child, ul.nobullet li{border:none;background:none;list-style-type:disc;padding-left:0;}
+
+div#printLogo {display:block;}
+
+.ui-tabs-nav { display: none; }
+.ui-tabs .ui-tabs-hide { display: block !important; }

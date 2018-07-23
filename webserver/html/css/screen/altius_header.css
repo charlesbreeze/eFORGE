@@ -1,0 +1,921 @@
+/*Start Banner Colours [=BC]*/
+
+
+.tb-default {
+	background-color: #cccccc;
+}
+.tb-black {
+	background-color: #181512;
+}
+.tb-blue_extra {
+	background-color: #049dbf;
+}
+.tb-blue_open_day {
+	background-color: #004b85;
+}
+.tb-dark_purple {
+	background-color: #4C224F;
+}
+.tb-dark_purple_80 {
+	background-color: #67436C;
+}
+.tb-dark_red {
+	background-color: #6D0020;
+}
+.tb-dark_red_90 {
+	background-color: #78002d;
+}
+.tb-dark_red_80 {
+	background-color: #86183C;
+}
+.tb-dark_blue {
+	background-color: #173958;
+}
+.tb-dark_blue_95 {
+	background-color: #173857;
+}
+.tb-dark_blue_90 {
+	background-color: #1B4669;
+}
+.tb-dark_blue_70 {
+	background-color: #296587;
+}
+.tb-dark_blue_50 {
+	background-color: #5c86a7;
+}
+.tb-dark_green_105{
+	background-color: #316300;
+}
+.tb-dark_green {
+	background-color: #4B5100;
+}
+.tb-dark_green_90 {
+	background-color: #5E6509;
+}
+.tb-orange {
+	background-color: #EF8100;
+}
+.tb-orange_80 {
+	background-color: #f26d49;
+}
+.tb-orange_95 {
+	background-color: #f18101;
+}
+.tb-mid_red {
+	background-color: #EF3213;
+}
+.tb-mid_red_80 {
+	background-color: #F26B47;
+}
+.tb-mid_blue {
+	background-color: #29A6C9;
+}
+.tb-mid_blue_90 {
+	background-color: #2FADCD;
+}
+.tb-mid_blue_80 {
+	background-color: #50b5d1;
+}
+.tb-mid_blue_70 {
+	background-color: #67bbd6;
+}
+.tb-mid_blue_60 {
+	background-color:#459CBD;
+}
+.tb-mid_green {
+	background-color: #689300;
+}
+.tb-yellow {
+	background-color: #F6C100;
+}
+.tb-pink {
+	background-color: #AD004E;
+}
+.tb-mid_green {
+	background-color: #689300;
+}
+.tb-mid_green_80 {
+	background-color: #80A743;
+}
+.tb-light_purple {
+	background-color: #CCA6BB;
+}
+.tb-pink_95 {
+	background-color: #920035;
+}
+.tb-pink_80 {
+	background-color: #BC2268;
+}
+.tb-light_blue {
+	background-color: #97BFDF;
+}
+.tb-very_light_blue {
+	background-color: #92AEC7;
+}
+.tb-dark_purple_55 {
+	background-color: #695a74;
+}
+.tb-advances{
+	background-color:#6F7935;
+}
+.tb-natsci1{
+	background-color:#181512;
+}
+.tb-women{
+	background-color:#996699;
+}
+.tb-gc{
+	background-color:#669900;
+}
+.tb-dark_grey{
+	background-color:#222222;
+}
+.tb-esrc_green{
+	background-color:#7AA100;
+}
+.tb-dark_green{
+    background-color:#81A13C;
+}
+.tb-cerise{
+	background-color:#9A004B;
+}
+.tb-slms-fbs{background-color: #89334c;}
+.tb-slms-fls{background-color: #689300;}
+.tb-slms-fms{background-color: #5e3860;}
+.tb-slms-fphs{background-color: #d77b23;}
+
+.tb-altius_header{
+  background-color: #e5e5e5;
+}
+/*End Banner Colours [=BC]*/
+
+/*Breadcrumb styles [=BS]*/
+
+#altius0001, #altius0084{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#29A6C9;
+}
+#altius0002{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#689300;
+}
+#altius0003, #altius0073{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#EF8100;
+}
+#altius0004{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#FFFFFF;
+border-bottom: 1px solid #CCCCCC;
+}
+#altius0005{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#CCA6BB;
+}
+#altius0006, #altius0031, #altius0044, #altius0046, #altius0066, #altius0067, #altius0068{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#F6C100;
+}
+#altius0007, #altius0048, #altius0086{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#97BFDF;
+}
+#altius0008, #altius0024, #altius0052, #altius0055{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#C7F400;
+}
+#altius0009, #altius0025{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#E5EACE;
+}
+#altius0010, #altius0049, #altius0051, #altius0053, #altius0069{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#B1D779;
+}
+#altius0011, #altius0083{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#CBBED1;
+}
+#altius0012, #altius0059{
+/*width:100%;
+margin: 0;
+padding: 0;
+height:22px;*/
+background-color:#DBB8B8;
+}
+#altius0013b{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#A9C1D5;
+}
+#altius0013c{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#BBD0E1;
+}
+#altius0013, #altius0043, #altius0075{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#92AEC7;
+}
+#altius0014, #altius0036{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#B7D196;
+}
+#altius0015{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#EEDDE7;
+}
+#altius0016{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#AFCDE3;
+}
+#altius0017{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#9ABB6B;
+}
+#altius0018, #altius0033{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#F7BF7D;
+}
+#altius0019{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#F8EBAD;
+}
+#altius0020, #altius0027{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#7CC3DA;
+}
+#altius0021{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#DCF981;
+}
+#altius0022{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#BCD6EB;
+}
+#altius0023{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#F8CE00;
+}
+#altius0026{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#F3A64F;
+}
+#altius0028, #altius0061, #altius0078{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#EBC2CB;
+}
+#altius0029{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#F3F5E7;
+}
+#altius0030{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#F9DB61;
+}
+#altius0032, #altius0060, #altius0080, #altius_aus{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#CEE7EE;
+}
+#altius0034{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#DBB8BB;
+}
+#altius0035{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#B7A4BF;
+}
+#altius0037{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#E3A8B7;
+}
+#altius0038, #altius0089{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#B1C5D9;
+}
+#altius0039{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#D7DCB8;
+}
+#altius0040, #altius0042{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#D7E6C4;
+}
+#altius0041, #altius0064{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#D1D1D4;
+}
+
+#altius0045{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#FAE17A;
+}
+#altius0047, #altius0074{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#d9e6f3;
+}
+#altius0050, #altius0054{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#ad004e;
+}
+#altius0056{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#FAE695;
+}
+#altius0057{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#FFFFFF;
+}
+#altius0058{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#FCD9C5;
+}
+#altius0062{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#E4EDF7;
+}
+#altius0063{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#F1E6ED;
+}
+#altius0065, #altius0076{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#EF3213;
+}
+#altius0070{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#FCE0C8;
+}
+#altius0071{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#D3E4EE;
+}
+#altius0072{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#173958;
+}
+#altius0077{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#fcfcfc;
+}
+#altius0079, #altius0085{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#A5D3E5;
+}
+#altius0081{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#c6dbac;
+}
+#altius0082{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#f9c6ac;
+}
+#altius0087{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#AEC582;
+}
+#altius0088{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#C6E7C6;
+}
+#altius0090{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#dbdcde;
+}
+#altius0091{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#229BB6;
+}
+#altius0092{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#E5EACE;
+}
+#altius0093{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color:#E4EDF7;
+}
+#altius0094{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #f6b340;
+}
+#altius0095{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #E8E6E3;
+}
+#altius0096{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #5EADDC;
+}
+#altius0097{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #EE7D27;
+}
+#altius0098{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #996699;
+}
+#altius0099{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #CC9999;
+}
+#altius0100{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #5E9999;
+}
+#altius0101{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #FFCC66;
+}
+#altius0102{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #bdc242;
+}
+#altius0103{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #F8CE00;
+}
+#altius0104{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #fcd7c3;
+}
+#altius0105{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #bbc1ae;
+}
+#altius0106{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #CCD158;
+}
+#altius0107{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #db0962;
+}
+#altius0108 {
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #f3b01c;
+}
+#altius0109{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #D8DE5E;
+}
+#altius0110{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #d2ccc4;
+}
+#altius0111{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #a2aa3f;
+}
+#altius0112{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #fdc400;
+}
+#altius0113{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #e95e27;
+}
+#altius0114{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #D1DE44;
+}
+#altius0115{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #CEE7EE;
+}
+#altius0116{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #002154;
+}
+#altius0117{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #92A5A1;
+}
+#altius0118{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #F3B01C;
+}
+#altius0119{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #ed174f;
+}
+#altius0120{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #CA551F;
+}
+#altius0121{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #DF9E33;
+}
+#altius0123
+{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #910f13;
+}
+#altius0124
+{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #bfbd95;
+}
+#altius0125
+{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #c5c5c5;
+}
+#altius0127
+{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #A195B9;
+}
+#altius0128
+{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+/* background-color: #93a445; */
+}
+#altius0129
+{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #efe9e5;
+}
+#altius0130
+{
+width:100%;
+margin: 0;
+padding: 0;
+height:22px;
+background-color: #E5EACE;
+}
+#header {
+	height: 100%;
+}
+#header h1 {
+	padding: 18px 0 0 20px;
+	text-transform:uppercase;
+	font-size:14px;
+	font-weight:bold;
+}
+#header span {
+/*
+	padding: 0 0 0 21px;
+	text-transform:uppercase;
+	font-size:11px;
+	font-weight:lighter;
+*/
+}
+.section_header_white {
+	color:#FFFFFF;
+	font-size:14px;
+	font-weight:bold;
+}
+.section_subheader_white {
+	color:#FFFFFF;
+	font-size:11px;
+	font-weight:lighter;
+}
+.section_header_blue {
+	color:#000099;
+}
+.section_subheader_blue {
+	color:#000099;
+}
+
+#logo_holder {
+position:absolute;
+top: 0px;
+right:0px;
+width: 265px;
+height: 110px;
+margin: 0;
+display: inline;
+text-align: right;
+}
+
+/* alert message */
+#alert-closer {
+    position:absolute;
+    top:11px;
+    left:390px;
+    font-size:1.5em;
+    cursor:pointer;
+    color:#FFF;
+    font-weight:normal;
+}
+#alert-message p {
+    color:#FFF;
+}
+#alert-message-overlay {
+    position:absolute;
+    top:0px;
+    left:0px;
+    z-index:998;
+    display:none;
+    opacity:0.3;
+    -moz-opacity:0.3;
+	filter:progid:DXImageTransform.Microsoft.Alpha(opacity=30);
+	-khtml-opacity:0.3;
+	-webkit-opacity:0.3;
+	background:#000;
+}
+#alert-message {
+    position:absolute;
+    top:0px;
+    left:0px;
+    z-index:1;
+    display:none;
+    width:400px;
+    height:200px;
+    padding:10px;
+    opacity:0.01;
+    -moz-opacity:0.01;
+	filter:progid:DXImageTransform.Microsoft.Alpha(opacity=1);
+	-khtml-opacity:0.01;
+	-webkit-opacity:0.01;
+    background:#F1B;
+    font-size:1.5em;
+    font-weight:normal;
+    border:6px double #FFF;
+}
+#alert-message h2 {
+    color:#000;
+    font-size:1.6em;
+}
+#handler-buttons {
+    width:446px;
+    margin:10px auto;
+    text-align:center;
+}
+/* end alert message */
+

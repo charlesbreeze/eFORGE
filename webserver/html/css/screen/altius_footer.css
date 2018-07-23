@@ -1,0 +1,26 @@
+/*Start Footer styling*/
+#inlinelist ul {
+	margin:0;
+	padding:0;
+}
+#inlinelist li {
+	display:inline;
+	list-style-image:none;
+	list-style-position:outside;
+	list-style-type:none;
+	padding: 0;
+	margin: 0;
+}
+/*End Footer styling*/
+
+/*Edit bar*/
+#editbar{
+width: 100%;
+height: 20px;
+}
+#googlecredit{
+float: left;
+}
+#silvaedit{
+float: right;
+}
