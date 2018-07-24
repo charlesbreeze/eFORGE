@@ -1,0 +1,104 @@
+@charset "UTF-8";
+/**
+ * "Yet Another Multicolumn Layout" - (X)HTML/CSS Framework
+ *
+ * (en) Variation of screen layout (basemod.css) - graphic layout border "3col_gfxborder"
+ * (de) Variation des Screenlayouts (basemod.css) - Grafische Layoutumrandung "3col_gfxborder"
+ *
+ * @copyright       Copyright 2005-2009, Dirk Jesse
+ * @license         CC-A 2.0 (http://creativecommons.org/licenses/by/2.0/),
+ *                  YAML-C (http://www.yaml.de/en/license/license-conditions.html)
+ * @link            http://www.yaml.de
+ * @package         yaml
+ * @version         3.1
+ * @revision        $Revision: 343 $
+ * @lastmodified    $Date: 2009-01-19 23:41:32 +0100 (Mo, 19. Jan 2009) $
+ */
+
+@media screen, projection
+{
+  body { background: #3b69ad; }
+
+  .page_margins {
+    border: 0 none;
+	/* background-image, background-repeat & background-position removed by jon because we dont want shadows on all four edges*/
+    /*background-image:  url(../../images/gfxborder/border_left_black.gif);
+    background-repeat:repeat-y;
+    background-position:left;*/
+  }
+
+  .page {
+    border: 0 none;
+    margin: 0 0 0 5px; padding: 10px 15px 10px 10px;
+    background-image:  url(../../images/gfxborder/border_right_black.gif);
+    background-repeat:repeat-y;
+    background-position:right;
+  }
+
+
+  #border-top {
+    overflow:hidden;
+    width: auto;
+    height: 20px;
+    font-size:0;
+    margin-bottom: -15px;
+	/* background-image, background-repeat & background-position removed by jon because we dont want shadows on all four edges*/
+   /* background-image:  url(../../images/gfxborder/border_top_black.gif);
+    background-repeat:repeat-x;
+    background-position:top left;*/
+  }
+
+  #border-bottom {
+    overflow:hidden;
+    width: auto;
+    height: 20px;
+    margin-top: -15px;
+    font-size:0;
+    background-image:  url(../../images/gfxborder/border_bottom_black.gif);
+    background-repeat:repeat-x;
+    background-position:bottom left;
+  }
+
+  #edge-tl {
+    float:left;
+    width: 20px;
+    height: 20px;
+    font-size:0;
+	/* background-image & background-position removed by jon because we dont want shadows on all four edges*/
+    /*background-image:  url(../../images/gfxborder/corner_tl_black.gif);
+    background-position: top left;*/
+  }
+
+  #edge-tr {
+    position:relative; /* IE Fix | z-index */
+    float:right;
+    width: 20px;
+    /*height: 20px;*/ /*This height changed by jon so that we can have a shadow on just the right and the bottom edges - revert to 20px and uncomment the background-image and background-position if you want shadows on all 4 edges*/
+	height: 10px;
+    font-size:0;
+	/*This background below colour added by jon below so that the shadow appears to be behind the main ciontent area*/
+	background-color: #ffffff;
+    /*background-image:  url(../../images/gfxborder/corner_tr_black.gif);
+    background-position: top right;*/
+  }
+
+  #edge-bl {
+    float:left;
+	/*width: 20px;*//*This width changed by jon so that we can have a shadow on just the right and the bottom edges - revert to 20px and uncomment the background-image and background-position if you want shadows on all 4 edges*/
+    width: 5px;
+    height: 20px;
+	/*This background below colour added by jon below so that the shadow appears to be behind the main ciontent area*/
+	background-color: #ffffff;
+    /*background-image:  url(../../images/gfxborder/corner_bl_black.gif);
+    background-position: bottom left;*/
+  }
+
+  #edge-br {
+    position:relative; /* IE Fix | z-index */
+    float:right;
+    width: 20px;
+    height: 20px;
+    background-image:  url(../../images/gfxborder/corner_br_black.gif);
+    background-position: bottom right;
+  }
+}

@@ -1,0 +1,65 @@
+/*Start Breadcrumb and google search styling*/
+.hlist{
+	height:22px;
+	margin:0;
+	padding:0;
+	width:100%;
+	background:none;
+	/*border-bottom:1px solid #333333;*/
+	border-top:none;
+	display:inline;
+	float:left;
+	line-height:0;
+	overflow:hidden;
+	position:relative;
+}
+#search {
+	display:block;
+	padding-left:20px;
+}
+#googlesearch {
+	display:inline;
+	float:left;
+	margin:0;
+	padding-top:4px;
+	width:auto;
+}
+#q {
+	border:1px solid #CCCCCC;
+	color:#000000;
+	display:inline;
+	font-family:Verdana,Arial,Helvetica,sans-serif;
+	font-size:10px;
+	margin:0;
+	vertical-align:middle;
+}
+
+.hlist ul {
+	display: inline;
+	float: left;
+	padding: 0;
+}
+.hlist ul li {
+	display: inline;
+	float: left; 
+	list-style-type: none;
+	margin: 0;
+	padding: 2px 4px 0 0;
+}
+.hlist ul li:before {
+	content: "\00BB \0020 ";
+}
+.hlist ul li:first-child:before {
+	content: "";
+}
+
+.hlist ul li a:focus,
+.hlist ul li a:hover,
+.hlist ul li a:active  { color:#CC6666;; text-decoration: none; }
+
+.hlist ul li.active strong,
+.hlist ul li.active a:focus,
+.hlist ul li.active a:hover,
+.hlist ul li.active a:active { background: transparent; color: #fff; text-decoration: none; }
+
+/*End Breadcrumb and google search styling*/

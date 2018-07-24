@@ -42,9 +42,9 @@ use 5.010;
 use strict;
 use warnings FATAL => 'all';
 use Storable;
+use Data::Dumper;
 
-
-my $MAX_SQL_VARIABLES = 999;
+my $MAX_SQL_VARIABLES = 99999;
 our $VERSION = '0.01';
 our (@ISA, @EXPORT);
 use Exporter;
@@ -97,9 +97,9 @@ sub save_probe_annotation_stats {
     my $file = "$out_dir/$lab.overlaps.stats.txt";
     open(STATS, ">>$file") or die "cannot open $file";
     my (@gene_features, @cpg_island_relationships);
-    foreach my $probeid (keys %{$overlaps->{'MVPS'}}){
+    foreach my $probeid (keys %{$overlaps->{'DMPS'}}){
         my ($this_gene_feature, $this_cpg_island_relationship) =
-            split("\t", $overlaps->{'MVPS'}->{$probeid}->{'PARAMS'});
+            split("\t", $overlaps->{'DMPS'}->{$probeid}->{'PARAMS'});
         push @gene_features, $this_gene_feature;
         push @cpg_island_relationships, $this_cpg_island_relationship;
     }
@@ -186,7 +186,7 @@ sub process_file {
  Example        : my $random_picks = get_random_matching_picks($overlaps, "450k", ".", 1000);
  Description    : Get several random picks of probes matching the criteria defined in the $overlaps
                   hash. The random picks are selected from a pre-built hash stored in the $data_dir
-                  called mvp_450k_bins (or so).
+                  called dmp_450k_bins (or so).
  Exceptions     : Cannot find the bins file for the selected array.
 
 =cut
@@ -195,17 +195,17 @@ sub get_random_matching_picks {
     my ($overlaps, $array, $datadir, $num_random_picks) = @_;
     my $picks = [];
 
-    # load up the stored hashes that contain the bins of mvps by feature and cpg island relationship.
+    # load up the stored hashes that contain the bins of dmps by feature and cpg island relationship.
     my %bins;
-    my $bins_file = $datadir . "/mvp_${array}_bins";
+    my $bins_file = $datadir . "/dmp_${array}_bins";
     if (-e $bins_file) {
         %bins = %{ retrieve($bins_file) };
     } else {
         die "Cannot retrieve the file $bins_file\n";
     }
     
-    foreach my $probe_id (keys %{$overlaps->{'MVPS'}}) {
-        my ($feature, $cpg_island_relationship) = split("\t", join("\t", $overlaps->{'MVPS'}->{$probe_id}->{'PARAMS'}));
+    foreach my $probe_id (keys %{$overlaps->{'DMPS'}}) {
+        my ($feature, $cpg_island_relationship) = split("\t", join("\t", $overlaps->{'DMPS'}->{$probe_id}->{'PARAMS'}));
 
         #range has to be the number of probes to choose from in that hash subclass
         my $range = scalar @{$bins{$feature}{$cpg_island_relationship}};
@@ -214,8 +214,8 @@ sub get_random_matching_picks {
             my $picked_probe_id;
             while (1) {
                 my $pick = int(rand($range));
-                $picked_probe_id = ${$bins{$feature}{$cpg_island_relationship}}[$pick]; #pick the $pick'th element in the array as the chosen mvp
-                last unless $picked_probe_id eq $probe_id; # must not pick the test mvp itself.
+                $picked_probe_id = ${$bins{$feature}{$cpg_island_relationship}}[$pick]; #pick the $pick'th element in the array as the chosen dmp
+                last unless $picked_probe_id eq $probe_id; # must not pick the test dmp itself.
             }
             push(@{$picks->[$n]}, $picked_probe_id);
         }
@@ -233,37 +233,81 @@ sub get_random_matching_picks {
  Returns        : hashref $stats
  Example        : my $result = process_overlaps($rows, $cells, 'erc');
  Description    : Returns a reference to a complex hash with stats from the rows. These are split
-                  into 'MVPS' and 'CELLS'. The former contains 'SUM' and 'PARAMS' for each probe ID
-                  while the latter contains 'COUNT' and 'MVPS' for each cell.
+                  into 'DMPS' and 'CELLS'. The former contains 'SUM' and 'PARAMS' for each probe ID
+                  while the latter contains 'COUNT' and 'DMPS' for each cell.
  Exceptions     : Dies if the number of cells does not match the length of the bit string.
 
 =cut
 
 sub process_overlaps {
     my ($rows, $cells, $data) = @_;
+
+    #print Dumper "rows";    
+    #print Dumper \$rows;
+    
+    #print Dumper "cells";    
+    #print Dumper \$cells;
+    
     my $overlaps;
     my @overlapping_probes_per_cell;
     my @indexes = 0..(@$cells-1);
     foreach my $row (@{$rows}){
         my ($probeid, $sum, $bit_string, $feature, $cpg_island_relationship) = @$row;
-        $overlaps->{'MVPS'}->{$probeid}->{'SUM'} = $sum;
-        $overlaps->{'MVPS'}->{$probeid}->{'PARAMS'} = join("\t", $feature, $cpg_island_relationship);
+        $overlaps->{'DMPS'}->{$probeid}->{'SUM'} = $sum;
+        $overlaps->{'DMPS'}->{$probeid}->{'PARAMS'} = join("\t", $feature, $cpg_island_relationship);
         die "For $data, found ".scalar(@$cells)." cells for ".length($bit_string)." bits\n" if (scalar(@$cells) ne length($bit_string));
-        foreach my $index (@indexes) {
-            ## $bit_string is a string made of 0s and 1s. If it is a 1 for this position, count and push
-            if (substr($bit_string, $index, 1)) {
-                push @{$overlapping_probes_per_cell[$index]}, $probeid;
-            }
-        }
+        
+        # profile test 1
+        
+        #my @bits = map(int(chr), unpack("C*", $bit_string));
+        #map{ if ($bits[$_] == 1) { push @{$overlapping_probes_per_cell[$_]}, $probeid } } 0..$#bits;
+        
+        # profile test 2
+        
+        #my @bits = unpack("C*", $bit_string);
+        #map{ if ($bits[$_] == 49) { push @{$overlapping_probes_per_cell[$_]}, $probeid } } 0..$#indexes;
+        
+        # profile test 3 (https://tools.altiusinstitute.org/nytprof.033018.008)
+        
+        my $bsl = length($bit_string);
+        my @bits = unpack("C$bsl", $bit_string);
+        map{ if ($bits[$_] == 49) { push @{$overlapping_probes_per_cell[$_]}, $probeid } } 0..($bsl-1);
+        
+        # profile test 4
+        
+        #my $bsl = length($bit_string);
+        #map{ if ((unpack("C$bsl", $bit_string))[$_] == 49) { push @{$overlapping_probes_per_cell[$_]}, $probeid } } 0..($bsl-1);
+        
+        # profile test 5 (https://tools.altiusinstitute.org/nytprof.033018.009)
+        
+        #my $bsl = length($bit_string);
+        #my @bits = unpack("C$bsl", $bit_string);
+        #foreach my $index (0..($bsl-1)) {
+        #  if ($bits[$index] == 49) { push @{$overlapping_probes_per_cell[$index]}, $probeid }
+        #}
+        
+        #
+        # original (https://tools.altiusinstitute.org/nytprof.033018.007)
+        #
+        
+        #foreach my $index (@indexes) {
+        #    ## $bit_string is a string made of 0s and 1s. If it is a 1 for this position, count and push
+        #    if (substr($bit_string, $index, 1)) {
+        #        push @{$overlapping_probes_per_cell[$index]}, $probeid;
+        #    }
+        #}
     }
     my $index = 0;
     foreach my $cell (@$cells){
         if ($overlapping_probes_per_cell[$index] and @{$overlapping_probes_per_cell[$index]}) {
             $overlaps->{'CELLS'}->{$cell}->{'COUNT'} = scalar(@{$overlapping_probes_per_cell[$index]});
-            $overlaps->{'CELLS'}->{$cell}->{'MVPS'} = $overlapping_probes_per_cell[$index];
+            $overlaps->{'CELLS'}->{$cell}->{'DMPS'} = $overlapping_probes_per_cell[$index];
         }
         $index++;
     }
+
+    #print Dumper "overlaps";
+    #print Dumper \$overlaps;
 
     return $overlaps;
 }
@@ -413,9 +457,35 @@ sub get_probe_annotations_and_overlap_for_dataset {
         my $sth = $dbh->prepare_cached($sql);
         $sth->execute($array_tag, $dataset_tag, @$probe_ids[$start..$end]);
         
-        while (my $row = $sth->fetchrow_arrayref()) {
+        # profile test 1 (https://tools.altiusinstitute.org/nytprof.033018.011/)
+        
+        #my $max_rows = 100;
+                
+        # profile test 2 (https://tools.altiusinstitute.org/nytprof.033018.012/)
+        
+        #my $max_rows = 500;
+                
+        # profile test 3 (https://tools.altiusinstitute.org/nytprof.033018.013/)
+        
+        my $max_rows = 1000;
+                
+        # profile test 4 (https://tools.altiusinstitute.org/nytprof.033018.014/)
+        
+        #my $max_rows = 10000;
+        
+        my $rows = [];
+        while (my $row = shift(@$rows) || shift ( @{$rows = $sth->fetchall_arrayref(undef, $max_rows)||[]} )) {
             push @$results, [@$row];
         }
+
+        #
+        # original (https://tools.altiusinstitute.org/nytprof.033018.010/)
+        #
+        
+        #while (my $row = $sth->fetchrow_arrayref()) {
+        #    push @$results, [@$row];
+        #}
+        
         $sth->finish();
     }
 
@@ -437,16 +507,30 @@ sub get_probe_annotations_and_overlap_for_dataset {
 =cut
 
 sub fetch_all_probe_ids {
-    my ($dbh, $array, $locations) = @_;
+    my ($dbh, $array_tag, $locations) = @_;
+    
+    # Get array ID
+    my $array_id_sth = $dbh->prepare("SELECT array_id FROM array WHERE array_tag = ?");
+    $array_id_sth->execute($array_tag);
+    my $array_id_result = $array_id_sth->fetchrow_arrayref();
+    my $array_id = @{$array_id_result}[0];
+    $array_id_sth->finish();
+    
+    # Get probe mapping ID
+    my $probe_mapping_id_sth = $dbh->prepare("SELECT probe_mapping_id FROM probe_mapping_info WHERE array_id = ?");
+    $probe_mapping_id_sth->execute($array_id);
+    my $probe_mapping_id_result = $probe_mapping_id_sth->fetchrow_arrayref();
+    my $probe_mapping_id = @{$probe_mapping_id_result}[0];
+    $probe_mapping_id_sth->finish();
 
     my $sth = $dbh->prepare("SELECT probe_id
                              FROM probe_mapping
-                             WHERE  chr_name = ? AND position = ?");
+                             WHERE probe_mapping_id = ? AND chr_name = ? AND position = ?");
     my $probe_ids = [];
 
     foreach my $this_loc (@$locations) {
         my ($chr, $pos) = @$this_loc;
-        $sth->execute($chr, $pos);
+        $sth->execute($probe_mapping_id, $chr, $pos);
         my $result = $sth->fetchall_arrayref();
         my $probe_id;
         foreach my $row (@{$result}) {
@@ -459,15 +543,22 @@ sub fetch_all_probe_ids {
 
 =head2 proximity_filter
 
-Filter MVPs from the MVP list if they are within 1 kb of each other. The rationale is that the first MVP to be identified in a block is chosen, and others are removed.
+Filter DMPs from the DMP list if they are within 1 kb of each other. The rationale is that the first DMP to be identified in a block is chosen, and others are removed.
 
 =cut
 
 sub proximity_filter {
     my ($dbh, $array_tag, $probe_ids, $filter) = @_;
-    my %prox_excluded_probes; # a hash to store MVPs found in proximity (1 kb) with an MVP in the list
-    my %filtered_probes; # The list of MVPs filtered (i.e. after filtering, the ones to keep)
+    my %prox_excluded_probes; # a hash to store DMPs found in proximity (1 kb) with a DMP in the list
+    my %filtered_probes; # The list of DMPs filtered (i.e. after filtering, the ones to keep)
     my %missing_probes;
+    
+    # Get array ID
+    my $array_id_sth = $dbh->prepare("SELECT array_id FROM array WHERE array_tag = ?");
+    $array_id_sth->execute($array_tag);
+    my $array_id_result = $array_id_sth->fetchrow_arrayref();
+    my $array_id = @{$array_id_result}[0];
+    $array_id_sth->finish();
 
     # Get the full list of probes as a hash (also removes redundancy)
     my %probe_id_hash;
@@ -475,36 +566,55 @@ sub proximity_filter {
         $probe_id_hash{$probe_id} = 1;
     }
     $probe_ids = [keys %probe_id_hash];
+    
+    # Debugging old sqlite3 constant
+    #$MAX_SQL_VARIABLES = 999;
 
     for (my $loop = 0; $loop * $MAX_SQL_VARIABLES < @$probe_ids; $loop++) {
         my $start = $loop * $MAX_SQL_VARIABLES;
         my $end = ($loop + 1) * $MAX_SQL_VARIABLES - 1;
         $end = @$probe_ids - 1 if ($end >= @$probe_ids);
 
-        my $sql = "SELECT probe_id, proxy_probes FROM proxy_filter JOIN array USING (array_id) WHERE".
-                " array_tag = ? AND probe_id IN (?". (",?" x ($end - $start)).")";
+        # The proxy_filter_id value is array_id
+        my $sql = "SELECT probe_id, proxy_probes FROM proxy_filter WHERE proxy_filter_id = $array_id AND probe_id IN (?". (",?" x ($end - $start)).")";
         my $sth = $dbh->prepare($sql); #get the blocks form the ld table
-        $sth->execute($array_tag, @$probe_ids[$start..$end]);
+        $sth->execute(@$probe_ids[$start..$end]);
         my $result = $sth->fetchall_arrayref();
         $sth->finish();
 
+        #my @probe_ids = ();
         foreach my $row (@{$result}){
             my ($probe_id, $probe_id_list) = @$row;
+            #push @probe_ids, $probe_id;
             # if the probe is in the proximity filtered set already ignore it
-            next if exists $prox_excluded_probes{$probe_id}; 
-            # if this is the first time it is seen, add it to the filtered mvps, and remove anything in proximity with it
+            #next if exists $prox_excluded_probes{$probe_id}; 
+            if (exists $prox_excluded_probes{$probe_id}) {
+                #if ($probe_id eq "cg01914153") {
+                #    print Dumper "cg01914153 found";
+                #}
+                next;
+            } 
+            # if this is the first time it is seen, add it to the filtered dmps, and remove anything in proximity with it
             $filtered_probes{$probe_id} = 1;
             next if $probe_id_list =~ /NONE/; # nothing is in proximity
             my (@other_probe_ids) = split (/\|/, $probe_id_list);
             foreach my $other_probe_id (@other_probe_ids) {
                 if (exists $probe_id_hash{$other_probe_id}) {
-                    $prox_excluded_probes{$other_probe_id} = $probe_id; #Add to the excluded mvps, if it is in proximity with the current mvp, and it its one of the test mvps.
+                    $prox_excluded_probes{$other_probe_id} = $probe_id; #Add to the excluded dmps, if it is in proximity with the current dmp, and it its one of the test dmps.
                 }
             }
         }
+        #print Dumper join ',' , @probe_ids;
     }
+    #die;
+    
+    #print Dumper join ',', sort keys %prox_excluded_probes;
+    #die;
+    
+    #print Dumper join ',', sort keys %filtered_probes;
+    #die;
 
-    #note that if an MVP doesn't exist in the proximity file it will be rejected regardless, may need to add these back
+    #note that if an DMP doesn't exist in the proximity file it will be rejected regardless, may need to add these back
     return (\%prox_excluded_probes, [keys %filtered_probes]);
 }
 
@@ -518,7 +628,8 @@ sub get_samples_from_dataset {
     my ($dbh, $dataset_tag) = @_;
     my ($cells, $samples);
 
-    my $sth = $dbh->prepare("SELECT shortcell, tissue, datatype, file, acc FROM dataset JOIN sample USING (dataset_id) WHERE dataset_tag = ? ORDER BY sample_order");
+    my $prepare = "SELECT shortcell, tissue, datatype, file, acc FROM dataset JOIN sample USING (dataset_id) WHERE dataset_tag = ? ORDER BY sample_order";
+    my $sth = $dbh->prepare($prepare);
     $sth->execute($dataset_tag);
     my ($shortcell, $tissue, $datatype, $file, $acc);
     $sth->bind_columns(\$shortcell, \$tissue, \$datatype, \$file, \$acc);

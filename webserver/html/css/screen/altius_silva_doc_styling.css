@@ -1,0 +1,255 @@
+p{
+	color: #4D4D4D;
+}
+p.lead{
+	font-weight:bold;
+}
+p.p{
+
+}
+p.annotation{
+	color: #a0a0a0;
+}
+h1,h2,h3,h4,h5,h6 {
+    color:#4D4D4D;
+	font-weight:bold;
+  }
+
+h3.heading{
+
+}
+h4.heading{
+
+}
+h5.heading{
+
+}
+h6.heading{
+
+}
+h6.minor{
+	font-size:108.333%;
+}
+pre.pre{
+
+}
+em{
+
+}
+a:link{
+
+}
+a:hover{
+
+}
+a:visited{
+
+}
+a:active{
+
+}
+ol.decimal{
+	list-style-position: inside;
+}
+ol.decimal li{
+/*background: transparent url("../../images/list-background-image.gif") no-repeat top left;
+padding-left: 20px;*/
+}
+ol.decimal li a{
+
+}
+ol.decimal li a:hover{
+
+}
+ul.disc{
+
+}
+ul.disc li, ul.toc li, #podcasts ul li {
+list-style: none;
+background: url("../../images/bulletted-list-background-image.gif") no-repeat left 6px;
+border-bottom: 1px dotted #CFCBC3;
+padding: 3px 20px 3px 20px;
+}
+ul.disc li:first-child, ul.toc li:first-child, #podcasts ul li:first-child {
+border-top: 1px dotted #CFCBC3;
+border-bottom: 1px dotted #CFCBC3;
+}
+
+ul.toc li ul.toc li:first-child, ul.disc li ul.disc li:first-child {border-top:none;}
+
+
+ul.disc li a{
+
+}
+ul.disc li a:hover{
+
+}
+ul.nobullet{
+width: auto;
+}
+ul.nobullet li{
+list-style-type: none;
+background-color: #CFCBC3;
+border-bottom: 1px dotted #ffffff;
+padding: 5px 20px 5px 20px;
+}
+ul.nobullet li:hover{
+background-color: #B0ABA0;
+color: #ffffff;
+}
+ul.nobullet li a{
+display: block;
+width: 100%;
+/*border: 1px solid red;*/
+}
+
+/*START TABLE STYLING*/
+/*Silva table reset all default stylings*/
+  table.silvatable { 
+	width: 100%; 
+	border-collapse:collapse; 
+	margin-bottom: 0.5em; 
+	border-top: none; 
+	border-bottom: none;
+	color: #4d4d4d;
+	}
+  th,td { 
+	padding: 0.5em;
+	}
+  tr.rowheading { 
+	color: #000000; 
+	font-weight: bold;
+	border-bottom: none;
+	}
+  tbody tr.rowheading {
+	background: transparent;
+	/*color: #333;*/
+	}
+tr.rowheading td{
+	padding: 0.8em;
+}
+  tbody td {
+	border-bottom: none;
+	}
+
+  /*tbody tr.odd:hover, tbody tr.even:hover {
+	background: #f0e8e8;
+  }
+  tbody tr:hover td {
+	background: #fff8f8;
+	}*/
+  tbody tr.rowheading:hover td {
+	background: transparent;
+  }
+  /*Silva Table grid styling*/
+
+	table.silvatable.grid{ 
+	border: 2px #888 solid;
+	}
+	table.silvatable.grid tr.rowheading { 
+	border-bottom: 1px solid #4d4d4d;
+	}
+	table.silvatable.grid tr.rowheading td{
+	padding: 0.8em;
+	}
+	table.silvatable.grid tbody tr{
+	border-bottom: 1px dotted #4d4d4d;
+	}
+/*Silva table plain grey*/
+	table.silvatable.list{
+	}
+	table.silvatable.list tbody tr{
+		background-color: #CFCBC3;
+		border-top: 2px solid #ffffff;
+	}
+	table.silvatable.list tr.rowheading { 
+	background-color: #B0ABA0;
+	}
+/* Silva table datagrid*/
+	table.silvatable.datagrid tbody tr{
+		background-color: #CFCBC3;
+		border-bottom: 1px dotted #ffffff;
+	}
+	table.silvatable.datagrid tr.rowheading { 
+	background-color: #B0ABA0;
+	border-bottom: 3px solid #ffffff;
+	}
+/*END TABLE STYLING*/
+
+/*Form Styling*/
+#col3_content form{
+	border: 1px solid #888;
+	padding: 5px;
+}
+#col3_content form fieldset{
+	background-color: #CFCBC3;
+}
+#col3_content form h4{
+	background-color:#B0ABA0;
+	padding: 0.5em 1em 0.5em 1em;
+	text-align: center;
+	color: #ffffff;
+	border-bottom: 2px solid #ffffff; 
+}
+#col3_content form p{
+padding: 0.5em 1em 0.5em 1em;
+border-bottom: 2px solid #ffffff; 
+margin: 0;
+}
+#col3_content form table.silvatable { 
+	margin-bottom: 0em; 
+	margin-top: 0em;
+}
+#col3_content form table.silvatable tr{ 
+	border-bottom: 2px solid #ffffff; 
+}
+#col3_content form table.silvatable tr td.align-right, .searchform-title {
+text-align:right;
+font-weight: bold;
+}
+#col3_content form table.silvatable tr td.align-center{
+text-align:center;
+}
+#col3_content form table.silvatable input, #col3_content form table.silvatable textarea, #col3_content form table.silvatable select, input.searchform-submit, .searchbox input.button {
+border: 1px solid #ffffff;
+}
+#col3_content form table.silvatable input.form_button, input.searchform-submit, .searchbox input.button {
+border: 1px solid #ffffff;
+padding: 0.33em;
+background-color: #4D4D4D;
+color: #ffffff;
+cursor:pointer;
+}
+
+/*Table cell alignment*/
+table td.align-right, table th.align-right, table td.align-right p, table th.align-right p {
+text-align:right;
+}
+table td.align-left, table th.align-left, table td.align-left p, table th.align-left p {
+text-align:left;
+}
+table td.align-center, table th.align-center, table td.align-center p, table th.align-center p {
+text-align:center;
+}
+
+/*Image floats from silva*/
+
+.float-right {
+	clear:none;
+	float:right;
+	margin-left:1em;
+}
+.float-left {
+	clear:none;
+	float:left;
+	margin-right:1em;
+}
+.image-right {
+	text-align:right;
+}
+.image-left {
+	text-align:left;
+}
+.image-center {
+	text-align:center;
+}

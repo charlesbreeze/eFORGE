@@ -130,19 +130,20 @@ sub content_box {
     my $string;
 
 $string .= qq{<div class="content-box">
-<table width="100%" border="0" cellspacing="0" cellpadding="0">
-<tr><td valign="top"><H3 class="heading">$title</H3></td></tr>
+<table width="100%" border="0" cellspacing="0" cellpadding="0" class="content-box-table">
+<thead><tr><td valign="top" class="content-box-header"><H3 class="heading">$title</H3></td></tr></thead>
+<tbody>
 };
-foreach my $this_content (@content) {
 
+foreach my $this_content (@content) {
 $string .= qq{
-<tr><td><span class="p">$this_content</span></td></tr>
+<tr><td class="content-box-body"><span class="p">$this_content</span></td></tr>
 };
 
 }
 
 $string .= qq{
-</table></div>
+</tbody></table></div>
 
 };
 
@@ -156,21 +157,24 @@ sub content_box_1 {
     my $string;
     
     $string .= qq{<div class="content-box">
-<table width="100%" border="0" cellspacing="0" cellpadding="0">
+<table width="100%" border="0" cellspacing="0" cellpadding="0" class="content-box-table">
 <tr>
-<td valign="top" width="15%"><H3 class="heading">$title</H3></td>
+<td valign="top" width="15%" class="content-box-header"><H3 class="heading">$title</H3></td>
 <td width="5">&nbsp;</td>
-<td>
+<td class="content-box-body">
 };
-
+    my $idx = 0;
 foreach my $this_content (@content) {
 
     $string .= qq{
-<span class="p"><strong>&gt;&nbsp;</strong>$this_content</span>
-<br />
-<br />
+<span class="p"><strong>&#9656;&nbsp;</strong>$this_content</span>
 };
-
+    if ($idx < scalar(@content) - 1) {
+      $string .= qq{
+<br/>
+};
+    }
+    $idx++;
 }
 
 $string .= qq{</td>
@@ -231,9 +235,9 @@ $title
 sub start {
     my ($title, $breadcrumbs, $left_menu, $colour, $right_column) = @_;
 
-my $layout = "ucl_default_2col_layout.css";
+my $layout = "altius_default_2col_layout.css";
 if ($right_column) {
-    $layout = "ucl_default_layout.css";
+    $layout = "altius_default_layout.css";
 }
 
     my $string;
@@ -244,41 +248,31 @@ if ($right_column) {
             <head>
 
             <link rel="canonical"
-                  href="http://www.ucl.ac.uk/cancer" />
-            <link rel="dns-prefetch" href="//static.ucl.ac.uk" />
+                  href="https://www.altius.org" />
+            <link rel="dns-prefetch" href="https://www.altius.org" />
             <title>$title</title>
             <meta http-equiv="X-UA-Compatible" content="IE=9" />
-            <link rel="shortcut icon" href="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/images/favicon2.ico" />
+            <!-- <link rel="shortcut icon" href="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/images/favicon2.ico" /> -->
+            <link rel="shortcut icon" href="https://eforge-dev.altiusinstitute.org/src/html/img/favicon.ico" />
             
 
 
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-
-
-<meta name="contact.name" content="Web Services" />
-<meta name="contact.email" content="silva-support\@ucl.ac.uk" />
-
-
-    
-
-
-
-
+            <meta name="contact.name" content="Web Services" />
+            <meta name="contact.email" content="eforge\@altius.org" />
 
 
             <!--Start General Layout Styles-->
             
                 
+                    <!--Start Altius default layout 2 column styles-->
+                    <link href="/src/html/css/$layout" rel="stylesheet" type="text/css" />
+                    <!--[if lte IE 8]><link rel="stylesheet" type="text/css" href="/src/html/css/patch_$layout" /><![endif]-->
+                    <!--End Altius default layout 2 column styles-->
                 
-                    <!--Start UCL default layout 2 column styles-->
-                    <link href="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/css/$layout" rel="stylesheet" type="text/css" />
-                    <!--[if lte IE 8]><link rel="stylesheet" type="text/css" href="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/css/patches/patch_$layout" /><![endif]-->
-                    <!--End UCL default layout 2 column styles-->
-                
-            
             
                 <!--Corporate identity styling below-->
-                <link href="http://static.ucl.ac.uk/silva/UCLDefaultLayoutV3/css/screen/corp-identity-$colour.css"
+                <link href="/src/html/css/corp-identity-$colour.css"
                       rel="stylesheet" type="text/css" />
                 <!--Corporate identity styling above-->
             
@@ -291,7 +285,7 @@ if ($right_column) {
             
 
             <!--Start Print CSS-->
-            <link href="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/css/print/print.css" media="print" rel="stylesheet" type="text/css" />
+            <link href="/src/html/css/print.css" media="print" rel="stylesheet" type="text/css" />
             <!--Set IE to be print smaller width, so that it doesn't crop content-->
             <!--[if lte IE 8]>
                 <style type="text/css">
@@ -312,50 +306,50 @@ if ($right_column) {
     <!--End Gallery javascripts-->
 
     <!--Start Ticker Javascript-->
-        <script language="JavaScript" src="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/scripts/ticker.js" type="text/JavaScript"></script>
+        <script language="JavaScript" src="/src/html/js/ticker.js" type="text/JavaScript"></script>
     <!--End Ticker Javascript-->
 
     <!--Start JQuery Javascript-->
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
         <script type="text/javascript">
-            window.jQuery || document.write('<script src="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/scripts/jquery-1.3.2.min.js"><\\/script>')
+            window.jQuery || document.write('<script src="src/html/js/scripts/jquery-1.3.2.min.js"><\\/script>')
         </script>
     <!--End JQuery Javascript-->
         
     
 
-    <!--Start UCL Javascript-->
-        <!--<script type="text/javascript" src="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/scripts/ucl.min.js"></script>-->
-    <!--End UCL Javascript-->
+    <!--Start Altius Javascript-->
+        <script type="text/javascript" src="/src/html/js/altius.min.js"></script>
+    <!--End Altius Javascript-->
 
     <!--Start JQuery Core User Interface Javascript-->
-        <script type="text/javascript" src="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/scripts/ui.core.min.js"></script>
+        <script type="text/javascript" src="/src/html/js/ui.core.min.js"></script>
     <!--End JQuery Core User Interface Javascript-->
 
     <!--Start JQuery Font Resizer Javascript-->
-        <script type="text/javascript" src="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/scripts/fontsizer.jquery.js"></script>
+        <script type="text/javascript" src="/src/html/js/fontsizer.jquery.js"></script>
     <!--End JQuery Font Resizer Javascript-->
 
     <!--Start JQuery cookie Javascript-->
-        <script type="text/javascript" src="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/scripts/jquery.cookie.min.js"></script>
+        <script type="text/javascript" src="/src/html/js/jquery.cookie.min.js"></script>
     <!--End JQuery cookie Javascript-->
 
-    <!--Start UCL alerts Javascript-->
-        <script type="text/javascript" src="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/scripts/ucl.alert.js"></script>
-    <!--End UCL alerts Javascript-->
+    <!--Start Altius alerts Javascript-->
+        <script type="text/javascript" src="/src/html/js/altius.alert.js"></script>
+    <!--End Altius alerts Javascript-->
 
 
 
             
 
-    <script type="text/javascript" src="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/scripts/jquery.doc.ready.js"></script>
+    <script type="text/javascript" src="/src/html/js/jquery.doc.ready.js"></script>
 
 
             <!--start Silva Style Sheets-->
             
 
             <!-- Stylesheet for high contrast style switching -->
-            <link rel="stylesheet" type="text/css" id="contrastCSS" href="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/css/screen/ucl_normal_view.css" />
+            <link rel="stylesheet" type="text/css" id="contrastCSS" href="/src/html/css/screen/altius_normal_view.css" />
             <!--end Silva Style Sheets-->
 
             <!-- _______ Silva version 2.1.7 _______ -->
@@ -373,36 +367,36 @@ if ($right_column) {
                     </div>
                     <!-- Graphic Border - End Part 1 -->
                     <div class="page">
-                        <div id="printLogo"><img src="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/images/printlogo.gif" alt="UCL logo" /></div>
+                        <div id="printLogo"><img src="/src/html/img/altius_logo.png" alt="Altius logo" /></div>
                         
-                                <div id="header" class="tb-dark_grey">
+                                <div id="header" class="tb-altius_header">
       <div id="topnav">
         <!-- start: skip link navigation -->
         <a class="skip" href="#navigation" title="skip link">skip to navigation</a><span class="hideme">.</span>
         <a class="skip" href="#content" title="skip link">skip to content</a><span class="hideme">.</span>
         <!-- end: skip link navigation -->
       </div>
-      <h1 class="section_header_white">UCL Cancer Institute</h1>
-      <span class="section_subheader_white">School of Life and Medical Sciences</span>
-      <div id="logo_holder"> 
-            <a href="http://www.ucl.ac.uk/">
-                <img src="//static.ucl.ac.uk/silva/UCLDefaultLayoutV3/images/corp-identity-$colour.gif"
-                     alt="UCL Home" />
+      <!-- <h1 class="section_header_white">Altius Institute for Biomedical Sciences</h1> -->
+      <!-- <span class="section_subheader_white">School of Life and Medical Sciences</span> -->
+      <!-- <div id="logo_holder"> 
+            <a href="https://www.altius.org/">
+                <img src="/src/html/img/altius_logo.png"
+                     alt="Altius" />
             </a>
+      </div> -->
+      <div class="brand-container">
+        <a href="https://www.altius.org/" target="_blank"><img src="/src/html/img/altius_logo.png" class="brand-logo"></a>
+        <span class="brand-text"><a href="https://eforge.altiusinstitute.org/" target="_self">eFORGE</a></span>
+        <div class="brand-subtitle">identify tissue or cell type-specific signal in EWAS data</div>
       </div> 
     </div>
 
 
                             <!-- Begin bradcrumbs row -->
     <div id="nav" class="noprint">
-      <div class="hlist" id="corp-identity-$colour">
+      <div class="hlist">
         <!--Start Search box-->
         <div id="search"> 
-            <form action="http://search2.ucl.ac.uk/search/search.cgi" method="get" id="googlesearch">
-            <input placeholder="Search UCL" name="query" id="query" type="text" value="" accesskey="q" value="Search UCL">
-            <input type="hidden" name="collection" value="ucl-public-meta">
-            <input type="submit" value="GO" class="submit" name="Submit">
-            </form>
         </div>
         <!--End search Box-->
         
@@ -414,15 +408,15 @@ if ($right_column) {
 
 
 
-    foreach my $this_breadcrumb ({"UCL Home" => "http://www.ucl.ac.uk"}, @$breadcrumbs) {
-        my ($label, $url) = %$this_breadcrumb;
-        $string .= qq{  <li>
-    <a href="$url">$label</a>
-    <!--[if lte IE 7]>&raquo;<![endif]-->
-  </li>
-};
-
-    }
+#     foreach my $this_breadcrumb ({"Altius" => "https://www.altius.org"}, @$breadcrumbs) {
+#         my ($label, $url) = %$this_breadcrumb;
+#         $string .= qq{  <li>
+#     <a href="$url">$label</a>
+#     <!--[if lte IE 7]>&raquo;<![endif]-->
+#   </li>
+# };
+# 
+#     }
 
 
 
@@ -477,7 +471,7 @@ if ($right_column) {
                 $string .= qq{</ul>\n};
                 $inside_list = 0;
             }
-            $string .= qq{<img src="$url" alt="logo" width="180">\n<br />\n};
+            $string .= qq{<img src="$url" alt="logo" class="logo" width="180">\n<br />\n};
             next;
         }
         if ($label =~ /^__title__$/) {
@@ -635,45 +629,24 @@ sub end {
                         <!-- end: #main -->
                         <!-- begin: #footer -->
                         <!-- =============== FOOTER =============== -->
-
-
+ 
  <div id="footer"> 
-  <ul>
-   <li><a href="http://www.ucl.ac.uk/disclaimer">Disclaimer</a></li>
-   <li><a href="http://www.ucl.ac.uk/foi">Freedom of Information</a></li>
-   <li><a href="http://www.ucl.ac.uk/accessibility">Accessibility</a></li>
-   <li><a href="http://www.ucl.ac.uk/privacy">Privacy</a></li>
-   <li><a href="http://www.ucl.ac.uk/cookies">Cookies</a></li>
-   <li><a href="http://www.ucl.ac.uk/advanced-search">Advanced Search</a></li>
-   <li><a href="http://www.ucl.ac.uk/contact-list/">Contact Us</a></li>
-  </ul>
-  
-  <div>
-   <address class="vcard">
+  <div style="margin:0px;margin-left:10px; padding:0;">
+   <address class="vcard" style="margin:0;padding-bottom:10px;">
     <span class="adr">
-     University College London - Gower Street - London - WC1E 6BT
+     Altius Institute for Biomedical Sciences - 2211 Elliott Ave #410 - Seattle, WA 98121 - USA - 
     </span>
     <span class="tel">
      <span class="type">Tel</span>:
-     <span class="value">+44 (0)20 7679 2000</span>
+     <span class="value">+12062671091</span>
     </span>
    </address>
-   <p>&#169; UCL 1999&#8211;2014</p>
   </div>
-
- </div>
-
- 
- <!-- end #footer -->
+</div> 
+<!-- end #footer -->
 
                         
                     </div>
-                    <!-- Graphic Border - Begin Part 2 -->
-                    <div id="border-bottom">
-                        <div id="edge-bl"> </div>
-                        <div id="edge-br"> </div>
-                    </div>
-                    <!-- Graphic Border - End Part 2 -->
                 </div>
             </body>
 </html>
