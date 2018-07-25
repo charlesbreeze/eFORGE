@@ -2,7 +2,7 @@
 use warnings;
 use strict;
 
-use CGI ':form', ':cgi', ':html', ':standard';                             # load CGI routines
+use CGI ':form', ':cgi', ':html';                             # load CGI routines
 use lib("modules");
 use IPC::Cmd qw[run];
 use LWP::Simple qw(!head);
@@ -25,13 +25,13 @@ my $debug = 0;
 ##
 
 # The location of the HTML pages for this server on the filesystem
-my $DOCUMENT_ROOT = "/var/www/eforge/production/src/html";
+my $DOCUMENT_ROOT = "/var/www/eFORGE.v1.2/html";
 
 # The base URL (without the server name) for this server. For instance:
 # Running on http://server.org/ -> $WEB_ROOT = ""
 # Running on http://server.org/tool/ -> $WEB_ROOT = "/tool"
 # IMPORTANT - DO NOT INCLUDE A TRAILING '/'
-my $WEB_ROOT = "";
+my $WEB_ROOT = "/eFORGE.v1.2";
 
 # The location of the files w.r.t. the base URL (DO NOT CHANGE)
 my $WEB_OUTDIR = "/files";
@@ -47,30 +47,33 @@ my $STDOUT_FILE = "output.txt";
 my $colour="bright-blue";
 my $plot_colour="#29A6C9";
 
-my $title = "eFORGE v2.0";
+my $title = "eFORGE v1.2";
 
 my $bkgd_conf = read_conf_file("$BIN_DIR/bkgd.conf");
 
 my $ref_data_conf = read_conf_file("$BIN_DIR/data.conf");
 
 my $breadcrumbs = [
-    {"Altius Institute" => "https://www.altius.org"}
+    {"UCL Cancer Institute" => "http://www.ucl.ac.uk/cancer"},
+    {"Cancer Biology" => "http://www.ucl.ac.uk/cancer/rescancerbiol/cancerbiology"},
+    {"Medical Genomics" => "http://www.ucl.ac.uk/cancer/medical-genomics/medgenhome"},
 ];
 
 my $left_menu = [
-    {"__logo__" => "$WEB_ROOT/src/html/img/logo.jpg"},
-    {"__title__" => "Application"},
+    {"__logo__" => "$WEB_ROOT/img/logo.jpg"},
+    {"__title__" => $title},
     {"Start" => "$WEB_ROOT/"},
     {"Help" => "$WEB_ROOT/?help"},
     {"Documentation" => "$WEB_ROOT/?documentation"},
     {"Download" => "$WEB_ROOT/?download"},
     {"About" => "$WEB_ROOT/?about"},
     {"__title__" => "Previous versions"},
-    {"eFORGE v1.2" => "http://eforge.cs.ucl.ac.uk/eFORGE.v1.2"},
     {"eFORGE v1.1" => "http://eforge.cs.ucl.ac.uk/eFORGE.v1.1"},
     {"eFORGE v1.0" => "http://eforge.cs.ucl.ac.uk/eFORGE.v1.0"},
-    {"__title__" => "Altius Institute"},
-    {"Home" => "https://www.altius.org/"}
+    {"__title__" => "UCL Cancer Institute"},
+    {"Home" => "http://www.ucl.ac.uk/cancer/"},
+    {"Medical Genomics" => "http://www.ucl.ac.uk/cancer/medical-genomics/medgenhome"},
+    {"Bill Lyons Informatics Centre" => "http://www.ucl.ac.uk/cancer/blic/"},
 ];
 
 my $right_column = undef;
@@ -216,21 +219,6 @@ sub get_absolute_root_outdir {
 =cut
 
 sub print_form {
-    print CGI::start_div({-class=>"content-box"});
-    
-    print CGI::start_table({-width=>"100%", -border=>"0", -cellspacing=>"0", -cellpadding=>"0", -class=>"content-box-table"});
-    
-    print CGI::start_thead();
-    print CGI::start_Tr();
-    print CGI::start_td({-class=>"content-box-header"});
-    print CGI::h3({-class=>"heading"},"Data");
-    print CGI::end_td();
-    print CGI::end_Tr();
-    print CGI::end_thead();
-    
-    print CGI::start_tbody();
-    print CGI::start_Tr();
-    print CGI::start_td({-class=>"content-box-body", -style=>"padding:0;margin:0;"});
     print start_multipart_form(-id=>'eforge');
     print table({-width=>"100%", -border=>"0", -cellspacing=>"0", -cellpadding=>"0"},
         Tr({-valign=>"TOP"}, [
@@ -238,6 +226,7 @@ sub print_form {
             ## ================================================================
             ## Input data section
             ## ================================================================
+            th(["<h6>Data</h6>", ""]),
             td(["Paste data:",
                 textarea('data_text', '# Example with a filtered set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014, 15:R31.
 cg00839584
@@ -312,15 +301,7 @@ cg27443224', 10, 60)]),
                 submit('action','Run')]),
         ])
         );
-    
     print end_form();
-    
-    print CGI::end_td();
-    print CGI::end_Tr();
-    print CGI::end_tbody();
-    print CGI::end_table();
-    
-    print CGI::end_div();
 }
 
 
@@ -810,11 +791,10 @@ sub print_intro_box {
              GWAS data.
            <br \>",
         "eFORGE identifies tissue or cell type-specific signal by analysing a minimum set of 5
-            differentially methylated positions (DMPs) for overlap with DNase I hypersensitive sites
+            differentially methylated positions (DMPs) for overlap with DNase 1 hypersensitive sites
             (DHSs) compared to matched background DMPs and provides both graphical and tabulated
             outputs.
            <br \>",
-        "eFORGE can now analyse <a href='https://support.illumina.com/content/dam/illumina-marketing/documents/products/datasheets/humanmethylationepic-data-sheet-1070-2015-008.pdf' target='_blank'>Illumina 850k EPIC</a> array data, as well as <a href='https://support.illumina.com/content/dam/illumina-marketing/documents/products/datasheets/datasheet_humanmethylation450.pdf' target='_blank'>Illumina 450k</a> array data.<br \>",
     );
 }
 
@@ -877,7 +857,7 @@ sub print_main_page {
 sub print_help_page {
     print $q->header;
     print Template::start($title, $breadcrumbs, $left_menu, $colour, $right_column);
-    print Template::header("$title &#9656; Help");
+    print Template::header("$title &gt; Help");
 
     print_intro_box();
 
@@ -889,7 +869,7 @@ sub print_help_page {
        "<strong>Input file format</strong><br \><br \>
            If f is specified, specify the file format as follow:
            <br \><br \>
-           <strong>Probe list</strong>: list of dmps as probeids each on a separate line.
+           <strong>Probe list</strong>: list of mvps as probeids each on a separate line.
            Optionally can add other fields after the probeid which are
            ignored, unless the pvalue filter is specified, in which case
            eForge assumes that the second field is the minus log10 pvalue
@@ -900,7 +880,8 @@ sub print_help_page {
            and 1-based format where beg and end are the same*.
            <br \>",
        "<strong>Platform</strong><br \><br \>
-           Select which Illumina methylation array has been used to generate these data (850k or 450k).
+           Select which Illumina methylation array has been used to generate these data (450k or
+           27k).
            <br \>",
        "<strong>Maximum number of probes</strong><br \><br \>
            The web version is limited to 1000 probes. While it is possible to input a larger number
@@ -988,7 +969,7 @@ sub print_help_page {
 sub print_documentation_page {
     print $q->header;
     print Template::start($title, $breadcrumbs, $left_menu, $colour, $right_column);
-    print Template::header("$title &#9656; Documentation");
+    print Template::header("$title &gt; Documentation");
 
     print Template::content_box("eFORGE analysis tool",
        "The eFORGE (<u>e</u>xperimentally-derived <u>F</u>unctional element <u>O</u>verlap analysis of <u>R</u>e<u>G</u>ions from <u>E</u>WAS) tool performs a Functional Overlap analysis to identify tissue specific signal for a given set of EWAS DMPs.<br \>",
@@ -998,7 +979,7 @@ sub print_documentation_page {
        "The eFORGE tool provides a method to view the tissue specific regulatory component of a set of EWAS DMPs. eFORGE analysis takes a set of DMPs, such as those hits above genome-wide significance threshold in an EWAS study, and analyses whether there is enrichment for overlap of putative functional elements compared to matched background DMPs. It assesses enrichment on a per cell type basis, since functional elements are differentially active in different cell types, and hence can expose tissue-specific signals of enrichment for the given test DMP set. This can reveal the sites of action underlying the EWAS signal, and provide confirmation of the validity of the EWAS where a tissue-specific mechanism is known or expected for the phenotype. Conversely unknown tissue involvements can also be revealed.<br \>",
        "In the initial implementation, the functional elements considered are DNase I hotspots from either the ENCODE or Roadmap Epigenomics projects generated by the Hotspot method. The hotspots are regions of general DNase I sensitivity (rather than peaks which are more similar to DNase hypersensitive sites).<br \>",
        "For each set of test DMPs, an overlap analysis is performed against the functional elements from either data source for each cell sample separately (125 samples for ENCODE, 299 for Roadmap), and the number of overlaps is counted. A background distribution of the expected overlap counts for this DMP set is obtained by picking sets of the same number of DMPs as the test DMP set, matched for gene relationship and CpG island relationship annotation. The matched background sets are then overlapped with the functional elements and the background distribution of overlaps determined. By default 1000 matched sets are used. The enrichment value for the test DMP set is expressed as the -log10 (binomial p value). Enrichments outside the nominal 95th and 99th percentile (by default) of the binomial distribution (after Benjamini-Yekutieli multiple testing correction) are considered significant. A schematic of the analysis is shown below.<br \>",
-       "<strong>eFORGE Analysis Strategy</strong><br />",
+       "eFORGE Analysis Strategy<br />",
        "<img src=\"$WEB_ROOT/img/analysis-strategy.png\" width=100%>",
        "The results are presented by cell sample in either graphic (interactive Dimple chart or static pdf) or tabular (interactive DataTables table or tab separated file) forms. Typical results may show an enrichment of overlap (red or pink points) for the EWAS DMP set in a tissue of mechanistic relevance to the phenotype under analysis, for instance blood cell subtypes for Rheumatoid Arthritis DMPs.<br \>",
        "Alternatively there may be no enrichment and all points will be blue below the -log10 (binomial p value) thresholds. This could be because there is no regulatory component underlying the EWAS association, or because the relevant tissue is not present in the available functional element datasets, or for other technical reasons (e.g. too few overlaps).<br \>",
@@ -1023,13 +1004,10 @@ The TSV output is generated by eFORGE during processing. The graphic and tabular
         "<strong>Estimating False Positive Rates by DMP count in the Test DMP Set</strong><br /><br />
 To estimate false positive rates, 1000 randomly chosen DMP sets for each of a series of DMP counts between 10 and 300 DMPs were analysed using eFORGE on the Roadmap and ENCODE data. The false positive rate was calculated as the number of cell enrichments greater than the two standard thresholds used by eFORGE expressed as the proportion of the total number of cell overlap tests performed.<br />",
 
-        "<strong>False Positive Rate by DMP set Count</strong><br /><br /><img src=\"$WEB_ROOT/img/analysis-fdr.png\" width=100% style=\"background-color:white;\"><br /><br />This plot suggests that for a DMP set of >= 20, a threshold of -log10 (binomial p value) >= 3.38 (equivalent to 0.001 in corrected p value) maintains the false positive rate below around 0.0025 (0.25%)."
+        "<strong>False Positive Rate by DMP set Count</strong><br /><img src=\"$WEB_ROOT/img/analysis-fdr.png\" width=100%><br />This plot suggests that for a DMP set of >= 20, a threshold of -log10 (binomial p value) >= 3.38 (equivalent to 0.001 in corrected p value) maintains the false positive rate below around 0.0025 (0.25%)."
     );
 
     print Template::content_box("Versions",
-        "<strong>v2.0</strong><br \><br \>
-This version includes support for the 850k EPIC Illumina array.<br />",
-
         "<strong>v1.2</strong><br \><br \>
 This version includes DHS data from the BLUEPRINT Consortium.<br />",
 
@@ -1058,22 +1036,20 @@ First version of eFORGE. The tools allows to analyses DMPs versus Epigenome Road
 sub print_download_page {
     print $q->header;
     print Template::start($title, $breadcrumbs, $left_menu, $colour, $right_column);
-    print Template::header("$title &#9656; Download");
+    print Template::header("$title &gt; Download");
     print Template::content_box("Download",
     "The code is available on GitHub:
     <a href=\"https://github.com/charlesbreeze/eFORGE\">https://github.com/charlesbreeze/eFORGE</a>",
     "Additional files you will require:
-    <p><ul><li><a href=\"$WEB_ROOT$WEB_OUTDIR/eforge.db\">eforge.db</a> (for eFORGE v1.0)</li>
+    <ul><li><a href=\"$WEB_ROOT$WEB_OUTDIR/eforge.db\">eforge.db</a> (for eFORGE v1.0)</li>
     <li><a href=\"$WEB_ROOT$WEB_OUTDIR/eforge_1.1.db\">eforge_1.1.db</a> (for eFORGE v1.1)</li>
     <li><a href=\"$WEB_ROOT$WEB_OUTDIR/eforge_1.2.db\">eforge_1.2.db</a> (for eFORGE v1.2)</li>
-    <li><a href=\"$WEB_ROOT$WEB_OUTDIR/eforge_2.0.db\">eforge_2.0.db</a> (for eFORGE v2.0)</li>
-    <li><a href=\"$WEB_ROOT$WEB_OUTDIR/dmp_850k_bins\">dmp_850k_bins</a></li>
-    <li><a href=\"$WEB_ROOT$WEB_OUTDIR/dmp_450k_bins\">dmp_450k_bins</a></li>
-    <li><a href=\"$WEB_ROOT$WEB_OUTDIR/dmp_27k_bins\">dmp_27k_bins</a></li></ul></p>");
+    <li><a href=\"$WEB_ROOT$WEB_OUTDIR/mvp_450k_bins\">mvp_450k_bins</a></li>
+    <li><a href=\"$WEB_ROOT$WEB_OUTDIR/mvp_27k_bins\">mvp_27k_bins</a></li></ul>");
     print Template::content_box("License",
     "<strong>eforge.pl</strong> Functional analysis of EWAS DMPs
        <br \><br \>
-       Copyright (C) [2017] Altius Institute for Biomedical Sciences, EMBL - European Bioinformatics Institute and University College London
+       Copyright (C) [2014-2015]  EMBL - European Bioinformatics Institute and University College London
        <br \><br \>
        This program is free software: you can redistribute it and/or modify it
        under the terms of the GNU General Public License as published by the
@@ -1085,7 +1061,7 @@ sub print_download_page {
        institution name nor the name eforge.pl can be used to endorse or
        promote products derived from this software without prior written
        permission. For written permission, please contact
-       <strong>cbreeze(at)altius.org</strong>.
+       <strong>c.breeze(at)ucl.ac.uk</strong>.
        Products derived from this software may not be called eforge.pl nor may
        eforge.pl appear in their names without prior written permission of the
        developers. You should have received a copy of the GNU General Public
@@ -1110,10 +1086,10 @@ sub print_download_page {
 sub print_about_page {
     print $q->header;
     print Template::start($title, $breadcrumbs, $left_menu, $colour, $right_column);
-    print Template::header("$title &#9656; About");
+    print Template::header("$title &gt; About");
     print Template::content_box("eFORGE",
-    "eFORGE was developed by Charles
-    Breeze while on secondment at the
+    "eFORGE was developed by <a href=\"http://www.ucl.ac.uk/cancer/medical-genomics/mg_staff\">Charles
+    Breeze</a> while on secondment at the
     <a href=\"http://www.ebi.ac.uk\">European Bioinformatics Institute</a> as part of the
     <a href=\"http://www.epitrain.eu\">EpiTrain Initial Training
     Network</a>.",
@@ -1126,26 +1102,28 @@ sub print_about_page {
     <a href=\"http://genomebiology.com/2014/15/2/R31\">Jaffe AE and Irizarry RA, Genome Biol 2014, 15:R31</a>.",
     "<p align=\"right\">(last updated on ".scalar(localtime((stat("$0"))[9])).")</p>",
     );
-#     print Template::content_box("System",
-#     "eForge is currently running on a virtual machine provided by <a href=\"".
-#     "http://www.cs.ucl.ac.uk/\">UCL Computer Sciences</a> department and maintained by the <a href=\"".
-#     "http://www.ucl.ac.uk/cancer/blic/\">Bill Lyons Informatics Centre</a>.");
-#     if ($q->remote_addr() =~ /^128\.40\.233\./ or $q->remote_addr() =~ /^127\.0\.0\.1$/) {
-#         my $absolute_root_outdir = get_absolute_root_outdir();
-#         refresh_usage_stats($absolute_root_outdir);
-#         print Template::content_box("Usage",
-#             "<img src=\"$WEB_ROOT$WEB_OUTDIR/last_week.png\">",
-#             "<img src=\"$WEB_ROOT$WEB_OUTDIR/last_month.png\">",
-#             "<img src=\"$WEB_ROOT$WEB_OUTDIR/scalability.png\">",
-#             "<strong>Disk usage:</strong> ".qx"cat $absolute_root_outdir/du.txt"." in ".
-#                 qx"cat $absolute_root_outdir/num.txt"." folders",
-#             "You are accessing this server from ".$q->remote_addr(),
-#             "<p align=\"right\">(last updated on ".
-#                 scalar(localtime((stat("$absolute_root_outdir/last_week.png"))[9])).")</p>");
-#     }
+    print Template::content_box("System",
+    "eForge is currently running on a virtual machine provided by <a href=\"".
+    "http://www.cs.ucl.ac.uk/\">UCL Computer Sciences</a> department and maintained by the <a href=\"".
+    "http://www.ucl.ac.uk/cancer/blic/\">Bill Lyons Informatics Centre</a>.");
+    if ($q->remote_addr() =~ /^128\.40\.233\./ or $q->remote_addr() =~ /^127\.0\.0\.1$/) {
+        my $absolute_root_outdir = get_absolute_root_outdir();
+        refresh_usage_stats($absolute_root_outdir);
+        print Template::content_box("Usage",
+            "<img src=\"$WEB_ROOT$WEB_OUTDIR/last_week.png\">",
+            "<img src=\"$WEB_ROOT$WEB_OUTDIR/last_month.png\">",
+            "<img src=\"$WEB_ROOT$WEB_OUTDIR/scalability.png\">",
+            "<strong>Disk usage:</strong> ".qx"cat $absolute_root_outdir/du.txt"." in ".
+                qx"cat $absolute_root_outdir/num.txt"." folders",
+            "You are accessing this server from ".$q->remote_addr(),
+            "<p align=\"right\">(last updated on ".
+                scalar(localtime((stat("$absolute_root_outdir/last_week.png"))[9])).")</p>");
+    }
     print Template::content_box("Contact",
-    "Email <a href=\"mailto:cbreeze(at)altius.org\">Charles Breeze</a>:
-    cbreeze(at)altius.org",
+    "Email <a href=\"http://www.ucl.ac.uk/cancer/medical-genomics/mg_staff\">Charles Breeze</a>:
+    c.breeze(at)ucl.ac.uk and
+    <a href=\"https://iris.ucl.ac.uk/iris/browse/profile?upi=BECKX39\">Stephan Beck</a>:
+    s.beck(at)ucl.ac.uk.",
     );
     
     print Template::content_box("Some of the papers that cite eFORGE",
