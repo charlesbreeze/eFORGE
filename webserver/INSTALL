@@ -1,8 +1,7 @@
 This instructions relate to the installation of the eFORGE webserver.
 
-This is based on a VM running Scientific Linux with Perl 5.10.1, or greater. You 
-may need to adapt these commands if you wish to install the webserver on a different 
-system.
+This is based on a VM running Scientific Linux with Perl 5.10.1. You may need to adapt these
+commands if you wish to install the webserver on a different system.
 
 Step-by-step guide
 ==================
@@ -10,13 +9,13 @@ Step-by-step guide
 1. Log into the VM
 ------------------
 
-This is the host where your web service resides.
+    ssh USER@eforge.cs.ucl.ac.uk
 
 2. Download the eForge package and install the dependencies
 -----------------------------------------------------------
 
-2.a. The code lives in GitHub and the databases and dmp_*_bins files are available for download
-through the Altius eFORGE service.
+2.a. The code lives in GitHub and the databases and mvp_*_bins files are available through the
+webserver.
 
     cd
     
@@ -24,14 +23,11 @@ through the Altius eFORGE service.
     
     cd eFORGE
 
-    export WEBROOT=https://eforge.altiusinstitute.org
-    wget $WEBROOT/files/eforge.db
-    wget $WEBROOT/files/eforge_1.1.db
-    wget $WEBROOT/files/eforge_1.2.db
-    wget $WEBROOT/files/eforge_2.0.db
-    wget $WEBROOT/files/dmp_27k_bins
-    wget $WEBROOT/files/dmp_450k_bins
-    wget $WEBROOT/files/dmp_850k_bins
+    wget http://eforge.cs.ucl.ac.uk/files/eforge.db
+    wget http://eforge.cs.ucl.ac.uk/files/eforge_1.1.db
+    wget http://eforge.cs.ucl.ac.uk/files/eforge_1.2.db
+    wget http://eforge.cs.ucl.ac.uk/files/mvp_450k_bins
+    wget http://eforge.cs.ucl.ac.uk/files/mvp_27k_bins
 
 2.b. Install Perl dependencies
 
@@ -70,31 +66,6 @@ Check that these work. If the .dchart.html cannot be open. By default, the HTML 
 location of the js code on the local machine. For the server, this should point at a public URL
 server by the server itself.
 
-2.e. Compile a custom version of DBD::SQLite Perl plug-in (optional):
-
-If you plan to input more than 999 probes, there is a runtime limit to the number of SQL 
-variables that may be passed to a SQLite query. This can be optionally pushed upwards by compiling 
-and installing a custom version of the DBD::SQLite Perl plug-in.
-
-Visit https://github.com/DBD-SQLite/DBD-SQLite to obtain source code for this plug-in, and then 
-apply the following patch:
-
-```
---- sqlite3.c.old       2018-01-26 23:34:59.000000000 -0800
-+++ sqlite3.c   2018-03-14 19:39:51.364114114 -0700
-@@ -11999,7 +11999,7 @@
- ** The maximum value of a ?nnn wildcard that the parser will accept.
- */
- #ifndef SQLITE_MAX_VARIABLE_NUMBER
--# define SQLITE_MAX_VARIABLE_NUMBER 999
-+# define SQLITE_MAX_VARIABLE_NUMBER 99999
- #endif
-
- /* Maximum page size.  The upper bound on this value is 65536.  This a limit
-```
-
-Compile and install the modified plug-in to your Perl environment.
-
 3. Install the web server
 -------------------------
 
@@ -104,68 +75,64 @@ Compile and install the modified plug-in to your Perl environment.
 
 3.b. Create some directories for hosting the code, log and result files:
 
-    sudo mkdir /var/www/eFORGE.v2.0/
-    cd /var/www/eFORGE.v2.0/
+    sudo mkdir /var/www/eFORGE.v1.2/
+    cd /var/www/eFORGE.v1.2/
     sudo mkdir -p bin log cgi-bin html html/files
     sudo chown apache log html/files # the user under which you run apache (see the line "User" in
                                      # /etc/httpd/conf/httpd.conf)
 
 3.c. Copy the webserver files to the right directories 
 
-    sudo rsync -avPL ~/eFORGE/webserver/cgi-bin/ /var/www/eFORGE.v2.0/cgi-bin/
-    sudo rsync -avPL ~/eFORGE/webserver/bin/ /var/www/eFORGE.v2.0/bin/
-    sudo rsync -avPL ~/eFORGE/webserver/html/ /var/www/eFORGE.v2.0/html/
-    sudo rsync -avPL ~/eFORGE/eforge.db /var/www/eFORGE.v2.0/bin/
-    sudo rsync -avPL ~/eFORGE/eforge_1.1.db /var/www/eFORGE.v2.0/bin/
-    sudo rsync -avPL ~/eFORGE/eforge_1.2.db /var/www/eFORGE.v2.0/bin/
-    sudo rsync -avPL ~/eFORGE/eforge_2.0.db /var/www/eFORGE.v2.0/bin/
-    sudo rsync -avPL ~/eFORGE/dmp_850k_bins /var/www/eFORGE.v2.0/bin/
-    sudo rsync -avPL ~/eFORGE/dmp_450k_bins /var/www/eFORGE.v2.0/bin/
-    sudo rsync -avPL ~/eFORGE/dmp_27k_bins /var/www/eFORGE.v2.0/bin/
+    sudo rsync -avPL ~/eFORGE/webserver/cgi-bin/ /var/www/eFORGE.v1.2/cgi-bin/
+    sudo rsync -avPL ~/eFORGE/webserver/bin/ /var/www/eFORGE.v1.2/bin/
+    sudo rsync -avPL ~/eFORGE/webserver/html/ /var/www/eFORGE.v1.2/html/
+    sudo rsync -avPL ~/eFORGE/eforge.db /var/www/eFORGE.v1.2/bin/
+    sudo rsync -avPL ~/eFORGE/eforge_1.1.db /var/www/eFORGE.v1.2/bin/
+    sudo rsync -avPL ~/eFORGE/eforge_1.2.db /var/www/eFORGE.v1.2/bin/
+    sudo rsync -avPL ~/eFORGE/mvp_450k_bins /var/www/eFORGE.v1.2/bin/
+    sudo rsync -avPL ~/eFORGE/mvp_27k_bins /var/www/eFORGE.v1.2/bin/
 
 3.e. Add links to the database files for the Downloads page:
 
-    cd /var/www/eFORGE.v2.0/html/files
+    cd /var/www/eFORGE.v1.2/html/files
     sudo ln -s ../../bin/eforge.db .
     sudo ln -s ../../bin/eforge_1.1.db .
     sudo ln -s ../../bin/eforge_1.2.db .
-    sudo ln -s ../../bin/eforge_2.0.db .
-    sudo ln -s ../../bin/dmp_850k_bins .
-    sudo ln -s ../../bin/dmp_450k_bins .
-    sudo ln -s ../../bin/dmp_27k_bins .
+    sudo ln -s ../../bin/mvp_450k_bins .
+    sudo ln -s ../../bin/mvp_27k_bins .
 
 3.f. Create the configuration files
 
 These files contain a list of arrays and dataset included in the database. They are used by the
 web server to know what it can offer without having to query the DB every time.
 
-    cd /var/www/eFORGE.v2.0/bin
+    cd /var/www/eFORGE.v1.2/bin
     perl eforge.pl -data ? > data.conf
     perl eforge.pl -bkgd ? > bkgd.conf
 
 3.g. Configure the Apache server
 
-You can choose to either run eFORGE on a VirtualHost (like the URL pointing to $WEBROOT) or 
-on a folder.
+You can choose to either run eFORGE on a VirtualHost (like http://eforge.cs.ucl.ac.uk/) or on a
+folder (like http://blic.cs.ucl.ac.uk/eFORGE).
 
 OPTION 1 -- Configure an Apache VirtualHost for eFORGE:
 
-    cat > /etc/httpd/conf.d/eforge.v2.0.conf
+    cat > /etc/httpd/conf.d/eforge.v1.2.conf
 <VirtualHost *:80>
-    ServerName eforge.altiusinstitute.org
-    DocumentRoot /var/www/eFORGE.v2.0./html
-    ScriptAlias /cgi-bin/  /var/www/eFORGE.v2.0/cgi-bin/
+    ServerName eforge.cs.ucl.ac.uk
+    DocumentRoot /var/www/eFORGE.v1.2./html
+    ScriptAlias /cgi-bin/  /var/www/eFORGE.v1.2/cgi-bin/
 
     <IfModule dir_module>
         DirectoryIndex index.html /cgi-bin/index.pl
     </IfModule>
 
-    <Directory "/var/www/eFORGE.v2.0/html">
+    <Directory "/var/www/eFORGE.v1.2/html">
         Order allow,deny
         Allow from all
     </Directory>
 
-    <Directory "/var/www/eFORGE.v2.0/cgi-bin">
+    <Directory "/var/www/eFORGE.v1.2/cgi-bin">
         AllowOverride None
         Options None
         Order allow,deny
@@ -176,18 +143,18 @@ OPTION 1 -- Configure an Apache VirtualHost for eFORGE:
 
 OPTION 2 -- Configure an Apache VirtualHost for eFORGE:
 
-    cat > /etc/httpd/conf.d/eforge.v2.0.conf
-ScriptAlias /eFORGE.v2.0/cgi-bin/  /var/www/eFORGE.v2.0/cgi-bin/
-Alias "/eFORGE.v2.0" "/var/www/eFORGE.v2.0/html"
+    cat > /etc/httpd/conf.d/eforge.v1.2.conf
+ScriptAlias /eFORGE.v1.2/cgi-bin/  /var/www/eFORGE.v1.2/cgi-bin/
+Alias "/eFORGE.v1.2" "/var/www/eFORGE.v1.2/html"
 
-<Directory "/var/www/eFORGE.v2.0/html/">
+<Directory "/var/www/eFORGE.v1.2/html/">
     Order allow,deny
     Allow from all
 
     DirectoryIndex index.html cgi-bin/index.pl
 </Directory>
 
-<Directory "/var/www/eFORGE.v2.0/cgi-bin/">
+<Directory "/var/www/eFORGE.v1.2/cgi-bin/">
     AllowOverride None
     Options None
     Order allow,deny
@@ -197,7 +164,7 @@ Alias "/eFORGE.v2.0" "/var/www/eFORGE.v2.0/html"
 
 3.h. Copy the rCharts libraries to the html path:
 
-    sudo rsync -avP /usr/lib64/R/library/rCharts/libraries /var/www/eFORGE.v2.0/html/
+    sudo rsync -avP /usr/lib64/R/library/rCharts/libraries /var/www/eFORGE.v1.2/html/
 
 3.i Re-start Apache
 
