@@ -66,6 +66,35 @@ Check that these work. If the .dchart.html cannot be open. By default, the HTML 
 location of the js code on the local machine. For the server, this should point at a public URL
 server by the server itself.
 
+2.e. Compile a custom version of DBD::SQLite Perl plug-in (optional):
+
+If you plan to input more than 1000 probes, there is a runtime limit to the number of SQL 
+variables that may be passed to a SQLite query. This can be optionally pushed upwards by compiling 
+and installing a custom version of the DBD::SQLite Perl plug-in.
+
+Visit https://github.com/DBD-SQLite/DBD-SQLite to obtain source code for this plug-in, and then 
+apply the following patch:
+
+```
+--- sqlite3.c.old       2018-01-26 23:34:59.000000000 -0800
++++ sqlite3.c   2018-03-14 19:39:51.364114114 -0700
+@@ -11999,7 +11999,7 @@
+ ** The maximum value of a ?nnn wildcard that the parser will accept.
+ */
+ #ifndef SQLITE_MAX_VARIABLE_NUMBER
+-# define SQLITE_MAX_VARIABLE_NUMBER 999
++# define SQLITE_MAX_VARIABLE_NUMBER 1000
+ #endif
+
+ /* Maximum page size.  The upper bound on this value is 65536.  This a limit
+```
+
+Compile and install the modified plug-in to your Perl environment.
+
+Additionally, it is necessary to edit the eForge.pm file in the $ROOT/eForge directory
+to push the 1000 probe limit up to the new limit. This value is set in the `$MAX_SQL_VARIABLES`
+variable.
+
 3. Install the web server
 -------------------------
 

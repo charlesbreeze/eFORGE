@@ -43,8 +43,7 @@ use strict;
 use warnings FATAL => 'all';
 use Storable;
 
-
-my $MAX_SQL_VARIABLES = 999;
+my $MAX_SQL_VARIABLES = 1000;
 our $VERSION = '0.01';
 our (@ISA, @EXPORT);
 use Exporter;
