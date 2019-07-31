@@ -6,13 +6,13 @@ eforge.pl - Experimentally derived Functional element Overlap analysis of ReGion
 
 =head1 SYNOPSIS
 
-eforge.pl options (-f file) (-mvp mvplist)
+eforge.pl options (-f file) (-dmp dmplist)
 
 =head1 DESCRIPTION
 
-Analyse a set of MVPs for their overlap with DNase 1 hotspots compared to matched background MVPs. 
-Identifies enrichment in DHS by tissue and plots graphs and table to display. Arbitrarily a minumum of 5* MVPs is required.  
-Note that if no MVPs are given the script will run on A DEFAULT EWAS* as an example output.
+Analyse a set of DMPs for their overlap with DNase 1 hotspots compared to matched background DMPs. 
+Identifies enrichment in DHS by tissue and plots graphs and table to display. Arbitrarily a minumum of 5* DMPs is required.  
+Note that if no DMPs are given the script will run on A DEFAULT EWAS* as an example output.
 
 Several outputs are made.
 
@@ -45,7 +45,7 @@ Use --dataset ? to get a list of available datasets on your local install.
 
 Array (FKA background) is set at default to 450k array ('450k'), the Illumina Infinium HumanMethylation450 BeadChip.
 
-For the time being, it is suficient for MVPs to be on the 450k array. Probes within 1kb of each other
+For the time being, it is suficient for DMPs to be on the 450k array. Probes within 1kb of each other
 will undergo filtering.
 
 Use --array ? to get a list of available backgrounds on your local install.
@@ -56,21 +56,21 @@ Supply a label that you want to use for the plotting titles, and filenames.
 
 =item B<--f FILENAME>
 
-Supply the name of a file containing a list of MVPs. 
+Supply the name of a file containing a list of DMPs. 
 Format must be given by the -format flag. 
-If not supplied the analysis is performed either on mvps provided as probeids (cg or ch probes) in a
-comma separated list through the mvps option or on a set of data from a default ewas study, namely a
+If not supplied the analysis is performed either on dmps provided as probeids (cg or ch probes) in a
+comma separated list through the dmps option or on a set of data from a default ewas study, namely a
 set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014.
 
-Note that at least 5 MVPs are required at a minimum by default.
+Note that at least 5 DMPs are required at a minimum by default.
 
-=item B<--mvps probe_id,probe_id...>
+=item B<--dmps probe_id,probe_id...>
 
-Can provide the mvps as probeids in a comma separated list.
+Can provide the dmps as probeids in a comma separated list.
 
-=item B<--min_mvps INT>
+=item B<--min_dmps INT>
 
-Specify the minimum number of MVPs to be allowed. Default is 5 now we are using binomial test.
+Specify the minimum number of DMPs to be allowed. Default is 5 now we are using binomial test.
 
 =item B<--thresh FLOAT,FLOAT>
 
@@ -80,18 +80,18 @@ Alter the default binomial p value thresholds. Give a comma separate list of thr
 
 If f is specified, specify the file format as follow:
 
-probeid = list of mvps as probeids each on a separate line. Optionally can add other fields after the probeid which are ignored,
+probeid = list of dmps as probeids each on a separate line. Optionally can add other fields after the probeid which are ignored,
 unless the pvalue filter is specified, in which case eForge assumes that the second field is the minus log10 pvalue
 
 bed  = File given is a bed file of locations (chr\tbeg\tend).  bed format should be 0 based and the chromosome should be given as chrN.
 However we will also accept chomosomes as just N (ensembl) and 1-based format where beg and end are the same*.
 
-tabix = File contains MVPs in tabix format.
+tabix = File contains DMPs in tabix format.
 
 =item B<--filter FLOAT>
 
-Set a filter on the MVPs based on the -log10 pvalue.  This works for files in the probeid' format.
-Give a value as the lower threshold and only MVPs with -log10 pvalues >= to the threshold will be
+Set a filter on the DMPs based on the -log10 pvalue.  This works for files in the probeid' format.
+Give a value as the lower threshold and only DMPs with -log10 pvalues >= to the threshold will be
 analysed. Default is no filtering.
 
 =item B<--save_stats>
@@ -104,8 +104,8 @@ The number of background matching sets to pick and analyse. Default 1000.
 
 =item B<--proxy TAG>
 
-Apply filter for MVPs in proximity (within 1 kb of another test MVP). With proximity filter specified,
-eForge will report MVPs removed due to proximity with another MVP in the list and will randomly pick
+Apply filter for DMPs in proximity (within 1 kb of another test DMP). With proximity filter specified,
+eForge will report DMPs removed due to proximity with another DMP in the list and will randomly pick
 one of the probes among the set of probes that are in proximity (within 1 kb of each other).
 
 At the moment, this is a dummy flag as only one proximity filter is available for each array. It
@@ -138,7 +138,7 @@ Print this perldoc and exit.
 
 =head1 LICENCE AND COPYRIGHT
 
-eforge.pl Functional analysis of EWAS MVPs
+eforge.pl Functional analysis of EWAS DMPs
 
 Copyright (C) [2014-2015] EMBL - European Bioinformatics Institute and University College London
 
@@ -173,6 +173,7 @@ Javier Herrero <javier.herrero@ucl.ac.uk>
 use strict;
 use 5.010;
 use warnings;
+use DBD::SQLite;
 use DBI; #database link to sqlite database
 use Sort::Naturally;
 use Cwd;
@@ -186,11 +187,13 @@ use eForge::ePlot;
 use eForge::eForge;
 use Data::UUID;
 use Statistics::Multtest qw(BY);
-
+use Data::Dumper;
+use threads;
+use List::Util qw(min);
 
 my $cwd = getcwd;
 
-my $dbname = "eforge_1.2.db";
+my $dbname = "eforge_2.0.450kmerge.db";
 
 my $array; # Default value
 my $array_label;
@@ -215,8 +218,8 @@ GetOptions (
     'label=s'    => \$label,
     'f=s'        => \$filename,
     'format=s'   => \$format,
-    'probes|mvps=s@' => \$probe_list,
-    'min_num_probes|min_mvps=i' => \$min_num_probes,
+    'probes|dmps=s@' => \$probe_list,
+    'min_num_probes|min_dmps=i' => \$min_num_probes,
     'noplot'     => \$noplot,
     'reps=i'     => \$reps,
     'thresh=s'   => \$thresh,
@@ -257,11 +260,14 @@ my $dirname = dirname(__FILE__);
 my $cfg = Config::IniFiles->new( -file => "$dirname/eforge.ini" );
 my $datadir = $cfg->val('Files', 'datadir');
 
+warn "[".scalar(localtime())."] DBD::SQLite plugin version: $DBD::SQLite::sqlite_version\n";
+
 unless (-s "$datadir/$dbname") {
     die "Database $dbname not found or empty";
 }
 my $dsn = "dbi:SQLite:dbname=$datadir/$dbname";
 my $dbh = DBI->connect($dsn, "", "") or die $DBI::errstr;
+
 ## ============================================================================
 
 
@@ -336,44 +342,48 @@ $lab = "$lab.$array.$dataset";
 
 
 ## ============================================================================
-## Read and process the input MVPs
+## Read and process the input DMPs
 ## ============================================================================
 warn "[".scalar(localtime())."] Processing input...\n";
 # This will read the probes from the file if provided, from the probe list otherwise or use the
 # example data set as a last resort.
-my $mvps = get_input_probes($filename, $probe_list);
-my $original_mvps = [@$mvps];
-my $num_of_input_mvps = scalar(@$mvps);
+my $dmps = get_input_probes($filename, $probe_list);
+my $original_dmps = [@$dmps];
+my $num_of_input_dmps = scalar(@$dmps);
 
 # Apply the proximity filter if requested
 my ($proximity_excluded);
-if(defined $proxy) {
-    ($proximity_excluded, $mvps) = proximity_filter($dbh, $array, $mvps);
-    while (my ($excluded_mvp, $mvp) = each %$proximity_excluded) {
-        warn "$excluded_mvp excluded for $proxy proximity filter with $mvp\n";
+if (defined $proxy) {
+    warn "Applying proximity filter... ($proxy)\n";
+    ($proximity_excluded, $dmps) = proximity_filter($dbh, $array, $dmps);
+    while (my ($excluded_dmp, $dmp) = each %$proximity_excluded) {
+        warn "$excluded_dmp excluded for $proxy proximity filter with $dmp\n";
     }
+}
+else {
+    warn "Not applying proximity filter...\n";
 }
 
 # $annotated_probes is an arrayref with probe_id, sum, bit, gene_group, cgi_group for each input probe
-my $annotated_probes = get_probe_annotations_and_overlap_for_dataset($dbh, $dataset, $array, $mvps);
+my $annotated_probes = get_probe_annotations_and_overlap_for_dataset($dbh, $dataset, $array, $dmps);
 my $existing_probes = {map {$_->[0] => 1} @$annotated_probes};
-$mvps = [keys %$existing_probes];
+$dmps = [keys %$existing_probes];
 
 ## Detect and remove the missing probes.
-my $num_missing_probes = find_missing_probes($original_mvps, $existing_probes, $proximity_excluded);
+my $num_missing_probes = find_missing_probes($original_dmps, $existing_probes, $proximity_excluded);
 
 # Print summary of filtering and checks:
-my $msg = "For $label, $num_of_input_mvps MVPs provided, ". scalar @$mvps.
+my $msg = "For $label, $num_of_input_dmps DMPs provided, ". scalar @$dmps.
         " retained: $num_missing_probes were not found";
 if (defined $proxy) {
     $msg .= " and " . scalar(keys %$proximity_excluded) . " excluded using $proxy proximity filter";
 }
 warn $msg, ".\n";
 
-# Check we have enough MVPs left
-my $num_of_valid_probes = scalar @$mvps;
+# Check we have enough DMPs left
+my $num_of_valid_probes = scalar @$dmps;
 if ($num_of_valid_probes < $min_num_probes) {
-    die "Fewer than $min_num_probes MVPs. Analysis not run\n";
+    die "Fewer than $min_num_probes DMPs. Analysis not run\n";
 }
 ## ============================================================================
 
@@ -384,13 +394,17 @@ if ($num_of_valid_probes < $min_num_probes) {
 # IMPORTANT: $cells contains the list of cells in the order defined in the DB. This is critical
 # to correctly assign each bit to the right sample.
 my ($cells, $samples) = get_samples_from_dataset($dbh, $dataset);
+$dbh->disconnect(); # EDH:  Moving this up as early as possible
+
+#print Dumper $cells;
+#exit -1;
 
 # unpack the bitstrings and store the overlaps by cell.
-# $overlaps is a complex hash like:
-# $overlaps->{'MVPS'}->{$probe_id}->{'SUM'} (total number of overlaps of this probe with features in this dataset)
-# $overlaps->{'MVPS'}->{$probe_id}->{'PARAMS'} (gene and CGI annotations for this probe)
-# $overlaps->{'CELLS'}->{$cell}->{'COUNT'} (number of input MVPs that overlap with the signal on this sample)
-# $overlaps->{'CELLS'}->{$cell}->{'MVPS'} (list of input MVPs that overlap with the signal on this sample)
+# $overlaps is a complex hash like:
+# $overlaps->{'DMPS'}->{$probe_id}->{'SUM'} (total number of overlaps of this probe with features in this dataset)
+# $overlaps->{'DMPS'}->{$probe_id}->{'PARAMS'} (gene and CGI annotations for this probe)
+# $overlaps->{'CELLS'}->{$cell}->{'COUNT'} (number of input DMPs that overlap with the signal on this sample)
+# $overlaps->{'CELLS'}->{$cell}->{'DMPS'} (list of input DMPs that overlap with the signal on this sample)
 my $overlaps = process_overlaps($annotated_probes, $cells, $dataset);
 
 # generate stats on the background selection
@@ -400,8 +414,8 @@ if (defined $save_probe_annotation_stats) {
 
 
 
-# only pick background mvps matching mvps that had bitstrings originally.
-#reference to hash key 'MVPS' is due to use of eforge.pm module from eForge tool
+# only pick background dmps matching dmps that had bitstrings originally.
+#reference to hash key 'DMPS' is due to use of eforge.pm module from eForge tool
 #(in subroutines process_overlaps, etc)
 
 
@@ -418,31 +432,56 @@ my %overlaps_per_cell; #this hash is going to store the overlaps for the random 
 # Get the bits for the background sets and process
 my $total_num_probes_in_random_picks;
 
-warn "[".scalar(localtime())."] Running the analysis with $num_of_valid_probes MVPs...\n";
+warn "[".scalar(localtime())."] Running the analysis with $num_of_valid_probes DMPs...\n";
 my $count = 0;
-foreach my $this_random_pick (@$random_picks) {
-    warn "[".scalar(localtime())."] Repetition $count out of ".$reps."\n" if (++$count%100 == 0);
-    $annotated_probes = get_probe_annotations_and_overlap_for_dataset($dbh, $dataset, $array, $this_random_pick);
 
-    $total_num_probes_in_random_picks += scalar @$annotated_probes;
+#
+# Intialize overlaps for cells, regardless of whether overlaps are discovered in random picks, or not.
+# This may help prevent downstream statistical tests from failing by divide-by-zero errors.
+# 8 Feb 2018, APR
+#
+foreach my $cell (@$cells) {
+    push @{$overlaps_per_cell{$cell}}, 0;
+}
 
-    unless (scalar @$annotated_probes == $num_of_valid_probes) {
-        warn "Random pick #$count only has " . scalar @$annotated_probes . " probes compared to $num_of_valid_probes in the input set.\n";
+my $worker_batch_size = int( $reps / 10 );
+my @workers = ();
+for (my $index0 = 0; $index0 < $reps; $index0 += $worker_batch_size) {
+    my $indexN = min( $index0 + $worker_batch_size, $reps ); 
+    my $worker = threads->create('worker_random_picks', $random_picks, $index0, $indexN);
+    push @workers, $worker;
+}
+# Let's look at these and see if they are legit
+for my $worker (@workers) {
+    # Hopefully they will be running, and not yet joinable!
+    my $status = "Running? " . ($worker->is_running() ? "YES" : "NO" );
+    $status .= "\tJoinable? " . ($worker->is_joinable() ? "YES" : "NO" );
+    #print "Thread status:  $status\n";
+}
+threads->yield(); # just a suggestion, we will be waiting here for a while 
+for my $worker (@workers) {
+    # Now we wait!
+    my $worker_array_ref = $worker->join();
+    my ($subset_total_random_probes, $subset_warnings, @subset_pick_overlaps) = @$worker_array_ref;
+    #warn "Worker returned " . scalar( @subset_pick_overlaps) . " pick overlaps.\n";
+    # Then unpack all the results in the main thread:
+    $total_num_probes_in_random_picks += $subset_total_random_probes;
+    if (length($subset_warnings) > 0) {
+        warn $subset_warnings;
     }
-
     my $this_pick_overlaps = process_overlaps($annotated_probes, $cells, $dataset);
-
-    # accumulate the overlap counts by cell
-    foreach my $cell (keys %{$this_pick_overlaps->{'CELLS'}}) {
-        push @{$overlaps_per_cell{$cell}}, $this_pick_overlaps->{'CELLS'}->{$cell}->{'COUNT'}; 
-    }
-
-    if (defined $save_probe_annotation_stats) {
-        save_probe_annotation_stats($this_pick_overlaps, $out_dir, $lab, $count);
+    for my $this_pick_overlaps (@subset_pick_overlaps) {
+        # accumulate the overlap counts by cell
+        foreach my $cell (keys %{$this_pick_overlaps->{'CELLS'}}) {
+            push @{$overlaps_per_cell{$cell}}, $this_pick_overlaps->{'CELLS'}->{$cell}->{'COUNT'}; 
+            #print Dumper "cell: [ $cell ] overlaps: $this_pick_overlaps->{'CELLS'}->{$cell}->{'COUNT'}";
+        }
+        if (defined $save_probe_annotation_stats) {
+            save_probe_annotation_stats($this_pick_overlaps, $out_dir, $lab, $count);
+        }
     }
 }
 
-$dbh->disconnect();
 warn "[".scalar(localtime())."] All repetitions done.\n";
 
 warn "[".scalar(localtime())."] Calculating p-values...\n";
@@ -462,22 +501,22 @@ my @pvalues;
 foreach my $cell (sort {ncmp($$samples{$a}{'tissue'},$$samples{$b}{'tissue'}) || ncmp($a,$b)} @$cells){
     # above line sorts by the tissues alphabetically (from $samples hash values)
 
-    # ultimately want a data frame of names(results)<-c("Zscore", "Cell", "Tissue", "File", "MVPs")
+    # ultimately want a data frame of names(results)<-c("Zscore", "Cell", "Tissue", "File", "DMPs")
     if (!$web) {
         print BACKGROUND join("\t", @{$overlaps_per_cell{$cell}}), "\n";
     }
-    my $teststat = ($overlaps->{'CELLS'}->{$cell}->{'COUNT'} or 0); #number of overlaps for the test MVPs
+    my $teststat = ($overlaps->{'CELLS'}->{$cell}->{'COUNT'} or 0); #number of overlaps for the test DMPs
 
     # binomial pvalue, probability of success is derived from the background overlaps over the tests for this cell
-    # $backmvps is the total number of background mvps analysed
+    # $backdmps is the total number of background dmps analysed
     # $tests is the number of overlaps found over all the background tests
-    my $total_num_overlaps_in_random_picks;
+    my $total_num_overlaps_in_random_picks = 1;
     foreach (@{$overlaps_per_cell{$cell}}) {
         $total_num_overlaps_in_random_picks += $_;
     }
     my $p = sprintf("%.6f", $total_num_overlaps_in_random_picks / $total_num_probes_in_random_picks);
 
-    # binomial probability for $teststat or more hits out of $mvpcount mvps
+    # binomial probability for $teststat or more hits out of $dmpcount dmps
     # sum the binomial for each k out of n above $teststat
     my $pbinom;
     if (defined $depletion) {
@@ -497,15 +536,20 @@ foreach my $cell (sort {ncmp($$samples{$a}{'tissue'},$$samples{$b}{'tissue'}) ||
     $pbinom = sprintf("%.2e", $pbinom);
 
     # Z score calculation (note: this is here only for legacy reasons. Z-scores assume normal distribution)
+    
+    if (! @{$overlaps_per_cell{$cell}}) {
+      print Dumper "undefined overlaps_per_cell for cell $cell";
+    }
+    
     my $zscore = zscore($teststat, $overlaps_per_cell{$cell});
 
-    my $mvp_string = "";
-    $mvp_string = join(",", @{$overlaps->{'CELLS'}->{$cell}->{'MVPS'}})
-            if defined $overlaps->{'CELLS'}->{$cell}->{'MVPS'};
-    # This gives the list of overlapping MVPs for use in the tooltips. If there are a lot of them this can be a little useless
+    my $dmp_string = "";
+    $dmp_string = join(",", @{$overlaps->{'CELLS'}->{$cell}->{'DMPS'}})
+            if defined $overlaps->{'CELLS'}->{$cell}->{'DMPS'};
+    # This gives the list of overlapping DMPs for use in the tooltips. If there are a lot of them this can be a little useless
     my ($shortcell, undef) = split('\|', $cell); # undo the concatenation from earlier to deal with identical cell names.
 
-    push(@results, [$zscore, $pbinom, $shortcell, $$samples{$cell}{'tissue'}, $$samples{$cell}{'datatype'}, $$samples{$cell}{'file'}, $mvp_string, $$samples{$cell}{'acc'}]);
+    push(@results, [$zscore, $pbinom, $shortcell, $$samples{$cell}{'tissue'}, $$samples{$cell}{'datatype'}, $$samples{$cell}{'file'}, $dmp_string, $$samples{$cell}{'acc'}]);
 }
 if (!$web) {
     close(BACKGROUND);
@@ -538,7 +582,16 @@ close(TSV);
 warn "[".scalar(localtime())."] Generating plots...\n";
 unless (defined $noplot){
     #Plotting and table routines
-    Chart($results_filename, $lab, $out_dir, $samples, $cells, $label, $t_marginal, $t_strict, $dataset); # basic pdf plot
+    warn "[".scalar(localtime())."] Charting against dataset [".$dataset."]...\n"; 
+    if ($dataset eq "erc2-H3-all") {
+      ChartAllH3Marks($results_filename, $lab, $out_dir, $samples, $cells, $label, $t_marginal, $t_strict, $dataset); # more complex pdf plot
+    }
+    elsif ($dataset eq "erc2-chromatin15state-all") {
+      ChartAllChromatin15StateMarks($results_filename, $lab, $out_dir, $samples, $cells, $label, $t_marginal, $t_strict, $dataset); # more complex pdf plot
+    }
+    else {
+      Chart($results_filename, $lab, $out_dir, $samples, $cells, $label, $t_marginal, $t_strict, $dataset); # basic pdf plot
+    }
     dChart($results_filename, $lab, $out_dir, $dataset, $label, $t_marginal, $t_strict, $web); # rCharts Dimple chart
     table($results_filename, $lab, $out_dir, $web); # Datatables chart
   }
@@ -599,9 +652,9 @@ sub parse_pvalue_thresholds {
  Arg[1]         : string $filename
  Arg[2]         : arrayref $probe_list
  Returns        : arrayref of probe IDs (string)
- Example        : $mvps = get_input_probes("input.txt", undef);
- Example        : $mvps = get_input_probes(undef, ["cg13430807", "cg10480329,cg06297318,cg19301114"]);
- Example        : $mvps = get_input_probes(undef, undef);
+ Example        : $dmps = get_input_probes("input.txt", undef);
+ Example        : $dmps = get_input_probes(undef, ["cg13430807", "cg10480329,cg06297318,cg19301114"]);
+ Example        : $dmps = get_input_probes(undef, undef);
  Description    : This function returns the list of input probe IDs. This can come from either
                   $filename if defined or from $probe_list otherwise. Each element in $probe_list is a
                   string which contains one or more probe IDs separated by commas (see Examples).
@@ -630,8 +683,8 @@ sub get_input_probes {
         @$probes = split(/,/, join(',', @$probe_list));
 
     } else{
-        # Test MVPs from Liu Y et al. Nat Biotechnol 2013  Pulmonary_function.snps.bed (*put EWAS bedfile here)
-        # If no options are given it will run on the default set of MVPs
+        # Test DMPs from Liu Y et al. Nat Biotechnol 2013  Pulmonary_function.snps.bed (*put EWAS bedfile here)
+        # If no options are given it will run on the default set of DMPs
         warn "No probe input given, so running on default set of probes, a set of monocyte tDMPs from Jaffe AE and Irizarry RA, Genome Biol 2014.";
         @$probes = qw(cg00839584 cg02497428 cg02780988 cg03055440 cg05445326 cg10045881 cg11051139 cg11058932 cg12091331 cg12962778 cg16303562 cg16501235 cg18589858 cg18712919 cg18854666 cg21792432 cg22081096 cg25059899 cg26989103 cg27443224);
     }
@@ -680,9 +733,34 @@ sub find_missing_probes {
     $num_missing_probes = scalar @$missing_probes;
 
     if ($num_missing_probes > 0) {
-        warn "The following $num_missing_probes MVPs have not been analysed because they were not found on the selected array\n";
+        warn "The following $num_missing_probes DMPs have not been analysed because they were not found on the selected array\n";
         warn join("\n", @$missing_probes) . "\n";
     }
 
     return $num_missing_probes;
+}
+
+
+# For a worker thread given a subset of the total random picks
+sub worker_random_picks {
+    my ($random_picks, $index0, $indexN) = @_;
+    my $subset_total_num_probes_in_random_picks = 0;
+    my $subset_warnings = "";
+    my @results = ();
+    # A thread should use its own private database connection
+    my $workerDBH = DBI->connect($dsn, "", "") or die $DBI::errstr;
+    for (my $index = $index0; $index < $indexN; ++$index) {
+        my $this_random_pick = $random_picks->[$index];
+        $annotated_probes = get_probe_annotations_and_overlap_for_dataset($workerDBH, $dataset, $array, $this_random_pick);
+        unless (scalar @$annotated_probes == $num_of_valid_probes) {
+            $subset_warnings .= "Random pick #$index only has " . scalar @$annotated_probes 
+                        . " probes compared to $num_of_valid_probes in the input set.\n";
+        }
+        $subset_total_num_probes_in_random_picks += scalar @$annotated_probes;
+        my $this_pick_overlaps = process_overlaps($annotated_probes, $cells, $dataset);
+        push @results, $this_pick_overlaps; 
+    }
+    $workerDBH->disconnect();
+    my @return_array = ($subset_total_num_probes_in_random_picks, $subset_warnings, @results);
+    return \@return_array; # (only one value is returned from thread join!)
 }
