@@ -1,5 +1,7 @@
 package eForge::eStats;
 
+use Data::Dumper;
+
 =head1 NAME
 
 eForge::eStats - Stats for use in eForge
@@ -80,6 +82,10 @@ reused from Ben Brown
 
 
 sub mean {
+    if (($#_+1) == 0) {
+      print Dumper "divide by zero!";
+      print Dumper \$_;
+    }
     my $sum = 0;
     foreach (@_){
         $sum+= $_;
@@ -133,7 +139,11 @@ Calculates the z-score for a given result and an array of values
 sub zscore {
     my ($teststat, $values) = @_;
     my $zscore;
-
+    
+    if (! @$values) {
+      print Dumper "undefined values!";
+    }
+    
     my $mean = mean(@$values);
     my $sd = std(@$values);
     if ($sd == 0) {
@@ -192,12 +202,12 @@ Need to modify this now have switched to binomial p values.
 
 
 sub fdr{
-    my ($tp, $mvps, $cells) = @_;
+    my ($tp, $dmps, $cells) = @_;
     if ($tp == 0){
         return "NA";
       }
     else{
-        my $fpr = 0.0085 * exp(-0.04201 * $mvps) + 0.00187; # from simulations of random data (Forge, not eForge->) 0.0085*exp(-0.04201. SNPs) + 0.00187
+        my $fpr = 0.0085 * exp(-0.04201 * $dmps) + 0.00187; # from simulations of random data (Forge, not eForge->) 0.0085*exp(-0.04201. SNPs) + 0.00187
         my $fdr = ($cells * $fpr) / $tp;
         return $fdr;
       }
