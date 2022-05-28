@@ -30,9 +30,9 @@ use Getopt::Long;
 2. The sqlite3 db file that stores the bitstrings. This file is called eforge_1.1.db currently.
 
 3. A stored hash containing the parameters for the background selection.
-Initially there were two files, one with the 27k and one with the 450k annotation data (mvp_bins). 
+Initially there were two files, one with the 27k and one with the 450k annotation data (mvp_bins). We recently added EPIC/850k files as well.
 
-The database and the hashes for these files are downloadable from:
+The database and the hashes for the 27k and 450k files are downloadable from:
 http://eforge.cs.ucl.ac.uk/?download
 
 For EPIC/850k files, see https://eforge.altiusinstitute.org/?download
@@ -49,14 +49,14 @@ install_github('rCharts', 'ramnathv', ref = "dev")
 
 The input data is one of several options.
 
-a. A list of 450k probeids (DMPs)
+a. A list of 450k/EPIC probeids (DMPs)
 
-b. BED format (for 450k probes)
+b. BED format (for 450k/EPIC probes)
 
 The analysis requires a minimum of 5 DMPs (this is not a strict limit but
 operationally is best).
 
-To work DMPs currently have to be on either the 27k or the the 450k array. The
+To work DMPs currently have to be on either the 27k or the 450k or EPIC array. The
 script gives warnings on DMPs not found.
 
 It also warns for background sets that do not have the right number of probes
