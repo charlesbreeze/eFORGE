@@ -30,10 +30,12 @@ use Getopt::Long;
 2. The sqlite3 db file that stores the bitstrings. This file is called eforge_1.1.db currently.
 
 3. A stored hash containing the parameters for the background selection.
-Currently two files, one with the 27k and one with the 450k annotation data (mvp_bins).
+Initially there were two files, one with the 27k and one with the 450k annotation data (mvp_bins). 
 
-The database and the hashes are downloadable from:
+The database and the hashes for these files are downloadable from:
 http://eforge.cs.ucl.ac.uk/?download
+
+For EPIC/850k files, see https://eforge.altiusinstitute.org/?download
 
 4. An eforge.ini file in the same directory as the script. Edit this to provide the
 directory in which the database and hash are stored.
